@@ -81,6 +81,14 @@ typedef struct NuPs2GsReg {
     u64 addr;
 } NuPs2GsReg;
 
+typedef struct TbSet {
+    int values[16][2];
+    int begin[16];
+    char pad0C0[0x80];
+    int current[16];
+    int extra[16];
+} TbSet;
+
 /* EE timer 1 counter: a free-running 16-bit tick used for screen-swap timing. */
 #define EE_T1_COUNT (*(volatile unsigned int *)0x10000800)
 #define EE_T0_COUNT (*(volatile unsigned int *)0x10000000)
@@ -89,9 +97,13 @@ typedef struct NuPs2GsReg {
 #define ExitHandler() __asm__ volatile ("sync\n\tei")
 
 extern int PS2_REZ_W;
+extern int PS2_REZ_H;
+extern int PS2_VCNTR_X;
+extern int PS2_VCNTR_Y;
 extern int D_006331C4;
 extern volatile int D_0062F03C;
 extern int D_006331F8;
+extern TbSet *D_0062F034;
 extern NuPs2GsReg D_002EA190;
 extern NuPs2GsReg D_002EA1A0;
 extern NuPs2GsReg D_002EA300;
@@ -109,6 +121,24 @@ extern NuPs2GsReg D_002EA310;
 float NuPs2GetRenderWidth(void)
 {
     return (float)PS2_REZ_W;
+}
+
+
+float NuPs2GetRenderHeight(void)
+{
+    return (float)PS2_REZ_H;
+}
+
+
+void tbslotReset(TbSet *set, int slot)
+{
+    int current;
+
+    set = set != 0 ? set : D_0062F034;
+    slot &= 0xF;
+    current = set->current[slot] ^ 1;
+    set->current[slot] = current;
+    set->values[slot][current ? 0 : 1] = 0;
 }
 
 
@@ -139,6 +169,24 @@ void NuPs2GetCurrentZBuffer(u64 *buf)
     } else {
         *buf = NuPs2ZBufReg1.data;
     }
+}
+
+
+float NuPs2GetRenderRange(void)
+{
+    return 4096.0f;
+}
+
+
+float NuPs2GetRenderXCentre(void)
+{
+    return (float)PS2_VCNTR_X;
+}
+
+
+float NuPs2GetRenderYCentre(void)
+{
+    return (float)PS2_VCNTR_Y;
 }
 
 

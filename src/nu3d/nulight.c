@@ -32,12 +32,55 @@
 
 
 extern int NuRndrFogClear;
+extern unsigned char D_006AD100[];
+extern float NuRndrFogNear;
+extern float NuRndrFogFar;
+extern int NuRndrFogCol;
+extern int NuRndrFogBlur;
+extern int HazeColour;
+extern void *NuLgtArcMtl;
+extern float NuLgtArcU0;
+extern float NuLgtArcV0;
+extern float NuLgtArcU1;
+extern float NuLgtArcV1;
+extern int NuLgtSeed;
 
 
 void NuLightClose(void) {
 }
 
 
+void *NuLightGetLight(int index) {
+    return &D_006AD100[index * 0x90];
+}
+
+
+void NuLightFog(float near, float far, int colour, int blur, int haze_colour) {
+    NuRndrFogNear = near;
+    NuRndrFogFar = far;
+    NuRndrFogCol = colour;
+    NuRndrFogBlur = blur << 24;
+    HazeColour = haze_colour;
+}
+
+
 void NuLightFogClear(int clear) {
     NuRndrFogClear = clear;
+}
+
+
+void NuLgtSetArcMat(void *material, float u0, float v0, float u1, float v1) {
+    NuLgtArcMtl = material;
+    NuLgtArcU0 = u0;
+    NuLgtArcV0 = v0;
+    NuLgtArcU1 = u1;
+    NuLgtArcV1 = v1;
+}
+
+
+int NuLgtRand(void) {
+    int seed = (NuLgtSeed * 0x24CD + 1) & 0xFFFF;
+
+    NuLgtSeed = seed;
+    return seed;
 }

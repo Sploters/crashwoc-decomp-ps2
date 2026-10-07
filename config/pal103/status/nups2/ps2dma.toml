@@ -133,7 +133,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016d4b0:vtBeginDirect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016d4d0:vtCloseDirect"

@@ -117,7 +117,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016a6a8:tbslotReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a6e8:tbslotLastValue"
@@ -145,7 +145,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a8f8:NuPs2GetRenderHeight"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a908:NuPs2VideoSetPos"
@@ -237,15 +237,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b270:NuPs2GetRenderRange"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b280:NuPs2GetRenderXCentre"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b290:NuPs2GetRenderYCentre"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b2a0:timeUserReset"

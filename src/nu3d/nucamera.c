@@ -124,6 +124,11 @@ void NuCameraSetAxes(NuVec3 *axes) {
 }
 
 
+void NuCameraGetAxes(NuVec3 *axes) {
+    *axes = camera_axes;
+}
+
+
 NuCamera *NuCameraGetCam(void) {
     return &global_camera;
 }
@@ -171,6 +176,11 @@ NuMtx *NuCameraGetVPCMtx(void) {
 
 float NuCameraDistSqr(NuVec3 *pos) {
     return NuVecDistSqr(pos, &camera_trans, 0);
+}
+
+
+void NuCameraGetTrans(NuVec3 *trans) {
+    *trans = camera_trans;
 }
 
 

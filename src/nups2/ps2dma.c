@@ -64,6 +64,7 @@ extern DmaTag D_002EA550;
 extern DmaTag D_002EA570;
 extern u32 *D_0062F0E0;
 extern DmaTag *vpdmatag_curr;
+extern u32 *D_00633200;
 
 #define dmatag_cnt      D_002EA550
 #define dmatag_end      D_002EA570
@@ -119,6 +120,14 @@ int SPR_DmaGetReadStatus(void)
 int GS_DmaGetWriteStatus(void)
 {
     return (GIF_CHCR >> 8) & 1;
+}
+
+
+u32 *vtBeginDirect(u32 *packet, u32 irq)
+{
+    D_00633200 = packet;
+    *packet = (irq << 31) | 0x50000000;
+    return packet + 1;
 }
 
 
