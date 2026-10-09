@@ -177,7 +177,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:0014bf98:NuExtSpecialDelete"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014bfb0:NuGSceneSetCrossFade"
@@ -197,7 +197,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:0014c130:NuSpecialGetPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c160:NuSpecialGetMtx"
