@@ -65,20 +65,20 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0067:0016fcf0:IntersectZN"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0067:0016fd28:IntersectLeft"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0067:0016fd58:IntersectRight"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0067:0016fd80:IntersectTop"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0067:0016fdb0:IntersectBottom"
-state = "asm"
+state = "matching"

@@ -142,6 +142,32 @@ void tbslotReset(TbSet *set, int slot)
 }
 
 
+int tbslotLastValue(TbSet *set, int slot)
+{
+    set = set != 0 ? set : D_0062F034;
+    slot &= 0xF;
+    return set->values[slot][set->current[slot]];
+}
+
+
+void tbslotBeginFn(TbSet *set, int slot)
+{
+    set = set != 0 ? set : D_0062F034;
+    slot &= 0xF;
+    set->begin[slot] = EE_T1_COUNT;
+    set->extra[slot] = 0;
+}
+
+
+void tbslotBeginExFn(TbSet *set, int slot, int extra)
+{
+    set = set != 0 ? set : D_0062F034;
+    slot &= 0xF;
+    set->begin[slot] = EE_T1_COUNT;
+    set->extra[slot] = extra;
+}
+
+
 void NuPs2GetCurrentBackBuffer(u64 *buf)
 {
     if (NuPs2FrameCount & 1) {

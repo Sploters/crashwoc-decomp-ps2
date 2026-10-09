@@ -61,13 +61,17 @@ typedef struct DmaTag {
 #define SCRATCHPAD_BASE 0x70000000
 
 extern DmaTag D_002EA550;
+extern DmaTag D_002EA560;
 extern DmaTag D_002EA570;
+extern DmaTag D_002EA580;
 extern u32 *D_0062F0E0;
 extern DmaTag *vpdmatag_curr;
 extern u32 *D_00633200;
 
 #define dmatag_cnt      D_002EA550
+#define dmatag_ref      D_002EA560
 #define dmatag_end      D_002EA570
+#define dmatag_end_ex   D_002EA580
 #define nuscratch_ptr   D_0062F0E0
 
 
@@ -77,9 +81,34 @@ void NuScratchReset(void)
 }
 
 
+u32 *NuScratchAlloc32(u32 size)
+{
+    u32 *previous = nuscratch_ptr;
+    u32 *block = (u32 *)(((u32)previous + 3) & ~3U);
+
+    size = (size + 3) & ~3U;
+    nuscratch_ptr = (u32 *)((u32)block + size);
+    *nuscratch_ptr = (u32)previous;
+    nuscratch_ptr++;
+    return block;
+}
+
+
 void NuScratchRelease(void)
 {
     nuscratch_ptr = (u32 *)nuscratch_ptr[-1];
+}
+
+
+DmaTag *vpDmaTag_Set(DmaTag *tag, u32 qwc, u32 id, u32 addr)
+{
+    tag->qwc = qwc;
+    tag->id = id << 4;
+    tag->addr = addr;
+    tag->pad = 0;
+    tag->vifcode[0] = 0;
+    tag->vifcode[1] = 0;
+    return tag + 1;
 }
 
 
@@ -95,6 +124,25 @@ DmaTag *vpDmaTag_End(DmaTag *tag)
 {
     vpdmatag_curr = tag;
     *tag = dmatag_end;
+    return tag + 1;
+}
+
+
+DmaTag *vpDmaTag_EndEx(DmaTag *tag, u32 vifcode0, u32 vifcode1)
+{
+    vpdmatag_curr = tag;
+    dmatag_end_ex.vifcode[0] = vifcode0;
+    dmatag_end_ex.vifcode[1] = vifcode1;
+    *tag = dmatag_end_ex;
+    return tag + 1;
+}
+
+
+DmaTag *vpDmaTag_Ref(DmaTag *tag, u32 addr)
+{
+    vpdmatag_curr = tag;
+    dmatag_ref.addr = addr;
+    *tag = dmatag_ref;
     return tag + 1;
 }
 
@@ -128,6 +176,15 @@ u32 *vtBeginDirect(u32 *packet, u32 irq)
     D_00633200 = packet;
     *packet = (irq << 31) | 0x50000000;
     return packet + 1;
+}
+
+
+u32 *vtCloseDirect(u32 *packet)
+{
+    u32 *direct = D_00633200;
+
+    *direct |= (((u32)(packet - 1) - (u32)direct) >> 4) & 0xFFFF;
+    return packet;
 }
 
 

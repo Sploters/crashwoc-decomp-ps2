@@ -66,6 +66,34 @@ class TestHazardNop(unittest.TestCase):
         got = _insns(["\tmtc1\t$1,$f0", "\tadd.s\t$f4,$f1,$f12"])
         self.assertEqual(got, ["mtc1\t$1,$f0", "add.s\t$f4,$f1,$f12"])
 
+    def test_inline_lis_hazard_padding_precedes_join_label(self):
+        # Incoming branches must skip the nop needed by the fall-through load.
+        got = _insns(["\tli.s\t$f0,1.0", "$Ljoin:",
+                      "\tc.lt.s\t$f0,$f15"])
+        self.assertEqual(got, ["li.s\t$f0,1.0", "nop", "$Ljoin:",
+                               "c.lt.s\t$f0,$f15"])
+
+    def test_literal_mtc1_hazard_crosses_comments_and_multiple_labels(self):
+        got = _insns(["\tmtc1\t$0,$f0", "\t#nop", "$Lfirst:",
+                      "", "$Ljoin:", "\tc.lt.s\t$f13,$f0"])
+        self.assertEqual(got, ["mtc1\t$0,$f0", "nop", "$Lfirst:",
+                               "$Ljoin:", "c.lt.s\t$f13,$f0"])
+
+    def test_explicit_padding_before_join_label_is_not_duplicated(self):
+        seg = ["\tli.s\t$f0,1.0", "\tnop", "$Ljoin:",
+               "\tc.lt.s\t$f0,$f15"]
+        self.assertEqual(_insns(seg), [l.strip() for l in seg])
+        self.assertEqual(_sonyize_seg(_sonyize_seg(seg)), _sonyize_seg(seg))
+
+    def test_instruction_after_join_label_separates_the_hazard(self):
+        seg = ["\tli.s\t$f0,1.0", "$Ljoin:", "\tlw\t$2,0($4)",
+               "\tc.lt.s\t$f0,$f15"]
+        self.assertEqual(_insns(seg), [l.strip() for l in seg])
+
+    def test_non_compare_after_join_label_is_not_claimed(self):
+        seg = ["\tli.s\t$f0,1.0", "$Ljoin:", "\tadd.s\t$f4,$f0,$f12"]
+        self.assertEqual(_insns(seg), [l.strip() for l in seg])
+
     def test_compare_after_unrelated_instruction_is_untouched(self):
         got = _insns(["\tlw\t$2,0($4)", "\tc.le.s\t$f1,$f12"])
         self.assertEqual(got, ["lw\t$2,0($4)", "c.le.s\t$f1,$f12"])

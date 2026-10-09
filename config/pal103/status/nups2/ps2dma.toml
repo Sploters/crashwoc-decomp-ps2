@@ -41,7 +41,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016cdb0:NuScratchAlloc32"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016cde8:NuScratchAlloc64"
@@ -57,7 +57,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016ce88:vpDmaTag_Set"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016ceb0:vpDmaTag_Cnt"
@@ -69,11 +69,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016cef0:vpDmaTag_EndEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016cf18:vpDmaTag_Ref"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0062:0016cf40:VU0_DmaWrite"

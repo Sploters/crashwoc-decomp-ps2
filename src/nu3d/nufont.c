@@ -21,3 +21,14 @@
  *   0x00131f60 NuFntSetPen
  *   0x00131f98 NuFntPrintLenV
  */
+
+extern int D_0062ED3C;
+extern int D_0062ED40;
+#define font_x D_0062ED3C
+#define font_y D_0062ED40
+
+void NuFntMoveRel(int x, int y)
+{
+    font_x += x;
+    font_y += y;
+}

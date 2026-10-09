@@ -121,15 +121,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a6e8:tbslotLastValue"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a718:tbslotBeginFn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a748:tbslotBeginExFn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a778:tbslotEndFn"

@@ -53,7 +53,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0036:00116f20:NuNodeNumChildren"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00116f28:NuNodeFindByName"
@@ -137,7 +137,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0036:00117b18:NuNodeKeepNames"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117b20:resolveReferenceNodes"
@@ -149,7 +149,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0036:00117ca8:NuMeshNodeSetGeometry"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117cb0:resolveSkinNodes"

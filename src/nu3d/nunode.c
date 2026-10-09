@@ -40,3 +40,32 @@
  *   0x00117cb0 resolveSkinNodes
  *   0x00117de8 NuNodeResolveSkinNodes
  */
+
+/* Partial layouts: only the fields accessed by these helpers are known. */
+struct nunode_s {
+    char pad_00[0x0C];
+    int num_children;              /* 0x0C */
+};
+
+struct numeshnode_s {
+    char pad_00[0x20];
+    void *geometry;                /* 0x20 */
+};
+
+extern int D_0062EB8C;
+#define keep_names D_0062EB8C
+
+int NuNodeNumChildren(struct nunode_s *node)
+{
+    return node->num_children;
+}
+
+void NuNodeKeepNames(int keep)
+{
+    keep_names = keep;
+}
+
+void NuMeshNodeSetGeometry(struct numeshnode_s *node, void *geometry)
+{
+    node->geometry = geometry;
+}

@@ -18,3 +18,138 @@
  *   0x00115168 NuVpPixelHeight
  *   0x00115190 NuVpGetCurrentViewport
  */
+
+/* Fields accessed by the viewport setters and coordinate helpers. */
+typedef struct NuViewport {
+    int x;
+    int y;
+    int width;
+    int height;
+    float zmin;
+    float zmax;
+    float centre_x;
+    float centre_y;
+    float clip_left;
+    float clip_top;
+    float clip_right;
+    float clip_bottom;
+    unsigned char pad30[0x10];
+} NuViewport;
+
+typedef struct NuViewportMatrix {
+    float elements[16];
+} NuViewportMatrix;
+
+extern NuViewport D_0067D480;
+extern NuViewport D_0067D4C0;
+extern NuViewportMatrix D_0067D500;
+extern int D_00633058;
+#define default_viewport D_0067D480
+#define current_viewport D_0067D4C0
+#define viewport_scaling_matrix D_0067D500
+#define viewport_dirty D_00633058
+
+
+void NuVpRestore(void)
+{
+    current_viewport = default_viewport;
+    viewport_dirty = 1;
+}
+
+
+void NuVpSetPosition(float x, float y)
+{
+    current_viewport.x = (int)x;
+    current_viewport.y = (int)y;
+    viewport_dirty = 1;
+}
+
+
+void NuVpSetSize(float width, float height)
+{
+    viewport_dirty = 1;
+    current_viewport.width = (int)width;
+    current_viewport.height = (int)height;
+}
+
+
+void NuVpSetZRange(float zmin, float zmax)
+{
+    viewport_dirty = 1;
+    current_viewport.zmin = zmin;
+    current_viewport.zmax = zmax;
+}
+
+
+void NuVpSetCentre(float x, float y)
+{
+    viewport_dirty = 1;
+    current_viewport.centre_x = x;
+    current_viewport.centre_y = y;
+}
+
+
+void NuVpSetClipping(float left, float top, float right, float bottom)
+{
+    NuViewport *viewport = &current_viewport;
+
+    if (left < 0.0f) {
+        viewport->clip_left = 0.0f;
+    } else {
+        viewport->clip_left = left;
+    }
+    if (top < 0.0f) {
+        current_viewport.clip_top = 0.0f;
+    } else {
+        current_viewport.clip_top = top;
+    }
+    if (right > 1.0f) {
+        current_viewport.clip_right = 1.0f;
+    } else {
+        current_viewport.clip_right = right;
+    }
+    if (bottom > 1.0f) {
+        current_viewport.clip_bottom = 1.0f;
+    } else {
+        current_viewport.clip_bottom = bottom;
+    }
+    viewport_dirty = 1;
+}
+
+
+void NuVpGetScalingMtx(NuViewportMatrix *matrix)
+{
+    if (matrix) {
+        *matrix = viewport_scaling_matrix;
+    }
+}
+
+
+float NuVpVirtualWidth(float width)
+{
+    return width / (float)current_viewport.width;
+}
+
+
+float NuVpVirtualHeight(float height)
+{
+    return height / (float)current_viewport.height;
+}
+
+
+float NuVpPixelWidth(float width)
+{
+    return width * (float)current_viewport.width + (float)current_viewport.x;
+}
+
+
+float NuVpPixelHeight(float height)
+{
+    return height * (float)current_viewport.height + (float)current_viewport.y;
+}
+
+
+NuViewport *NuVpGetCurrentViewport(void)
+{
+    return &current_viewport;
+}

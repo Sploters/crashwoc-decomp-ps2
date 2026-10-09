@@ -145,7 +145,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:0014baf0:NuGScnSetTmpWkspc"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014bb00:NuGScnSetCfg"

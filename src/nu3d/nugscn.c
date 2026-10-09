@@ -60,3 +60,14 @@
  *   0x0014c6d8 CvtNuIFFNodeHierarchy
  *   0x0014c768 FindSplinePtSize
  */
+
+extern void *D_006330B0;
+extern int D_006330B8;
+#define temp_workspace D_006330B0
+#define temp_workspace_size D_006330B8
+
+void NuGScnSetTmpWkspc(void *workspace, int size)
+{
+    temp_workspace = workspace;
+    temp_workspace_size = size;
+}
