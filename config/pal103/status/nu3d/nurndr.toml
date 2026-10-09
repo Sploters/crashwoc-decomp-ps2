@@ -45,7 +45,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0040:00120a78:NuRndrFxSprite2Set"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:00120e60:NuRndrFxCode"

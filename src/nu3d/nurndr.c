@@ -168,7 +168,184 @@ extern int NuSplineFindAllSub(void *spline, void *buf, int *masks, int maxcount)
 
 extern unsigned int D_00689A80[];
 extern u32 *vpDmaTag_RetEx(void *buf, u32 a1, u32 a2);
-extern void vpDmaTag_Close(void *p);
+extern u32 *vpDmaTag_Close(void *p);
+
+/* Only the packet cursor at offset 4 is used by the 2D packet writers. */
+struct RndrPacketStream {
+    void *unknown_00;
+    u32 *cur;
+};
+
+extern struct RndrPacketStream *rndrstream_2d;
+extern u32 *rndrstream_free;
+extern struct numtl_s *numtl_defaultmtl2d;
+extern int PS2_REZ_W;
+extern int PS2_REZ_H;
+extern int PS2_VCNTR_X;
+extern int PS2_VCNTR_Y;
+
+extern void NuRndrStreamLink(struct RndrPacketStream *stream);
+extern void NuRndrStreamSetMisc(struct RndrPacketStream *stream);
+extern void NuRndrStreamAddMtl(struct RndrPacketStream *stream, struct numtl_s *mtl);
+extern u32 *vpDmaTag_CntEx(u32 *packet, u32 vif0, u32 vif1);
+extern u32 *vpDmaTag_Next(u32 *packet, u32 address);
+extern u32 *vtBeginDirect(u32 *packet, u32 irq);
+extern u32 *vtCloseDirect(u32 *packet);
+extern u32 *gsBeginGifPacket(u32 *packet, int nloop, int eop, int pre,
+                             int prim, int flg, int nreg, ...);
+extern u32 *gsCloseGifPacket(u32 *packet);
+
+/* Eight entries per channel; names of the sprite parameters remain unknown. */
+struct FxSprite2 {
+    float parameter_00;
+    int parameter_04;
+    int count;
+    float parameter_0c;
+    float parameter_10;
+    float parameter_14;
+    float parameter_18;
+    int parameter_1c[8];
+    int colour[8];
+    float channel[24][8];
+};
+
+extern u32 *NuRndrStreamAlloc(int count);
+
+u32 *NuRndrFxSprite2Set(u32 code, struct FxSprite2 *fx) {
+    /* The target reserves two quadwords for its GIF tag scratch. */
+    u32 tag[8];
+    u32 *base;
+    u32 *packet;
+    int i;
+
+    base = NuRndrStreamAlloc(fx->count * 8 + 8);
+    packet = vpDmaTag_RetEx(base, 0x13000000,
+        ((fx->count * 8 + 4) << 16) | 0x6c008000);
+    *(unsigned long long *)tag = 0x1003400000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 1;
+    *packet++ = 0;
+    *(unsigned long long *)tag = 0x4403400000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 0x5252;
+    *packet++ = 0;
+    *packet++ = (u32)fx->parameter_00;
+    *packet++ = 0;
+    *packet++ = fx->parameter_04;
+    *packet++ = fx->count;
+    *(float *)packet++ = fx->parameter_14;
+    *(float *)packet++ = fx->parameter_18;
+    *(float *)packet++ = fx->parameter_0c;
+    *(float *)packet++ = fx->parameter_10;
+
+    for (i = 0; i < fx->count; i++) {
+        *packet++ = 0;
+        *packet++ = 0;
+        *packet++ = 0;
+        *packet++ = fx->parameter_1c[i];
+        *packet++ = fx->colour[i];
+        *packet++ = fx->colour[i] >> 8;
+        *packet++ = (short)(fx->colour[i] >> 16);
+        *packet++ = (signed char)(fx->colour[i] >> 24);
+        *(float *)packet++ = fx->channel[2][i];
+        *(float *)packet++ = fx->channel[3][i];
+        *(float *)packet++ = fx->channel[0][i];
+        *(float *)packet++ = fx->channel[1][i];
+        *(float *)packet++ = fx->channel[6][i];
+        *(float *)packet++ = fx->channel[7][i];
+        *(float *)packet++ = fx->channel[4][i];
+        *(float *)packet++ = fx->channel[5][i];
+        *(float *)packet++ = fx->channel[10][i];
+        *(float *)packet++ = fx->channel[11][i];
+        *(float *)packet++ = fx->channel[8][i];
+        *(float *)packet++ = fx->channel[9][i];
+        *(float *)packet++ = fx->channel[14][i];
+        *(float *)packet++ = fx->channel[15][i];
+        *(float *)packet++ = fx->channel[12][i];
+        *(float *)packet++ = fx->channel[13][i];
+        *(float *)packet++ = fx->channel[18][i];
+        *(float *)packet++ = fx->channel[19][i];
+        *(float *)packet++ = fx->channel[16][i];
+        *(float *)packet++ = fx->channel[17][i];
+        *(float *)packet++ = fx->channel[22][i];
+        *(float *)packet++ = fx->channel[23][i];
+        *(float *)packet++ = fx->channel[20][i];
+        *(float *)packet++ = fx->channel[21][i];
+    }
+
+    *packet++ = code | 0x14000000;
+    *packet++ = 0x13000000;
+    *packet++ = 0;
+    *packet++ = 0;
+    vpDmaTag_Close(packet);
+    return base;
+}
+
+
+void NuRndrGradRect2di(int x, int y, int width, int height,
+                      unsigned char *colours, struct numtl_s *mtl) {
+    x += (PS2_VCNTR_X - (PS2_REZ_W >> 1)) << 4;
+    y += (PS2_VCNTR_Y - (PS2_REZ_H >> 1)) << 4;
+    if (!mtl) {
+        mtl = numtl_defaultmtl2d;
+    }
+
+    NuRndrStreamLink(rndrstream_2d);
+    NuRndrStreamSetMisc(rndrstream_2d);
+    NuRndrStreamAddMtl(rndrstream_2d, mtl);
+    rndrstream_2d->cur = vpDmaTag_CntEx(rndrstream_2d->cur,
+                                      0x10000000, 0x50000000) - 1;
+    rndrstream_2d->cur = vtBeginDirect(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur = gsBeginGifPacket(rndrstream_2d->cur,
+        0, 1, 1, 4, 0, 9, 1, 2, 5, 1, 5, 1, 5, 1, 5);
+
+    *rndrstream_2d->cur++ = colours[0];
+    *rndrstream_2d->cur++ = colours[1];
+    *rndrstream_2d->cur++ = colours[2];
+    *rndrstream_2d->cur++ = colours[3];
+    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur++ = 0;
+    *(float *)rndrstream_2d->cur++ = 1.0f;
+    rndrstream_2d->cur++;
+    *rndrstream_2d->cur++ = x;
+    *rndrstream_2d->cur++ = y;
+    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur++ = 0;
+
+    *rndrstream_2d->cur++ = colours[4];
+    *rndrstream_2d->cur++ = colours[5];
+    *rndrstream_2d->cur++ = colours[6];
+    *rndrstream_2d->cur++ = colours[7];
+    *rndrstream_2d->cur++ = x + width;
+    *rndrstream_2d->cur++ = y;
+    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur++ = 0;
+
+    *rndrstream_2d->cur++ = colours[8];
+    *rndrstream_2d->cur++ = colours[9];
+    *rndrstream_2d->cur++ = colours[10];
+    *rndrstream_2d->cur++ = colours[11];
+    *rndrstream_2d->cur++ = x;
+    *rndrstream_2d->cur++ = y + height;
+    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur++ = 0;
+
+    *rndrstream_2d->cur++ = colours[12];
+    *rndrstream_2d->cur++ = colours[13];
+    *rndrstream_2d->cur++ = colours[14];
+    *rndrstream_2d->cur++ = colours[15];
+    *rndrstream_2d->cur++ = x + width;
+    *rndrstream_2d->cur++ = y + height;
+    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur++ = 0;
+
+    rndrstream_2d->cur = gsCloseGifPacket(rndrstream_2d->cur);
+    rndrstream_2d->cur = vtCloseDirect(rndrstream_2d->cur);
+    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+}
 
 
 int NuHGobjRndrMtx(void *hobj, void *mtx, int a2, int a3, void *dwa) {
