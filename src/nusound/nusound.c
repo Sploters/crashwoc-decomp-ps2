@@ -71,7 +71,22 @@ typedef struct nuvec_s {
     float z;
 } nuvec_s;
 
-typedef struct sceSifClientData sceSifClientData;
+typedef struct sceSifRpcData {
+    void *paddr;
+    unsigned int pid;
+    int tid;
+    unsigned int mode;
+} sceSifRpcData;
+
+typedef struct sceSifClientData {
+    sceSifRpcData rpcd;
+    unsigned int command;
+    void *buff;
+    void *cbuff;
+    void *end_func;
+    void *end_param;
+    void *serve;
+} sceSifClientData;
 
 typedef struct NuSoundLoopInfo {
     int id;
@@ -85,6 +100,10 @@ typedef struct NuSoundLoopInfo {
 extern int strlen(const char *s);
 extern int printf(const char *fmt, ...);
 extern void NuFileGetCurrentPath(char *path);
+extern void *memcpy();
+extern void sceSifInitRpc(unsigned int mode);
+extern int sceSifBindRpc(sceSifClientData *client, unsigned int request,
+                         unsigned int mode);
 extern int sceSifCallRpc(sceSifClientData *client, unsigned int function,
                          unsigned int mode, void *send, int send_size,
                          void *receive, int receive_size, void *end_func,
@@ -98,6 +117,7 @@ extern short senddata[];
 extern int sbuff2[];
 extern int IOP_Cnt;
 extern int nusound_irx_loaded;
+extern char D_0061AA20[];
 extern char D_0061AA78[];
 extern sceSifClientData D_006B4100;
 extern volatile unsigned char SOUND_SPUKeyStatus[];
@@ -105,27 +125,35 @@ extern NuSoundLoopInfo NuSndLoopInfo[];
 extern nuvec_s *NuSoundListenPos;
 extern int NuSndSteroPitch;
 
+#define bind_error_message D_0061AA20
 #define iop_buffer_full_message D_0061AA78
 #define sound_rpc_client D_006B4100
+
+#define SOUND_RPC_ID 0x12345
+
+#define QUEUE_IOP_COMMAND(command, count)                                   \
+    {                                                                       \
+        short iop_command = (command);                                      \
+        short iop_count = (count);                                          \
+        int i;                                                              \
+                                                                            \
+        if (IOP_Cnt + iop_count + 3 >= 0x400) {                             \
+            printf(iop_buffer_full_message);                                \
+            return;                                                         \
+        }                                                                   \
+        senddata[IOP_Cnt + 1] = iop_command;                                \
+        senddata[IOP_Cnt + 2] = iop_count;                                  \
+        for (i = 0; i < iop_count; i++) {                                   \
+            senddata[IOP_Cnt + 3 + i] = IOPCommandData[i];                  \
+        }                                                                   \
+        IOP_Cnt += iop_count + 2;                                           \
+        senddata[0]++;                                                      \
+    }
 
 
 void SOUND_CancelCheckStereo(void)
 {
-    short command = 0x12;
-    short count = 0;
-    int i;
-
-    if (IOP_Cnt + count + 3 >= 0x400) {
-        printf(iop_buffer_full_message);
-        return;
-    }
-    senddata[IOP_Cnt + 1] = command;
-    senddata[IOP_Cnt + 2] = count;
-    for (i = 0; i < count; i++) {
-        senddata[IOP_Cnt + 3 + i] = IOPCommandData[i];
-    }
-    IOP_Cnt += count + 2;
-    senddata[0]++;
+    QUEUE_IOP_COMMAND(0x12, 0);
 }
 
 
@@ -213,6 +241,85 @@ int SOUND_SIFTransfer(int function, void *data, int mode)
 }
 
 
+int SOUND_InitIOP(void)
+{
+    int delay;
+
+    sceSifInitRpc(0);
+    while (1) {
+        if (sceSifBindRpc(&sound_rpc_client, SOUND_RPC_ID, 0) < 0) {
+            printf(bind_error_message);
+            while (1) {
+            }
+        }
+        delay = 10000;
+        while (delay--) {
+        }
+        if (sound_rpc_client.serve != 0) {
+            break;
+        }
+    }
+    return 1;
+}
+
+
+void SetIOPCommand(short command, short count)
+{
+    QUEUE_IOP_COMMAND(command, count);
+}
+
+
+void SetIOPCommandEx(short command, short size, void *data)
+{
+    if (IOP_Cnt + size + 3 >= 0x400) {
+        printf(iop_buffer_full_message);
+        return;
+    }
+    senddata[IOP_Cnt + 1] = command;
+    senddata[IOP_Cnt + 2] = (size + 1) / 2;
+    memcpy(&senddata[IOP_Cnt + 3], data, size);
+    IOP_Cnt += (size + 1) / 2 + 2;
+    senddata[0]++;
+}
+
+
+void SOUND_AllChannelEffectsOff(int core)
+{
+    IOPCommandData[0] = core;
+    QUEUE_IOP_COMMAND(0x17, 1);
+}
+
+
+void SOUND_AllChannelEffectsOn(int core)
+{
+    IOPCommandData[0] = core;
+    QUEUE_IOP_COMMAND(0x16, 1);
+}
+
+
+void SOUND_SetChannelEffectOff(int channel)
+{
+    IOPCommandData[0] = channel;
+    QUEUE_IOP_COMMAND(0x19, 1);
+}
+
+
+void SOUND_SetChannelEffectOn(int channel)
+{
+    IOPCommandData[0] = channel;
+    QUEUE_IOP_COMMAND(0x18, 1);
+}
+
+
+void SOUND_SetEffectMasterVolume(int core, int left, int right)
+{
+    IOPCommandData[0] = core;
+    IOPCommandData[1] = left;
+    IOPCommandData[2] = right;
+    QUEUE_IOP_COMMAND(0x15, 3);
+}
+
+
 int SOUND_FindFreeSPUChannel(unsigned int first, unsigned int last)
 {
     unsigned int channel;
@@ -253,11 +360,55 @@ void SOUND_AllocateStreamBuffer(int stream, unsigned int address,
 }
 
 
+int SOUND_PlaySFX(int sample, unsigned int channel, int left, int right,
+                  int pitch, int flags, int priority)
+{
+    if (channel >= 0x30) {
+        return -1;
+    }
+    IOPCommandData[0] = sample;
+    IOPCommandData[1] = channel;
+    left &= 0x7FFF;
+    right &= 0x7FFF;
+    IOPCommandData[2] = left;
+    IOPCommandData[3] = right;
+    IOPCommandData[4] = pitch;
+    IOPCommandData[5] = flags + (priority << 8);
+    SetIOPCommand(0, 6);
+    return 0;
+}
+
+
 void SOUND_TransferSFX(int sample, int channel)
 {
     IOPCommandData[0] = sample;
     IOPCommandData[1] = channel;
     SetIOPCommand(6, 2);
+}
+
+
+int SOUND_SetChannelVolume(unsigned int channel, int left, int right)
+{
+    if (channel >= 0x30) {
+        return -1;
+    }
+    IOPCommandData[0] = channel;
+    IOPCommandData[1] = left;
+    IOPCommandData[2] = right;
+    SetIOPCommand(2, 3);
+    return 0;
+}
+
+
+int SOUND_SetChannelPitch(unsigned int channel, int pitch)
+{
+    if (channel >= 0x30) {
+        return -1;
+    }
+    IOPCommandData[0] = channel;
+    IOPCommandData[1] = pitch;
+    SetIOPCommand(3, 2);
+    return 0;
 }
 
 
@@ -299,6 +450,18 @@ void SOUND_SetMaxStreamLimit(int limit)
 {
     IOPCommandData[0] = limit;
     SetIOPCommand(0x10, 1);
+}
+
+
+int SOUND_SetChannelPitchStereo(unsigned int channel, int pitch)
+{
+    if (channel >= 0x2F) {
+        return -1;
+    }
+    IOPCommandData[0] = channel;
+    IOPCommandData[1] = pitch;
+    SetIOPCommand(0x20, 2);
+    return 0;
 }
 
 
