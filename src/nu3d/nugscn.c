@@ -61,17 +61,6 @@
  *   0x0014c768 FindSplinePtSize
  */
 
-extern void *D_006330B0;
-extern int D_006330B8;
-#define temp_workspace D_006330B0
-#define temp_workspace_size D_006330B8
-
-void NuGScnSetTmpWkspc(void *workspace, int size)
-{
-    temp_workspace = workspace;
-    temp_workspace_size = size;
-}
-
 struct numtx_s {
     float _00, _01, _02, _03;
     float _10, _11, _12, _13;
@@ -85,26 +74,242 @@ struct nuvec_s {
     float z;
 };
 
+struct nufaceon_s {
+    struct nuvec_s point;           /* 0x00 */
+    float width;                    /* 0x0C */
+    float height;                   /* 0x10 */
+    int colour;                     /* 0x14 */
+}; /* 0x18 */
+
+struct nufaceongeom_s {
+    char pad00[0x10];
+    struct nufaceon_s *faceons;     /* 0x10 */
+    int nfaceons;                   /* 0x14 */
+};
+
 struct nuinstance_s {
     struct numtx_s matrix;          /* 0x00 */
-};
+    int objid;                      /* 0x40 */
+    char pad44[0x0C];
+}; /* 0x50 */
 
 struct nuspecial_s {
     struct numtx_s mtx;             /* 0x00 */
     struct nuinstance_s *instance;  /* 0x40 */
     char *name;                     /* 0x44 */
     int flags;                      /* 0x48: bit 0 = ext (own matrix) */
-};
+    int pad;                        /* 0x4C */
+}; /* 0x50 */
+
+struct nugscn_s {
+    char pad00[0x10];
+    int numgobj;                    /* 0x10 */
+    struct nugobj_s **gobjs;        /* 0x14 */
+    int numinstance;                /* 0x18 */
+    struct nuinstance_s *instances; /* 0x1C */
+    int numspecial;                 /* 0x20 */
+    struct nuspecial_s *specials;   /* 0x24 */
+    char pad28[0x10];
+    int numexspecials;              /* 0x38 */
+    struct nuspecial_s *exspecials; /* 0x3C */
+    int exallocix;                  /* 0x40 */
+    char pad44[0x10];
+    short crossfade;                /* 0x54 */
+    short crossfaderate;            /* 0x56 */
+    int crossfadegobj;              /* 0x58 */
+    int crossfadefirst;             /* 0x5C */
+    char pad60[0x0C];
+}; /* 0x6C */
 
 struct nuhspecial_s {
-    void *scene;                    /* 0x00 */
+    struct nugscn_s *scene;         /* 0x00 */
     struct nuspecial_s *special;    /* 0x04 */
 };
+
+struct nutexanimenv_s {
+    void *prog;                     /* 0x00 */
+};
+
+struct nutexanim_s {
+    char pad00[0x14];
+    struct nutexanimenv_s *env;     /* 0x14 */
+    char *ntaname;                  /* 0x18 */
+    char *scriptname;               /* 0x1C */
+}; /* 0x20 */
+
+struct nusplinecfg_s {
+    char *name;                     /* 0x00 */
+    int ptsize;                     /* 0x04 */
+};
+
+extern void *memset(void *s, int c, unsigned int n);
+extern char *strstr(const char *haystack, const char *needle);
+extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
+extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
+extern void *NuTexAnimProgFind(char *name);
+extern void NuTexAnimEnvReset(struct nutexanimenv_s *env);
+
+extern struct nuvec_s nugscn_gobj_min;
+extern struct nuvec_s nugscn_gobj_max;
+
+extern void *D_006330B0;
+extern int D_006330B8;
+extern struct nusplinecfg_s *D_0062EE58;
+#define temp_workspace D_006330B0
+#define temp_workspace_size D_006330B8
+#define spline_cfg D_0062EE58
+
+#define ALIGN16(p) ((char *)(((unsigned int)(p) + 0xF) & 0xFFFFFFF0))
+
+
+void CalcDimsAddFaceOn(struct nufaceongeom_s *geom)
+{
+    struct nufaceon_s *faceon;
+    float size;
+    int i;
+
+    for (i = 0; i < geom->nfaceons; i++) {
+        faceon = &geom->faceons[i];
+        size = faceon->width;
+        if (size < faceon->height) {
+            size = faceon->height;
+        }
+        if (faceon->point.x - size < nugscn_gobj_min.x) {
+            nugscn_gobj_min.x = faceon->point.x - size;
+        }
+        if (faceon->point.y - size < nugscn_gobj_min.y) {
+            nugscn_gobj_min.y = faceon->point.y - size;
+        }
+        if (faceon->point.z - size < nugscn_gobj_min.z) {
+            nugscn_gobj_min.z = faceon->point.z - size;
+        }
+        if (faceon->point.x + size > nugscn_gobj_max.x) {
+            nugscn_gobj_max.x = faceon->point.x + size;
+        }
+        if (faceon->point.y + size > nugscn_gobj_max.y) {
+            nugscn_gobj_max.y = faceon->point.y + size;
+        }
+        if (faceon->point.z + size > nugscn_gobj_max.z) {
+            nugscn_gobj_max.z = faceon->point.z + size;
+        }
+    }
+}
+
+
+struct nugscn_s *NuGScnDuplicate(struct nugscn_s *scene, char **buffer)
+{
+    struct nugscn_s *dup;
+    int i;
+
+    dup = (struct nugscn_s *)ALIGN16(*buffer);
+    *buffer = (char *)&dup[1];
+    *dup = *scene;
+
+    *buffer = ALIGN16(*buffer);
+    dup->instances = (struct nuinstance_s *)*buffer;
+    *buffer += dup->numinstance * sizeof(struct nuinstance_s);
+    for (i = 0; i < dup->numinstance; i++) {
+        dup->instances[i] = scene->instances[i];
+    }
+
+    *buffer = ALIGN16(*buffer);
+    dup->specials = (struct nuspecial_s *)*buffer;
+    *buffer += dup->numspecial * sizeof(struct nuspecial_s);
+    for (i = 0; i < dup->numspecial; i++) {
+        dup->specials[i] = scene->specials[i];
+        dup->specials[i].instance = &dup->instances[scene->specials[i].instance - scene->instances];
+    }
+    return dup;
+}
+
+
+void NuGScnSetTmpWkspc(void *workspace, int size)
+{
+    temp_workspace = workspace;
+    temp_workspace_size = size;
+}
+
+
+void NuGScnSetCfg(struct nusplinecfg_s *cfg)
+{
+    spline_cfg = cfg;
+}
+
+
+void NuGScnTranslate(struct nugscn_s *scene, struct nuvec_s *offset)
+{
+    struct nuinstance_s *instance;
+    int i;
+
+    i = scene->numinstance;
+    instance = &scene->instances[i];
+    while (i != 0) {
+        i--;
+        instance--;
+        NuMtxTranslate(&instance->matrix, offset);
+    }
+}
+
+
+void NuGScnAddExt(struct nugscn_s *scene, int count, struct nuspecial_s *specials)
+{
+    scene->numexspecials = count;
+    scene->exspecials = specials;
+    scene->exallocix = 0;
+    memset(specials, 0, count * sizeof(struct nuspecial_s));
+}
+
+
+int NuExtSpecialDuplicate(struct nuhspecial_s *dst, struct nuhspecial_s *src)
+{
+    struct nugscn_s *scene;
+    struct nuspecial_s *special;
+    int start;
+
+    scene = src->scene;
+    start = scene->exallocix;
+    do {
+        scene->exallocix++;
+        if (scene->exallocix == scene->numexspecials) {
+            scene->exallocix = 0;
+        }
+        special = &scene->exspecials[scene->exallocix];
+        if ((special->flags & 1) == 0) {
+            dst->scene = scene;
+            dst->special = special;
+            *special = *src->special;
+            special->flags |= 3;
+            return 1;
+        }
+    } while (scene->exallocix != start);
+    return 0;
+}
+
 
 void NuExtSpecialDelete(struct nuhspecial_s *sph)
 {
     sph->special->flags &= ~1;
 }
+
+
+void NuGSceneSetCrossFade(struct nugscn_s *scene, short crossfade, short rate)
+{
+    if (crossfade != scene->crossfade) {
+        scene->crossfade = crossfade;
+        scene->crossfaderate = rate;
+        scene->crossfadefirst = scene->crossfadegobj;
+        scene->crossfadegobj++;
+        if (scene->crossfadegobj >= scene->numgobj) {
+            scene->crossfadegobj = 0;
+        }
+    }
+}
+
+
+void NuGScnMtlUpdate(void)
+{
+}
+
 
 void NuSpecialGetPos(struct nuhspecial_s *sph, struct nuvec_s *pos)
 {
@@ -117,4 +322,56 @@ void NuSpecialGetPos(struct nuhspecial_s *sph, struct nuvec_s *pos)
     pos->x = mtx->_30;
     pos->y = mtx->_31;
     pos->z = mtx->_32;
+}
+
+
+void NuSpecialGetMtx(struct nuhspecial_s *sph, struct numtx_s *mtx)
+{
+    struct numtx_s *src;
+
+    src = &sph->special->mtx;
+    if ((sph->special->flags & 1) == 0) {
+        src = &sph->special->instance->matrix;
+    }
+    *mtx = *src;
+}
+
+
+int NuSpecialDrawAt(struct nuhspecial_s *sph, struct numtx_s *mtx)
+{
+    struct nugscn_s *scene;
+
+    scene = sph->scene;
+    return NuRndrGScnObj(scene->gobjs[sph->special->instance->objid], mtx);
+}
+
+
+void NuSceneReAssignTexAnims(struct nutexanim_s *texanims, int count)
+{
+    int i;
+
+    if (texanims != 0) {
+        for (i = 0; i < count; i++) {
+            texanims->env->prog = NuTexAnimProgFind(texanims->scriptname);
+            NuTexAnimEnvReset(texanims->env);
+            texanims++;
+        }
+    }
+}
+
+
+int FindSplinePtSize(char *name)
+{
+    struct nusplinecfg_s *cfg;
+
+    cfg = spline_cfg;
+    if (cfg != 0) {
+        while (cfg->name != 0) {
+            if (strstr(name, cfg->name) != 0) {
+                return cfg->ptsize;
+            }
+            cfg++;
+        }
+    }
+    return 12;
 }
