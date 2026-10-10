@@ -165,7 +165,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad9d8:NuGCutLocatorIsVisble"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ada90:CalculateLocatorDirection"
@@ -181,11 +181,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001adc90:instNuGCutSceneCalculateCentre"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001add20:instNuCGutCamSysCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001adde0:instNuGCutCamSysStart"
@@ -201,7 +201,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001ae098:NuCGutLocatorSysCreateInst"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae138:instNuGCutLocatorSysEnd"
@@ -213,7 +213,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae1a8:NuGCutRigidSysFixPtrs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae290:NuGCutRigidSysFixUp"
@@ -245,11 +245,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001ae8f0:instNuGCutCharSysEnd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae9e8:NuGCutTriggerSysFixPtrs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aeaa0:NuGCutTriggerSysFixUp"
@@ -257,11 +257,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001aebb0:instNuCGutTriggerSysCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aec50:instNuGCutTriggerSysUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aed38:instNuGCutTriggerSysStart"
@@ -269,7 +269,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aed80:instNuGCutSceneRender"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aee28:StateAnimEvaluate"
@@ -281,8 +281,8 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aef38:instNuGCutLocatorSysUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001af030:instNuGCutCharSysRender"
-state = "asm"
+state = "matching"
