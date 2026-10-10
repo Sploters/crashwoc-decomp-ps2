@@ -89,7 +89,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c41f0:SOUND_StopSound"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4230:NuSoundSetChannelPitch"
@@ -97,7 +97,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c4290:NuSoundGetSteroPitch"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4298:NuSoundStopStream"
@@ -109,15 +109,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c4440:NuSoundListener"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4448:NuSoundKeyStatus"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4470:NuSoundSetGlobalDat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c44b0:NuSoundSetLocalDat"
@@ -173,7 +173,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c4d68:SOUND_FindFreeSPUChannel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4de0:SOUND_SetSPUWriteAddress"
@@ -209,15 +209,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c5050:SOUND_Pause"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5070:SOUND_Resume"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5090:SOUND_InitStreamData"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c50b0:SOUND_InitSPU"
@@ -245,12 +245,12 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c5390:NuSoundInitLoopInfo"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c53d0:NuSoundFindFree"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5428:NuSoundFindLoopInfo"
-state = "asm"
+state = "matching"
