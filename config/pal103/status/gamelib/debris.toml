@@ -61,11 +61,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:00185208:SplashEffect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00185388:SplashBodyEffect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00185510:SetupDebris"
@@ -85,7 +85,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:00186960:DebrisStartOffset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00186a68:AddVariableShotDebrisEffectMtx2"
@@ -121,7 +121,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00188f10:AddFiniteShotDebrisEffect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00188f80:AddVariableShotDebrisEffect"
@@ -133,19 +133,19 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:001891a0:DebReAlloc"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189200:DebrisOrientation"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001892f8:DebrisOrientationMtx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001893b8:DebrisPosOrientationMtx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001894a0:DebrisEmitterOrientation"
@@ -177,7 +177,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001896b8:LookupDebrisEffect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189730:DebrisRegisterCutoffCameraVec"
@@ -189,7 +189,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189768:DebrisFindAllOfType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001897f8:FindDebrisEffectStack"
@@ -213,7 +213,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001899d8:GenDebMomAdjFromPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189a38:GenDebMomAdjFromPosAll"
@@ -253,7 +253,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189e70:DebrisEmitterOrientationMtx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189f30:AddDebrisEffectToStack"

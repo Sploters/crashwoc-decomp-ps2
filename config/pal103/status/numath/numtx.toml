@@ -13,11 +13,11 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0015:00107b00:NuMtxSetRotateXYZ"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00107c18:NuMtxMul"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00107f20:NuMtxMulH"
@@ -25,7 +25,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:001083b8:NuMtxMulR"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00108628:NuMtxInvRSS"
@@ -113,11 +113,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0015:00109cc8:NuMtxPreRotateX"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109d70:NuMtxRotateY"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109e40:NuMtxRotateYR"
@@ -125,11 +125,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0015:00109f48:NuMtxPreRotateY"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109ff0:NuMtxRotateZ"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a0c0:NuMtxRotateZR"
@@ -137,7 +137,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0015:0010a1c8:NuMtxPreRotateZ"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a270:NuMtxTransposeR"
@@ -145,11 +145,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a2e0:NuMtxTranspose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a3c8:NuMtxInv"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a498:NuMtxInvR"
@@ -173,11 +173,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a7d0:NuMtxAddR"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a888:NuMtxSubR"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:0010a940:NuMtxSkewSymmetric"

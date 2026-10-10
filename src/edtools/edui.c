@@ -80,3 +80,241 @@
  *   0x001c1cc0 cbGradChange
  *   0x001c1cc8 TestMenu
  */
+
+typedef signed int s32;
+typedef unsigned int u32;
+typedef unsigned char u8;
+typedef float f32;
+
+#define EDUI_ITEM_SEL      0
+#define EDUI_ITEM_CHECK    2
+#define EDUI_ITEM_TOGGLE   3
+#define EDUI_ITEM_GRADPICK 7
+
+typedef struct eduigradstage_s {
+    u8 unk_0x00[0x10];
+    f32 h;
+    f32 s;
+    f32 v;
+} EDUIGRADSTAGE;
+
+typedef struct eduiitem_s {
+    struct eduiitem_s *next;
+    struct eduiitem_s *prev;
+    u32 type;
+    void *data;
+    u8 on;
+    u8 unk_0x11[0x3];
+    s32 group;
+    u8 unk_0x18[0x24];
+    void (*render)(struct eduiitem_s *item);
+    u8 unk_0x40[0x4];
+    union {
+        struct {
+            f32 hue;
+            f32 brightness;
+            f32 h;
+            f32 s;
+            f32 v;
+        } colour;
+        struct {
+            u8 unk_0x44[0x4];
+            EDUIGRADSTAGE *stage;
+        } grad;
+        struct {
+            u8 unk_0x44[0x18];
+            char *fmt;
+            f32 granularity;
+        } slider;
+    } u;
+} EDUIITEM;
+
+typedef struct eduimenu_s {
+    EDUIITEM *head;
+    EDUIITEM *tail;
+    u8 unk_0x08[0x4];
+    EDUIITEM *cursor;
+    u8 unk_0x10[0x1C];
+    struct eduimenu_s *child;
+    struct eduimenu_s *parent;
+} EDUIMENU;
+
+extern EDUIITEM *edui_last_item;
+extern f32 D_0062F8FC;
+extern f32 D_0062F900;
+extern f32 D_0062F904;
+extern f32 D_0062F908;
+extern void *D_0062F978;
+
+#define gpcfg_clip_h    D_0062F8FC
+#define gpcfg_clip_s    D_0062F900
+#define gpcfg_clip_v    D_0062F904
+#define gpcfg_clip_grey D_0062F908
+#define edui_test_sel   D_0062F978
+
+extern void eduiInitMaterials(void);
+extern EDUIITEM *eduiItemSliderCreate(void *data, void *style, s32 group,
+                                      void *cb, f32 val, f32 min, f32 max,
+                                      char *text);
+void eduicbRenderNumber(EDUIITEM *item);
+
+
+static inline void eduiRGBToHSV(f32 r, f32 g, f32 b, f32 *h, f32 *s, f32 *v) {
+    f32 max;
+    f32 min;
+    f32 delta;
+
+    max = (r > ((g > b) ? g : b)) ? r : ((g > b) ? g : b);
+    min = (r < ((g < b) ? g : b)) ? r : ((g < b) ? g : b);
+    *v = max;
+    *s = (max != 0.0f) ? (max - min) / max : 0.0f;
+    if (*s == 0.0f) {
+        *h = 0.0f;
+        return;
+    }
+    delta = max - min;
+    if (r == max) {
+        *h = (g - b) / delta;
+    } else if (g == max) {
+        *h = 2.0f + (b - r) / delta;
+    } else if (b == max) {
+        *h = 4.0f + (r - g) / delta;
+    }
+    *h *= 60.0f;
+    if (*h < 0.0f) {
+        *h += 360.0f;
+    }
+}
+
+
+void eduiItemColourPickSetHSV(EDUIITEM *item, f32 h, f32 s, f32 v) {
+    item->u.colour.h = h;
+    item->u.colour.s = s;
+    item->u.colour.v = v;
+    item->u.colour.hue = h / 360.0f;
+    item->u.colour.brightness = v;
+}
+
+
+void eduiItemColourPickSetRGB(EDUIITEM *item, f32 r, f32 g, f32 b) {
+    eduiRGBToHSV(r, g, b, &item->u.colour.h, &item->u.colour.s,
+                 &item->u.colour.v);
+    item->u.colour.hue = item->u.colour.h / 360.0f;
+    item->u.colour.brightness = item->u.colour.v;
+}
+
+
+void eduiItemSliderSetGranularity(EDUIITEM *item, f32 granularity) {
+    item->u.slider.granularity = granularity;
+}
+
+
+EDUIITEM *eduiItemNumberCreate(void *data, void *style, s32 group, void *cb,
+                               f32 val, f32 min, f32 max, char *text) {
+    EDUIITEM *item;
+
+    item = eduiItemSliderCreate(data, style, group, cb, val, min, max, text);
+    if (item) {
+        item->render = eduicbRenderNumber;
+    }
+    return item;
+}
+
+
+s32 eduiMenuAttach(EDUIMENU *menu, EDUIMENU *child) {
+    if (!child->parent) {
+        while (menu->child) {
+            menu = menu->child;
+        }
+        child->parent = menu;
+        menu->child = child;
+        return 1;
+    }
+    return 0;
+}
+
+
+EDUIITEM *eduiMenuAddItem(EDUIMENU *menu, EDUIITEM *item) {
+    if (menu->tail) {
+        menu->tail->next = item;
+    } else {
+        menu->head = item;
+    }
+    item->prev = menu->tail;
+    item->next = 0;
+    menu->tail = item;
+    menu->cursor = menu->head;
+    edui_last_item = item;
+    return item;
+}
+
+
+void eduiMenuHighlight(EDUIMENU *menu, EDUIITEM *item) {
+    EDUIITEM *scan;
+
+    if (!item->group) {
+        return;
+    }
+    for (scan = menu->head; scan; scan = scan->next) {
+        if (scan == item) {
+            switch (scan->type) {
+            case EDUI_ITEM_SEL:
+            case EDUI_ITEM_CHECK:
+            default:
+                scan->on = 1;
+                break;
+            case EDUI_ITEM_TOGGLE:
+                scan->on = 1 - scan->on;
+                break;
+            }
+        } else if (scan->group == item->group) {
+            scan->on = 0;
+        }
+    }
+}
+
+
+void eduiInit(void) {
+    eduiInitMaterials();
+}
+
+
+void cbgpcfgCopy(EDUIMENU *menu, EDUIITEM *item) {
+    EDUIITEM *pick;
+    EDUIGRADSTAGE *stage;
+
+    pick = item->data;
+    stage = pick->u.grad.stage;
+    if (stage) {
+        if (item->type == EDUI_ITEM_GRADPICK) {
+            gpcfg_clip_h = stage->h;
+            gpcfg_clip_s = stage->s;
+            gpcfg_clip_v = stage->v;
+        } else {
+            gpcfg_clip_grey = stage->v;
+        }
+    }
+}
+
+
+void cbSel(EDUIMENU *menu, EDUIITEM *item) {
+    edui_test_sel = item->data;
+}
+
+
+void cbSubMenu(EDUIMENU *menu, EDUIITEM *item) {
+    EDUIMENU *submenu;
+
+    submenu = item->data;
+    if (!submenu->parent) {
+        while (menu->child) {
+            menu = menu->child;
+        }
+        submenu->parent = menu;
+        menu->child = submenu;
+    }
+}
+
+
+void cbGradChange(EDUIMENU *menu, EDUIITEM *item) {
+}

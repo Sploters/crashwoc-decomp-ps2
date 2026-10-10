@@ -665,6 +665,33 @@ struct spline_s *GetWeatherBossSpline(void)
     return &D_005B4548;
 }
 
+extern s32 FlyingLevelExtro;
+extern f32 GetBigGunBestTarget(f32 bestdot, struct nuvec_s **pos,
+                               struct nuvec_s **vel, s32 *type);
+extern f32 GetBattleShipBestTarget(f32 bestdot, struct nuvec_s **pos,
+                                   struct nuvec_s **vel, s32 *type);
+extern f32 GetGunBoatBestTarget(f32 bestdot, struct nuvec_s **pos,
+                                struct nuvec_s **vel, s32 *type);
+extern f32 GetZoffaBestTarget(f32 bestdot, struct nuvec_s **pos,
+                              struct nuvec_s **vel, s32 *type);
+
+inline s32 PickGliderTarget(struct nuvec_s **pos, struct nuvec_s **vel, s32 *type)
+{
+    f32 best;
+
+    if (PlayerGlider.enable != 0 || FlyingLevelExtro != 0) {
+        return 0;
+    }
+    if (Level == 0x24) {
+        best = GetBigGunBestTarget(0.0f, pos, vel, type);
+    } else {
+        best = GetBattleShipBestTarget(0.0f, pos, vel, type);
+        best = GetGunBoatBestTarget(best, pos, vel, type);
+        best = GetZoffaBestTarget(best, pos, vel, type);
+    }
+    return best > 0.96f;
+}
+
 void GliderWeatherBossRailStuff(struct creature_s *c)
 {
     if (best_cRPos != 0) {
@@ -712,13 +739,28 @@ extern struct nuvec_s D_005A6DC0;
 
 extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
 
-void DrawPlane(struct plane_s *plane)
+inline void DrawPlane(struct plane_s *plane)
 {
     if (plane->active != 0) {
         NuMtxSetScale(&mTEMP, &plane_scale);
         NuMtxTranslate(&mTEMP, &plane->pos);
         MyDrawModelNew(&plane->draw, &mTEMP, 0);
     }
+}
+
+extern struct plane_s PlayerPlane;
+extern void DrawZoffaUFOs(void);
+extern void DrawAllHovaBlimps(void);
+extern void DrawGliderBullets(void);
+extern void DrawGliderTarget(void);
+
+void DrawFarmLevelExtra(void)
+{
+    DrawZoffaUFOs();
+    DrawPlane(&PlayerPlane);
+    DrawAllHovaBlimps();
+    DrawGliderBullets();
+    DrawGliderTarget();
 }
 
 void DrawBazookaToken(void)
@@ -846,6 +888,21 @@ struct battleship_s {
     char pad_514[0x554 - 0x514];
 };
 extern struct battleship_s BattleShipList[];
+extern s32 CollideWithBattleShip(struct nuvec_s *pos, struct battleship_s *ship,
+                                 f32 radius);
+
+s32 CollideWithBattleShips(struct nuvec_s *pos, f32 radius)
+{
+    s32 i;
+
+    for (i = 0; i < 6; i++) {
+        if (BattleShipList[i].active != 0 &&
+            CollideWithBattleShip(pos, &BattleShipList[i], radius)) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /* BigGunList: stride 0x154, 12 entries. */
 struct biggun_s {
@@ -858,9 +915,10 @@ extern struct biggun_s BigGunList[];
 
 /* SpaceStationList: stride 0xD0, 3 entries. */
 struct spacestation_s {
-    char pad_00[0x40];
+    struct numtx_s mtx;
     s32 field40;               /* 0x40 */
-    char pad_44[0xD0 - 0x44];
+    struct nuvec_s pos;
+    char pad_50[0xD0 - 0x50];
 };
 extern struct spacestation_s SpaceStationList[];
 
@@ -996,7 +1054,17 @@ void FadeOutLastTrail(s32 last, s32 count)
 /* SatelliteList: stride 0x124, 9 entries. */
 struct satellite_s {
     s32 active;                /* 0x00 */
-    char pad_04[0x124 - 0x04];
+    struct MYDRAW draw;
+    struct nuvec_s pos;
+    struct nuvec_s vel;
+    f32 angle;
+    f32 tilt[2];
+    f32 tiltdest[2];
+    char pad_110[0x114 - 0x110];
+    s32 hits;
+    s32 destroyed;
+    struct spacestation_s *station;
+    char pad_120[0x124 - 0x120];
 };
 extern struct satellite_s SatelliteList[];
 
@@ -1027,6 +1095,31 @@ void DrawGliderDebugStuff(void)
     NuFntScale(0x10, 0x10);
 }
 
+struct zoffa_s {
+    struct MYDRAW draw;
+    s32 active;
+    char pad_0E4[0xE8 - 0xE4];
+    struct nuvec_s pos;
+    char pad_0F4[0x10C - 0xF4];
+    f32 pitch;
+    f32 roll;
+    char pad_114[0x120 - 0x114];
+    f32 yaw;
+    char pad_124[0x168 - 0x124];
+    s32 seen;
+    char pad_16C[0x170 - 0x16C];
+    struct numtx_s locators[17];
+};
+
+inline void DrawZoffa(struct zoffa_s *ufo)
+{
+    NuMtxSetRotationZ(&mTEMP, ufo->roll * 182.0444489f);
+    NuMtxRotateX(&mTEMP, -ufo->pitch * 182.0444489f);
+    NuMtxRotateY(&mTEMP, (ufo->yaw + 180.0f) * 182.0444489f);
+    NuMtxTranslate(&mTEMP, &ufo->pos);
+    ufo->seen = MyDrawModelNew(&ufo->draw, &mTEMP, ufo->locators);
+}
+
 struct hovablimp_s *FindFreeHova(void)
 {
     s32 i;
@@ -1034,6 +1127,31 @@ struct hovablimp_s *FindFreeHova(void)
     for (i = 0; i < 6; i++) {
         if (HovaBlimp[i].active == 0) {
             return &HovaBlimp[i];
+        }
+    }
+    return 0;
+}
+
+extern s32 SatelliteCharacterId;
+
+struct satellite_s *InitSatellite(struct spacestation_s *station, f32 angle)
+{
+    struct satellite_s *sat = &SatelliteList[SatelliteCharacterId++];
+
+    if (sat->active == 0) {
+        memset(sat, 0, sizeof(struct satellite_s));
+        if (MyInitModelNew(&sat->draw, 0x8D, 0x1B, 0, 0, &sat->pos) != 0) {
+            sat->station = station;
+            sat->pos = station->pos;
+            sat->active = 1;
+            sat->angle = angle;
+            sat->hits = 16;
+            sat->tilt[0] = 0.0f;
+            sat->tilt[1] = 0.0f;
+            sat->tiltdest[0] = 0.0f;
+            sat->tiltdest[1] = 0.0f;
+            sat->vel = v000;
+            return sat;
         }
     }
     return 0;
@@ -1193,6 +1311,21 @@ struct asteroid_s *FindFreeAsteroid(s32 passes)
     return 0;
 }
 
+extern f32 Level_GliderRadius;
+extern f32 Level_GliderFloor;
+extern f32 Level_GliderCeiling;
+extern f32 frand(void);
+extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
+
+struct nuvec_s GetRandomGliderLevelEdgePoint(void)
+{
+    struct nuvec_s point = {0.0f, 0.0f, Level_GliderRadius};
+
+    NuVecRotateY(&point, &point, frand() * 360.0f * 182.0444489f);
+    point.y = Level_GliderFloor + frand() * (Level_GliderCeiling - Level_GliderFloor);
+    return point;
+}
+
 s32 CountAsteroids(void)
 {
     f32 sum = 0.0f;
@@ -1222,7 +1355,25 @@ struct wbbolt_s {
     s32 type;                  /* 0x24 */
     char pad_28[0x30 - 0x28];
 };
-extern struct wbbolt_s BoltList[];
+extern struct wbbolt_s BoltList[120];
+
+struct hail_s {
+    s32 state;
+    char pad_04[0x0C - 0x04];
+    struct nuvec_s pos;
+    char pad_18[0x24 - 0x18];
+};
+extern struct hail_s HailList[30];
+extern struct numtx_s BoltMtxA;
+extern struct numtx_s BoltMtxB;
+extern struct numtx_s BoltMtxC;
+extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+
+void InitLighteningHail(void)
+{
+    memset(HailList, 0, sizeof(HailList));
+    NuMtxSetScale(&BoltMtxC, SetNuVecPntr(0.5f, 1.5f, 0.5f));
+}
 
 struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
 {
@@ -1256,6 +1407,13 @@ struct wbbolt_s *FindFreeWBBolt(void)
     return 0;
 }
 
+void InitWBBolts(void)
+{
+    memset(BoltList, 0, sizeof(BoltList));
+    NuMtxSetScale(&BoltMtxA, SetNuVecPntr(1.5f, 1.5f, 1.5f));
+    NuMtxSetScale(&BoltMtxB, SetNuVecPntr(8.0f, 8.0f, 8.0f));
+}
+
 extern void DrawEarthBoss(void);
 extern void DrawJeepRocks(void);
 extern void DrawVehMasks(void);
@@ -1265,6 +1423,29 @@ void DrawEarthBossLevelExtra(void)
     DrawEarthBoss();
     DrawJeepRocks();
     DrawVehMasks();
+}
+
+extern s32 EarthBossJustEntered;
+extern s32 EarthBossDeathEffect;
+extern f32 EarthBossDeathTimer;
+extern s32 EarthBossVortexOpen;
+extern s32 ChrisBigBossDead;
+extern void InitEarthBoss(void);
+
+void EarthBossReset(void)
+{
+    EarthBossJustEntered = 0;
+    EarthBossDeathEffect = 0;
+    EarthBossDeathTimer = 0.0f;
+    EarthBossVortexOpen = 0;
+    ChrisBigBossDead = 0;
+    RumbleDisplayMode = 0;
+    InitVehMasks();
+    InitVehMask(0, 0x55);
+    InitVehMask(1, 3);
+    InitEarthBoss();
+    InitJeepRocks();
+    NumRockPanel = 0;
 }
 
 inline f32 PointLineSide(struct nuvec_s *p, struct nuvec_s *a, struct nuvec_s *b)
@@ -1407,6 +1588,92 @@ void InitWeatherBossTarget(void)
     WeatherBossTargetPos = SetNuVec(0.0f, 0.0f, -15.0f);
     WeatherBossTargetVel = v000;
     WeatherBossTargetAppearTimer = 0.0f;
+}
+
+extern f32 WBMAXY;
+extern f32 WBMINY;
+extern f32 WBTARGLIMX;
+extern f32 WBTARGLIMY;
+extern f32 WBLIMX;
+extern s32 WBIntroOn;
+extern s32 ProcessTimer(f32 *timer);
+
+void ProcessWeatherBossTarget(void)
+{
+    f32 range = WBMAXY - WBMINY;
+    f32 mid = (WBMAXY + WBMINY) * 0.5f;
+
+    if (WBIntroOn == 0 && FlyingLevelExtro == 0) {
+        ProcessTimer(&WeatherBossTargetAppearTimer);
+    }
+    WeatherBossTargetPos.x = (PlayerGlider.pos.x * WBTARGLIMX) / WBLIMX;
+    WeatherBossTargetPos.y =
+        ((PlayerGlider.pos.y - mid) * WBTARGLIMY) / (range * 0.5f) + 1.0f;
+}
+
+
+struct panelcount_s {
+    short count;
+    short draw;
+    signed char frame;
+    u8 pad[3];
+};
+struct game_s {
+    u8 pad_000[0x3FC];
+    u8 lives;
+};
+struct gliderstate_s {
+    char pad_00[0x10];
+    s32 dead;
+};
+extern struct panelcount_s plr_lives;
+extern struct game_s Game;
+extern s32 BEENHITBIGBUZZTIME;
+extern s32 BEENHITBIGRUMTIME;
+extern s32 InvincibilityCHEAT;
+extern s32 TimeTrial;
+extern s32 Adventure;
+extern s32 LivesLost;
+extern s32 GameMode;
+extern s32 new_mode;
+extern s32 new_level;
+extern s32 D_0063329C;
+#define glider_restart_timer D_0063329C
+extern void MyGameSfx(s32 id, struct nuvec_s *pos, s32 vol);
+
+inline void ExplodeGlider(struct gliderstate_s *glider)
+{
+    NewBuzz(&player->rumble, BEENHITBIGBUZZTIME);
+    NewRumble(&player->rumble, BEENHITBIGRUMTIME);
+    if (Level == 0x1A) {
+        MyGameSfx(0xD0, 0, 0x3FFF);
+    } else {
+        MyGameSfx(0x56, 0, 0x3FFF);
+    }
+    if (InvincibilityCHEAT == 0) {
+        glider->dead = 1;
+        glider_restart_timer = 50;
+        if (TimeTrial != 0) {
+            new_mode = GameMode;
+        } else if (plr_lives.count != 0) {
+            plr_lives.count--;
+            if (Adventure != 0) {
+                LivesLost++;
+                Game.lives = plr_lives.count;
+            }
+            new_mode = GameMode;
+        } else {
+            new_level = 0x26;
+        }
+    }
+}
+
+
+void DeadGliderWB(struct gliderstate_s *glider)
+{
+    if (glider->dead == 0) {
+        ExplodeGlider(glider);
+    }
 }
 
 

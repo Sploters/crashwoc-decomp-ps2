@@ -46,7 +46,13 @@
  *   0x0015b330 NuTexAnimResetList
  */
 
-typedef struct NuFPar NuFPar;
+typedef struct NuFPar {
+    int handle;
+    char buffer[0x1000];
+    char line[0x101];
+    char word[0x101];
+} NuFPar;
+
 struct numtl_s;
 
 enum {
@@ -77,7 +83,7 @@ typedef struct NuTexAnimProg {
     short xdef_pc[32];
     int num_xdefs;
     short num_codes;
-    unsigned int dynalloc : 1;
+    int dynalloc : 1;
     short code[2];
 } NuTexAnimProg;
 
@@ -103,7 +109,7 @@ typedef struct NuTexAnim {
     struct NuTexAnim *prev;
     short *tids;
     short num_tids;
-    unsigned int dynalloc : 1;
+    int dynalloc : 1;
     struct numtl_s *mtl;
     NuTexAnimEnv *env;
     char *name;
@@ -138,6 +144,16 @@ extern char D_00615900[];
 #define nutexanm_srcfile D_00615900
 
 extern void NuMemFreeFn(void *ptr, char *file, int line);
+extern int NuFileOpen(char *name, int mode);
+extern int NuFileWrite(int fh, void *data, int size);
+extern void NuFileClose(int fh);
+extern int NuFParGetWord(NuFPar *parser);
+extern int NuFParGetInt(NuFPar *parser);
+extern void NuDisableVBlank(void);
+extern void NuEnableVBlank(void);
+extern void NuTexAnimEnvProc(NuTexAnimEnv *env);
+extern int strcasecmp(char *a, char *b);
+extern char *strcpy(char *dst, const char *src);
 
 
 void NuTexAnimProgAssembleEnd(NuTexAnimProg *prog)
@@ -212,7 +228,48 @@ void NuTexAnimProgRelease(void)
 }
 
 
-void NuTexAnimEnvDestroy(NuTexAnimEnv *env)
+NuTexAnimProg *NuTexAnimProgFind(char *name)
+{
+    NuTexAnimProg *prog;
+
+    for (prog = ntap_first; prog; prog = prog->next) {
+        if (!strcasecmp(name, prog->name)) {
+            break;
+        }
+    }
+    return prog;
+}
+
+
+void NuTexAnimProgDestroy(NuTexAnimProg *prog)
+{
+    if (prog->prev) {
+        prog->prev->next = prog->next;
+    } else {
+        ntap_first = prog->next;
+    }
+    if (prog->next) {
+        prog->next->prev = prog->prev;
+    }
+    if (prog->dynalloc) {
+        NuMemFreeFn(prog, nutexanm_srcfile, 0xAD);
+    }
+}
+
+
+void NuTexAnimProgWrite(char *name, NuTexAnimProg *prog)
+{
+    int fh;
+
+    fh = NuFileOpen(name, 1);
+    if (fh) {
+        NuFileWrite(fh, prog, sizeof(NuTexAnimProg) + prog->num_codes * sizeof(short));
+        NuFileClose(fh);
+    }
+}
+
+
+inline void NuTexAnimEnvDestroy(NuTexAnimEnv *env)
 {
     if (env->dynalloc) {
         NuMemFreeFn(env, nutexanm_srcfile, 0x161);
@@ -258,6 +315,73 @@ void NuTexAnimSetSignals(unsigned int signals)
 }
 
 
+void NuTexAnimProcessList(NuTexAnim *anim)
+{
+    for (; anim; anim = anim->next) {
+        if (anim->env) {
+            NuTexAnimEnvProc(anim->env);
+        }
+    }
+}
+
+
+NuTexAnim *NuTexAnimFind(NuTexAnim *anim, char *name)
+{
+    for (; anim; anim = anim->next) {
+        if (!strcasecmp(anim->name, name)) {
+            return anim;
+        }
+    }
+    return 0;
+}
+
+
+void NuTexAnimDestroy(NuTexAnim *anim)
+{
+    if (anim->env) {
+        NuTexAnimEnvDestroy(anim->env);
+    }
+    if (anim->dynalloc) {
+        NuMemFreeFn(anim, nutexanm_srcfile, 0x4AE);
+    }
+}
+
+
+void NuTexAnimAddList(NuTexAnim *anim)
+{
+    NuTexAnimList *list;
+
+    NuDisableVBlank();
+    list = ntal_free;
+    if (list) {
+        ntal_free = list->next;
+        list->anims = anim;
+        list->next = ntal_first;
+        list->prev = 0;
+        if (ntal_first) {
+            ntal_first->prev = list;
+        }
+        ntal_first = list;
+    }
+    NuEnableVBlank();
+}
+
+
+void NuTexAnimProcess(void)
+{
+    NuTexAnimList *list;
+    NuTexAnim *anim;
+
+    for (list = ntal_first; list; list = list->next) {
+        for (anim = list->anims; anim; anim = anim->next) {
+            if (anim->env) {
+                NuTexAnimEnvProc(anim->env);
+            }
+        }
+    }
+}
+
+
 void NuTexAnimProgInit(NuTexAnimProg *prog)
 {
     int i;
@@ -277,6 +401,36 @@ void NuTexAnimProgInit(NuTexAnimProg *prog)
 }
 
 
+void pftaTex(NuFPar *parser)
+{
+    int tex;
+
+    tex = NuFParGetInt(parser);
+    nta_prog->code[nta_prog->num_codes++] = NTA_TEX;
+    nta_prog->code[nta_prog->num_codes++] = tex;
+}
+
+
+void pftaOn(NuFPar *parser)
+{
+    int signal;
+
+    signal = NuFParGetInt(parser);
+    nta_prog->on_pc[signal] = nta_prog->num_codes;
+    nta_prog->on_mask |= 1 << signal;
+}
+
+
+void pftaOff(NuFPar *parser)
+{
+    int signal;
+
+    signal = NuFParGetInt(parser);
+    nta_prog->off_pc[signal] = nta_prog->num_codes;
+    nta_prog->off_mask |= 1 << signal;
+}
+
+
 void pftaRet(NuFPar *parser)
 {
     nta_prog->code[nta_prog->num_codes++] = NTA_RET;
@@ -292,6 +446,14 @@ void pftaRepend(NuFPar *parser)
 void pftaEnd(NuFPar *parser)
 {
     nta_prog->code[nta_prog->num_codes++] = NTA_END;
+}
+
+
+void pftaScriptname(NuFPar *parser)
+{
+    NuFParGetWord(parser);
+    parser->word[32] = 0;
+    strcpy(nta_prog->name, parser->word);
 }
 
 

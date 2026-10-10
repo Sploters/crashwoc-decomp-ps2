@@ -129,15 +129,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4540:SOUND_InitIOP"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c45d0:SetIOPCommand"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4698:SetIOPCommandEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4760:FlushIOPCommand"
@@ -145,23 +145,23 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c4808:SOUND_AllChannelEffectsOff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c48c8:SOUND_AllChannelEffectsOn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4988:SOUND_SetChannelEffectOff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4a48:SOUND_SetChannelEffectOn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4b08:SOUND_SetEffectMasterVolume"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4bd0:SOUND_DisableEffects"
@@ -189,7 +189,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c4ef0:SOUND_PlaySFX"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4f60:SOUND_TransferSFX"
@@ -197,11 +197,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4f90:SOUND_SetChannelVolume"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4fe0:SOUND_SetChannelPitch"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5028:SOUND_GetStatus"
@@ -237,7 +237,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c5320:SOUND_SetChannelPitchStereo"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5368:SOUND_CloseStreamBuffer"
