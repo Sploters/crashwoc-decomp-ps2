@@ -84,12 +84,20 @@
  *   0x001a6b40 edanimcbCancelSoundTypeMenu
  */
 
+struct nuvec_s {
+    float x;
+    float y;
+    float z;
+};
+
 struct nuinstance_s {
     char pad00[0x50];
 };
 
 struct nuspecial_s {
-    char pad00[0x40];
+    float rot[3][4];
+    struct nuvec_s pos;
+    float pos_w;
     struct nuinstance_s *instance;
     char pad44[0x50 - 0x44];
 };
@@ -112,7 +120,8 @@ struct edanimitem_s {
 
 struct edanimparam_s {
     int id;
-    char pad004[0x10 - 0x04];
+    char pad004[0x0C - 0x04];
+    int switch_type;
     int switch_id;
     float switch_var;
     float switch_delay;
@@ -121,7 +130,11 @@ struct edanimparam_s {
     int particle_switch[8];
     char pad0fc[0x240 - 0xFC];
     float sound_timing[8];
-    char pad260[0x2D0 - 0x260];
+    struct nuvec_s sound_pos[8];
+    int bouncy_instance;
+    float bouncy_player_grav;
+    float bouncy_tension;
+    float bouncy_damping;
 };
 
 extern struct edanimparam_s AnimParams[];
@@ -148,8 +161,36 @@ extern int edanim_next_param;
 extern int edanim_particle_mode;
 extern int edanim_particle_type;
 extern int edanim_sound_type;
+extern void *edanim_soundtype_menu;
+
+extern char D_0062F6E0[];
+extern char D_006196B0[];
+extern char D_006196C0[];
+extern char D_006196D0[];
+extern char D_006196E0[];
+extern char D_006196F0[];
+extern char D_00619700[];
+
+#define mctb_text_present D_0062F6E0
+#define mctb_text_not_present D_006196B0
+#define mctb_text_ps2_card D_006196C0
+#define mctb_text_not_ps2_card D_006196D0
+#define mctb_text_formatted D_006196E0
+#define mctb_text_not_formatted D_006196F0
+#define mctb_text_free_space D_00619700
 
 extern void eduiMenuDestroy(void *menu);
+extern void eduiMenuDetach(void *menu);
+extern void eduiCreateMessageMenu(void *menu, char *text, int flag);
+extern struct nuvec_s *edmainQueryLocVec(void);
+extern float NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
+extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
+extern void PlatInstBounce(int instance, float player_grav, float tension, float damping);
+extern int saveloadCheckCardPresent(void);
+extern int saveloadCheckCardType(void);
+extern int saveloadCheckCardFormatted(void);
+extern int saveloadCheckCardFreeSpace(int port);
+extern int sprintf(char *buf, const char *fmt, ...);
 
 
 int edanimLookupInstanceIndex(int special)
@@ -186,11 +227,38 @@ void edanimParamReset(void)
 }
 
 
+float edanimPlayerAnimDistance(int param)
+{
+    if (edmainQueryLocVec() != 0) {
+        return NuVecDist(&edanim_base_scene->specials[AnimParams[param].id].pos,
+                         edmainQueryLocVec(), 0);
+    }
+    return 0.0f;
+}
+
+
 void edanimParamDestroy(int param)
 {
     if (AnimParams[param].id != -1) {
         AnimParams[param].id = -1;
     }
+}
+
+
+void edanimSoundPlace(int slot, struct nuvec_s *wpos)
+{
+    struct nuvec_s *origin = &edanim_base_scene->specials[edanim_nearest].pos;
+
+    NuVecSub(&AnimParams[edanim_nearest_param_id].sound_pos[slot], wpos, origin);
+}
+
+
+void edanimcbSetSwitchType(void *menu, struct edanimitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edanim_switchtype_menu = 0;
+    AnimParams[edanim_nearest_param_id].switch_type = item->value;
 }
 
 
@@ -232,6 +300,57 @@ void edanimcbCancelSwitchMenu(void)
 }
 
 
+void edanimcbSetBouncyPlayerGrav(void *menu, struct edanimitem_s *item)
+{
+    int id;
+
+    if (edanim_nearest != -1) {
+        id = edanim_nearest_param_id;
+        AnimParams[id].bouncy_player_grav = item->fvalue;
+        if (AnimParams[id].bouncy_instance != -1) {
+            PlatInstBounce(AnimParams[id].bouncy_instance,
+                           AnimParams[id].bouncy_player_grav,
+                           AnimParams[id].bouncy_tension,
+                           AnimParams[id].bouncy_damping);
+        }
+    }
+}
+
+
+void edanimcbSetBouncyTension(void *menu, struct edanimitem_s *item)
+{
+    int id;
+
+    if (edanim_nearest != -1) {
+        id = edanim_nearest_param_id;
+        AnimParams[id].bouncy_tension = item->fvalue;
+        if (AnimParams[id].bouncy_instance != -1) {
+            PlatInstBounce(AnimParams[id].bouncy_instance,
+                           AnimParams[id].bouncy_player_grav,
+                           AnimParams[id].bouncy_tension,
+                           AnimParams[id].bouncy_damping);
+        }
+    }
+}
+
+
+void edanimcbSetBouncyDamping(void *menu, struct edanimitem_s *item)
+{
+    int id;
+
+    if (edanim_nearest != -1) {
+        id = edanim_nearest_param_id;
+        AnimParams[id].bouncy_damping = item->fvalue;
+        if (AnimParams[id].bouncy_instance != -1) {
+            PlatInstBounce(AnimParams[id].bouncy_instance,
+                           AnimParams[id].bouncy_player_grav,
+                           AnimParams[id].bouncy_tension,
+                           AnimParams[id].bouncy_damping);
+        }
+    }
+}
+
+
 void edanimcbCancelBouncyMenu(void)
 {
     eduiMenuDestroy(edanim_bouncy_menu);
@@ -250,6 +369,19 @@ void edanimcbToggleParticleSwitch(void *menu, struct edanimitem_s *item)
     if (edanim_nearest_param_id != -1 && edanim_nearest_particle != -1) {
         AnimParams[edanim_nearest_param_id].particle_switch[edanim_nearest_particle] =
             item->toggle;
+    }
+}
+
+
+void edanimcbSetParticleType(void *menu, struct edanimitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edanim_particletype_menu = 0;
+    if (item->value == 0) {
+        edanim_particle_type = -1;
+    } else {
+        edanim_particle_type = item->value;
     }
 }
 
@@ -285,6 +417,47 @@ void edanimcbCancelLocalSoundMenu(void)
 void edanimcbCancelOptMenu(void)
 {
     edanim_active_menu = 0;
+}
+
+
+void edanimcbMCTBCardPresent(void *menu)
+{
+    if (saveloadCheckCardPresent()) {
+        eduiCreateMessageMenu(menu, mctb_text_present, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_not_present, 0);
+    }
+}
+
+
+void edanimcbMCTBCardType(void *menu)
+{
+    if (saveloadCheckCardType()) {
+        eduiCreateMessageMenu(menu, mctb_text_ps2_card, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_not_ps2_card, 0);
+    }
+}
+
+
+void edanimcbMCTBCardCheckFormat(void *menu)
+{
+    if (saveloadCheckCardFormatted()) {
+        eduiCreateMessageMenu(menu, mctb_text_formatted, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_not_formatted, 0);
+    }
+}
+
+
+void edanimcbMCTBCardFreeSpace(void *menu)
+{
+    char text[32];
+    int space;
+
+    space = saveloadCheckCardFreeSpace(0);
+    sprintf(text, mctb_text_free_space, space);
+    eduiCreateMessageMenu(menu, text, 1);
 }
 
 
@@ -337,4 +510,11 @@ void edanimcbCancelSoundMenu(void)
 {
     eduiMenuDestroy(edanim_sound_menu);
     edanim_sound_menu = 0;
+}
+
+
+void edanimcbCancelSoundTypeMenu(void)
+{
+    eduiMenuDestroy(edanim_soundtype_menu);
+    edanim_soundtype_menu = 0;
 }
