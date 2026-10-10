@@ -61,7 +61,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad0c8:NuGCutSceneSysUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad130:NuGCutSceneSysRender"
@@ -93,7 +93,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001ad2d0:NuGCutSceneFixUp"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad358:instNuGCutSceneCreate"
@@ -105,7 +105,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad518:instNuGCutSceneDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad580:instNuGCutSceneIsFinished"
@@ -113,11 +113,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad598:instNuGCutSceneStart"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad630:instNuGCutSceneEnd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad6c8:instNuGCutSceneReset"
@@ -125,7 +125,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad720:instNuGCutSceneCreateCamTgtArray"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad788:instNuGCutSceneAddCamTgt"
@@ -137,7 +137,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad830:instNuGCutSceneTranslate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad8a0:instNuGCutSceneRotateY"
@@ -145,7 +145,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad8f0:instNuGCutSceneSetMtx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad9a0:instNuGCutSceneChain"
@@ -173,11 +173,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001adb98:instNuGCutLocatorUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001adc20:NuGCutCamsSysFixPtrs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001adc90:instNuGCutSceneCalculateCentre"
@@ -225,7 +225,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001ae510:instNuGCutRigidSysReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae630:instNuGCutRigidSysStart"
@@ -273,7 +273,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001aee28:StateAnimEvaluate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aeef8:StateAnimFixPtrs"
