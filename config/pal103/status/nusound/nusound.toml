@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c23f8:SOUND_CancelCheckStereo"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c2470:init_adpcm"
@@ -93,7 +93,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4230:NuSoundSetChannelPitch"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4290:NuSoundGetSteroPitch"
@@ -101,7 +101,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4298:NuSoundStopStream"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c42e0:NuSoundLocalSet"
@@ -121,11 +121,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c44b0:NuSoundSetLocalDat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c44f0:SOUND_SIFTransfer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4540:SOUND_InitIOP"
@@ -177,11 +177,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4de0:SOUND_SetSPUWriteAddress"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4e18:SOUND_AllocateStreamBuffer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4e60:SOUND_PlayStream"
@@ -193,7 +193,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c4f60:SOUND_TransferSFX"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4f90:SOUND_SetChannelVolume"
@@ -205,7 +205,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c5028:SOUND_GetStatus"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5050:SOUND_Pause"
@@ -221,7 +221,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c50b0:SOUND_InitSPU"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c50f0:SOUND_AddSamples"
@@ -229,7 +229,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c5230:SOUND_SetMaxStreamLimit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5258:SOUND_CheckAndStartStereo"
@@ -241,7 +241,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c5368:SOUND_CloseStreamBuffer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5390:NuSoundInitLoopInfo"
