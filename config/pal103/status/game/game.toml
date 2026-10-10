@@ -385,7 +385,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001efdb8:SaveWumpa"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001efe80:FlyWumpa"
@@ -397,11 +397,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0094:001f0098:AddScreenWumpa"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f0140:MakeTimeF"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f0178:MakeLevelTimeString"
@@ -445,11 +445,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f0830:AnglesBetweenPoints"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f08c8:LineCrossed"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f0980:Draw3DObject"
@@ -461,7 +461,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f0be0:StopHGobjAnim"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001f0c20:ResetHGobjAnim"
