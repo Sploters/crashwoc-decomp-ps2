@@ -549,7 +549,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021c718:CollideWithBattleShips"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c798:ProcessCrashteroidsIntro"
@@ -577,7 +577,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021cc00:PickGliderTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ccd0:AddGliderBomb"
@@ -597,15 +597,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d040:ProcessWeatherBossTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d0f8:ExplodeGlider"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d1d8:DeadGliderWB"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d2c8:DrawGliderDebugStuff"
@@ -613,7 +613,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d300:DrawZoffa"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d3b8:FindFreeHova"
@@ -621,7 +621,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d3f0:InitSatellite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d4e8:DrawSatellite"
@@ -661,7 +661,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021db68:DrawFarmLevelExtra"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021dbf0:FindFreeAsteroid"
@@ -669,7 +669,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021dc90:GetRandomGliderLevelEdgePoint"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021dd48:CountAsteroids"
@@ -797,7 +797,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f078:InitLighteningHail"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f0d8:DrawLighteningHail"
@@ -813,7 +813,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f230:InitWBBolts"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f2b0:InitWBIntro"
@@ -825,7 +825,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f3b0:EarthBossReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f410:GetCurrentRumbleObjectives"
