@@ -3345,7 +3345,8 @@ void NewMask(struct mask_s *mask, struct nuvec_s *pos) {
     }
 }
 
-extern char D_00630BE8[]; /* "%s.wmp" */
+extern char D_00630BE8[];
+#define wumpa_file_fmt D_00630BE8
 extern char LevelFileName[];
 extern u8 Chase[];
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
@@ -3360,7 +3361,7 @@ void LoadWumpa(void) {
     void *fbuff;
     s32 fsize;
 
-    sprintf(tbuf, D_00630BE8, LevelFileName);
+    sprintf(tbuf, wumpa_file_fmt, LevelFileName);
     /* PS2 drops GC's `if (NuFileExists(tbuf))` guard */
     fbuff = Chase;
     fsize = NuFileLoadBuffer(tbuf, fbuff, 0x7FFFFFFF);
@@ -3387,7 +3388,7 @@ void SaveWumpa(void) {
     s32 fh;
     s32 i;
 
-    sprintf(tbuf, D_00630BE8, LevelFileName);
+    sprintf(tbuf, wumpa_file_fmt, LevelFileName);
     fh = NuFileOpen(tbuf, 1);
     if (fh != 0) {
         NuFileWriteInt(fh, WUMPACOUNT);
