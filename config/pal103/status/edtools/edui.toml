@@ -129,7 +129,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001bf828:eduiItemSetText"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001bf8e0:eduiItemSelCreate"
@@ -153,7 +153,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c0050:eduiGradStageDelete"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c00b8:eduiItemGradPickCreate"
@@ -185,11 +185,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c08e0:eduiItemSliderSetValEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0938:eduiItemSliderSetFmt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c09f0:eduiItemSliderSetGranularity"
@@ -209,7 +209,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c0d80:eduiMenuDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0de8:eduiMenuCreate"
@@ -221,7 +221,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0f18:eduiMenuDetach"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0f68:eduiMenuAddItem"
@@ -253,7 +253,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1450:eduicbItemSliderDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c14c8:eduicbRenderNumber"
@@ -261,7 +261,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c15d0:eduicbItemDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1638:eduicbItemGradPickDestroy"
@@ -293,11 +293,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1b00:eduicbPickCFGCancel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1b68:eduicbCancelMessageMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1bd8:eduiItemRender"
@@ -317,4 +317,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1cc8:TestMenu"
-state = "asm"
+state = "matching"

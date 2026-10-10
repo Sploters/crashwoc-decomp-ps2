@@ -211,11 +211,28 @@ typedef struct {
 } TerrainPlatformType; /* 0x64 */
 
 typedef struct {
+    s16 start;                /* 0x00 */
+    s16 count;                /* 0x02 */
+    f32 bounds[4];            /* 0x04 */
+} TerrainGroupType; /* 0x14 */
+
+typedef struct {
     TerrainSituType *terr;                /* 0x0000 */
     TerrainPlatformType platdata[128];    /* 0x0004 */
     void *wallinfo;                       /* 0x3204 */
     TerrainTrackInfoType TrackInfo[4];    /* 0x3208 */
+    TerrainGroupType terrgroup[256];      /* 0x3238 */
+    TerrainGroupType platgroup;           /* 0x4638 */
+    s32 miny;                             /* 0x464C */
+    s32 terrgroupcnt;                     /* 0x4650 */
+    s16 terrlist[4096];                   /* 0x4654 */
 } TerrainSetType;
+
+typedef struct {
+    TerrainSituType *terr;                /* 0x0000 */
+    void *data;                           /* 0x0004 */
+    s16 typeterr[128];                    /* 0x0008 */
+} PickupTerrType;
 
 typedef struct {
     struct nuvec_s pos;                   /* 0x00 */
@@ -242,6 +259,9 @@ extern f32 D_0062CD50;
 extern s32 TerrShapeAdjCnt;
 extern s32 terraincnt;
 extern TerrainSetType *CurTerr;
+extern PickupTerrType *PickupTerr;
+extern s32 situtotal;
+extern s32 terlistptr;
 extern TerrainTrackInfoType *CurTrackInfo;
 extern tertype *TerrPoly;
 extern tertype TerrPolyInfo;
@@ -302,6 +322,12 @@ extern short InsidePolLines(f32 x, f32 y, f32 z,
                             struct nuvec_s *norm);
 extern s32 CheckCylinder(s32 p0, s32 p1, s32 *flags, s32 type);
 extern s32 HitWallSpline(void);
+extern void NewScan(struct nuvec_s *pos, s32 extramask, s32 platscan);
+extern void NewScanRot(struct nuvec_s *pos, s32 extramask);
+extern s32 NewScanHandelFull(struct nuvec_s *pos, struct nuvec_s *vel, s32 extramask,
+                             s32 platscan, f32 size);
+extern s32 NewScanHandelSubset(void *handel, struct nuvec_s *pos, struct nuvec_s *vel,
+                               s32 platscan, f32 size);
 
 void TerrainPlatformOldUpdate(void) {
     s32 i;
@@ -1332,8 +1358,144 @@ s32 TerrainImpactPlatform(u8 *flags) {
     return 1;
 }
 
+s32 DeletePlatinst(s32 id) {
+    s32 i;
+    s32 slot;
+
+    if ((CurTerr->platdata[id].curmtx == 0) || (id < 0) || (id >= 128)) {
+        return 0;
+    }
+    situtotal--;
+    terlistptr--;
+    CurTerr->platdata[CurTerr->terr[situtotal].info].terrno = CurTerr->platdata[id].terrno;
+    CurTerr->terr[CurTerr->platdata[id].terrno] = CurTerr->terr[situtotal];
+    CurTerr->terr[situtotal].type = -1;
+    CurTerr->platdata[id].curmtx = 0;
+    slot = CurTerr->platgroup.start;
+    for (i = 0; i < CurTerr->platgroup.count; i++, slot++) {
+        if (CurTerr->terrlist[slot] == situtotal) {
+            CurTerr->terrlist[slot] = CurTerr->terrlist[terlistptr];
+            break;
+        }
+    }
+    CurTerr->platgroup.count--;
+    return 1;
+}
+
 void TerrainSetCur(void *curterr) {
     CurTerr = curterr;
+}
+
+f32 NewShadow(struct nuvec_s *ppos, f32 size) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, 0, 0);
+    NewCast(&pos, 5.0f);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowMask(struct nuvec_s *ppos, f32 size, s32 extramask) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, extramask, 0);
+    NewCast(&pos, 5.0f);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowTol(struct nuvec_s *ppos, f32 size, f32 tol) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, 0, 0);
+    NewCast(&pos, tol);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowTolMask(struct nuvec_s *ppos, f32 size, f32 tol, s32 extramask) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, extramask, 0);
+    NewCast(&pos, tol);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowPlat(struct nuvec_s *ppos, f32 size) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, 0, 1);
+    NewCast(&pos, 5.0f);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowMaskPlat(struct nuvec_s *ppos, f32 size, s32 extramask) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, extramask, 1);
+    NewCast(&pos, 5.0f);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowMaskPlatRot(struct nuvec_s *ppos, f32 size, s32 extramask) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScanRot(&pos, extramask);
+    NewCast(&pos, 5.0f);
+    NuScratchRelease();
+    return pos.y;
+}
+
+f32 NewShadowTolPlat(struct nuvec_s *ppos, f32 size, f32 tol) {
+    struct nuvec_s pos;
+
+    if (CurTerr == 0) {
+        return 2000000.0f;
+    }
+    TerI = NuScratchAlloc32(0x930);
+    pos = *ppos;
+    NewScan(&pos, 0, 1);
+    NewCast(&pos, tol);
+    NuScratchRelease();
+    return pos.y;
 }
 
 void AddCollisionSphere(struct nuvec_s *pos, f32 radius) {
@@ -1342,6 +1504,28 @@ void AddCollisionSphere(struct nuvec_s *pos, f32 radius) {
         SphereData[curSphereter].radius = radius;
         curSphereter++;
     }
+}
+
+void AddPickupTerr(s32 type, struct nuvec_s *pos) {
+    s32 id;
+
+    id = PickupTerr->typeterr[type];
+    if ((id != -1) && (curPickInst < 128)) {
+        CurTerr->terr[curPickInst + 2048] = PickupTerr->terr[id];
+        CurTerr->terr[curPickInst + 2048].Location = *pos;
+        curPickInst++;
+    }
+}
+
+void NewTerrAxisFreedom(TerrShapeType *shape, struct nuvec_s *pos) {
+    struct nuvec_s slide;
+
+    TerrShapeAdjCnt = 2;
+    TerrShape = shape;
+    slide.x = NuTrigTable[(s32)(shape->ang + 16384.0f) & 0xffff];
+    slide.y = 0.0f;
+    slide.z = -NuTrigTable[(s32)shape->ang & 0xffff];
+    TerrainSideClamp(&slide, pos);
 }
 
 void *CrashDataPtr(void) {
@@ -1482,6 +1666,19 @@ s32 PlatformCrush(void) {
 void NewScanInit(void) {
     TempStackPtr = TempScanStack;
     TerrPlatDis = -1;
+}
+
+s32 NewScanHandel(struct nuvec_s *pos, struct nuvec_s *vel, s32 extramask, void *handel,
+                  f32 size) {
+    if (CurTerr == 0) {
+        return 0;
+    }
+    TerrPlatDis = -1;
+    if (handel == 0) {
+        return NewScanHandelFull(pos, vel, extramask, 0, size);
+    } else {
+        return NewScanHandelSubset(handel, pos, vel, 0, size);
+    }
 }
 
 void NewRaySetDisablePalt(s32 disable) {

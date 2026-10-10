@@ -105,7 +105,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5390:edanimRender"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5490:edanimLookupInstanceIndex"
@@ -117,7 +117,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a54f8:edanimLookupSpecial"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5580:edanimParamReset"
@@ -137,7 +137,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a56b0:edanimParticlePlace"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5750:edanimcbSetSwitchType"
@@ -181,7 +181,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a59f8:edanimcbToggleSoundType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5ab0:edanimcbSetSoundTiming"
@@ -257,7 +257,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6430:edanimcbMCTBCardSlotsUsed"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6478:edanimcbMCTBCardSaveSlot"
@@ -265,19 +265,19 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a6500:edanimcbMCTBCardLoadSlot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6560:edanimcbMCTBCardDeleteSlot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a65c0:edanimcbMCTBCardUnFormat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6618:edanimcbMCTBCardFormat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6670:edanimcbCancelMCTBMenu"
@@ -293,11 +293,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a66d8:edanimProc"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6790:edanimcbSetLocalSoundType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6828:edanimcbSetLocalParticleType"
@@ -325,7 +325,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6ae0:edanimcbSetSoundType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6b40:edanimcbCancelSoundTypeMenu"

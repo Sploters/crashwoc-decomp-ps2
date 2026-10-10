@@ -110,6 +110,32 @@ struct nuvec_s {
     float z;
 };
 
+struct numtx_s {
+    float _00, _01, _02, _03;
+    float _10, _11, _12, _13;
+    float _20, _21, _22, _23;
+    float _30, _31, _32, _33;
+};
+
+struct camera_s {
+    struct numtx_s mtx;
+};
+
+struct nuinstanim_s {
+    char pad00[0x44];
+    float tfirst;
+    float tinterval;
+    float ltime;
+    unsigned int playing : 1;
+    unsigned int backwards : 1;
+    unsigned int waiting : 1;
+};
+
+struct pad_s {
+    char pad000[0x564];
+    unsigned int buttons;
+};
+
 struct nuinstance_s {
     char pad00[0x50];
 };
@@ -117,14 +143,15 @@ struct nuinstance_s {
 struct nuspecial_s {
     char pad00[0x40];
     struct nuinstance_s *instance;
-    char pad44[0x50 - 0x44];
+    char *name;
+    char pad48[0x50 - 0x48];
 };
 
 struct nugscn_s {
     char pad00[0x18];
     int numinstance;
     struct nuinstance_s *instances;
-    char pad20[0x24 - 0x20];
+    int numspecial;
     struct nuspecial_s *specials;
 };
 
@@ -142,21 +169,29 @@ struct edobject_s {
     int oscillate;
     char pad00c[0x10 - 0x0C];
     float anim_pause;
-    char pad014[0x24 - 0x14];
+    char pad014[0x18 - 0x14];
+    int total_time;
+    char pad01c[0x24 - 0x1C];
     int anim_start_offset;
     char pad028[0x2C - 0x28];
     struct nuvec_s waypoints[8];
     float waypoint_speed[8];
     struct nuvec_s waypoint_rot[8];
-    char pad10c[0x12C - 0x10C];
+    int waypoint_time[8];
     int switch_type;
     int switch_id;
     float switch_var;
     float switch_delay;
-    char pad13c[0x1DC - 0x13C];
+    char particle_name[8][16];
+    int particle_type[8];
     int particle_rate[8];
     int particle_switch[8];
-    char pad21c[0x340 - 0x21C];
+    struct nuvec_s particle_pos[8];
+    unsigned short particle_rotz[8];
+    unsigned short particle_roty[8];
+    char pad29c[0x2A0 - 0x29C];
+    char sound_name[8][16];
+    int sound_id[8];
     int sound_type[8];
     float sound_timing[8];
     struct nuvec_s sound_pos[8];
@@ -170,7 +205,9 @@ struct edobjinstance_s {
     struct nuvec_s pos;
     char pad3c[0x40 - 0x3C];
     int id;
-    char pad44[0x50 - 0x44];
+    char pad44[0x48 - 0x44];
+    struct nuinstanim_s *anim;
+    char pad4c[0x50 - 0x4C];
 };
 
 extern struct edobject_s ObjectPath[];
@@ -209,8 +246,16 @@ extern int edobj_nearest_waypoint;
 extern int edobj_instance_type;
 extern struct nuvec_s edobj_snap_vec;
 extern struct nuvec_s edobj_cam_pos;
+extern unsigned short edobj_emitrotz;
+extern unsigned short edobj_emitroty;
+extern struct camera_s global_camera;
+extern char *debtab[];
 extern float D_0062CF24;
 extern float D_0062CF28;
+extern float D_0062CF2C;
+extern int D_0062F57C;
+
+#define edobj_blink_timer D_0062F57C
 
 extern void edbitsRegisterLevel(char *filename, int whatgame);
 extern void eduiMenuDestroy(void *menu);
@@ -221,11 +266,41 @@ extern void edcamSetPos(struct nuvec_s *pos);
 extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern float NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern struct nuvec_s *edmainQueryLocVec(void);
+extern float NuFsqrt(float x);
+extern int strncmp(const char *a, const char *b, int n);
+extern char *strcpy(char *dst, const char *src);
+extern char *edbitsGetSoundName(int id);
+extern void eduiMenuProcess(void *menu, struct pad_s *pad);
+extern void edobjDoInput(struct pad_s *pad);
+extern void edobjDetermineNearestObject(float range);
+extern void edobjDetermineNearestWaypoint(float range);
+extern void edobjDetermineNearestParticle(float range);
+extern void edobjDetermineNearestSound(float range);
 
 
 void edobjRegisterLevel(char *filename, int whatgame)
 {
     edbitsRegisterLevel(filename, whatgame);
+}
+
+
+void edobjResetAnimsToZero(void)
+{
+    struct edobjinstance_s *oi;
+    struct nuinstanim_s *anim;
+    int i;
+
+    oi = ObjectInstance;
+    for (i = 0; i < 64; i++) {
+        ObjectPath[i].particle_type[0] = -1;
+        if (oi[i].id != -1 && (anim = oi[i].anim) != 0) {
+            anim->tfirst = 0.0f;
+            anim->waiting = 1;
+            anim->ltime = ObjectPath[i].anim_start_offset;
+            anim->backwards = 0;
+            anim->playing = 0;
+        }
+    }
 }
 
 
@@ -249,6 +324,21 @@ void edobjObjectReset(void)
 }
 
 
+int edobjLookupInstance(char *name)
+{
+    int i;
+
+    if (edobj_base_scene != 0) {
+        for (i = 0; i < edobj_base_scene->numspecial; i++) {
+            if (strncmp(edobj_base_scene->specials[i].name, name, 19) == 0) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+
 void edobjObjectDestroyAll(void)
 {
     int i;
@@ -261,10 +351,46 @@ void edobjObjectDestroyAll(void)
 
 float edobjPlayerObjectDistance(int obj)
 {
-    if (edmainQueryLocVec() == 0) {
-        return 0.0f;
+    if (edmainQueryLocVec() != 0) {
+        return NuVecDist(&ObjectInstance[obj].pos, edmainQueryLocVec(), 0);
     }
-    return NuVecDist(&ObjectInstance[obj].pos, edmainQueryLocVec(), 0);
+    return 0.0f;
+}
+
+
+int edobjRenderCutoffTest(struct nuvec_s *pos)
+{
+    float dx;
+    float dy;
+    float dz;
+
+    dx = pos->x - global_camera.mtx._30;
+    dy = pos->y - global_camera.mtx._31;
+    dz = pos->z - global_camera.mtx._32;
+    if (NuFsqrt(dx * dx + dy * dy + dz * dz) > 40.0f) {
+        return 0;
+    }
+    return 1;
+}
+
+
+void edobjcbResetAnims(void *menu, struct edobjitem_s *item)
+{
+    struct edobjinstance_s *oi;
+    struct nuinstanim_s *anim;
+    int i;
+
+    oi = ObjectInstance;
+    for (i = 0; i < 64; i++) {
+        ObjectPath[i].particle_type[0] = -1;
+        if (oi[i].id != -1 && (anim = oi[i].anim) != 0) {
+            anim->tfirst = 0.0f;
+            anim->waiting = 1;
+            anim->ltime = ObjectPath[i].anim_start_offset;
+            anim->backwards = 0;
+            anim->playing = 0;
+        }
+    }
 }
 
 
@@ -289,6 +415,15 @@ void edobjSoundPlace(int slot, struct nuvec_s *wpos)
 {
     NuVecSub(&ObjectPath[edobj_nearest].sound_pos[slot], wpos,
              &ObjectPath[edobj_nearest].waypoints[0]);
+}
+
+
+void edobjParticlePlace(int slot, struct nuvec_s *wpos)
+{
+    NuVecSub(&ObjectPath[edobj_nearest].particle_pos[slot], wpos,
+             &ObjectPath[edobj_nearest].waypoints[0]);
+    ObjectPath[edobj_nearest].particle_rotz[slot] = edobj_emitrotz;
+    ObjectPath[edobj_nearest].particle_roty[slot] = edobj_emitroty;
 }
 
 
@@ -411,6 +546,35 @@ void edobjcbChangeWaypointYRot(void *menu, struct edobjitem_s *item)
 }
 
 
+void edobjcbChangeWaypointZRot(void *menu, struct edobjitem_s *item)
+{
+    if (edobj_waypoint_mode) {
+        if (edobj_nearest_waypoint != -1) {
+            ObjectPath[edobj_nearest].waypoint_rot[edobj_nearest_waypoint].z =
+                item->fvalue * D_0062CF2C;
+            edobjConvertPathToAnim(edobj_nearest);
+        }
+    }
+}
+
+
+void edobjcbChangeWaypointTime(void *menu, struct edobjitem_s *item)
+{
+    int time;
+    int old;
+
+    if (edobj_waypoint_mode) {
+        if (edobj_nearest_waypoint != -1) {
+            time = item->fvalue;
+            old = ObjectPath[edobj_nearest].waypoint_time[edobj_nearest_waypoint];
+            ObjectPath[edobj_nearest].waypoint_time[edobj_nearest_waypoint] = time;
+            ObjectPath[edobj_nearest].total_time += time - old;
+            edobjConvertPathToAnim(edobj_nearest);
+        }
+    }
+}
+
+
 void edobjcbSetInstanceType(void *menu, struct edobjitem_s *item)
 {
     eduiMenuDetach(menu);
@@ -516,6 +680,21 @@ void edobjcbSetBouncyDamping(void *menu, struct edobjitem_s *item)
 }
 
 
+void edobjcbToggleSoundType(void *menu, struct edobjitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edobj_soundtype_menu = 0;
+    if (item->toggle == 0) {
+        ObjectPath[edobj_nearest].sound_type[edobj_nearest_sound] = 0;
+        ObjectPath[edobj_nearest].sound_timing[edobj_nearest_sound] = 1.0f;
+    } else {
+        ObjectPath[edobj_nearest].sound_type[edobj_nearest_sound] = 1;
+        ObjectPath[edobj_nearest].sound_timing[edobj_nearest_sound] = 50.0f;
+    }
+}
+
+
 void edobjcbSetSoundTiming(void *menu, struct edobjitem_s *item)
 {
     ObjectPath[edobj_nearest].sound_timing[edobj_nearest_sound] = item->fvalue;
@@ -586,6 +765,58 @@ void edobjEnter(void)
     edobj_sound_type = -1;
     edobj_snap_xz = 0;
     edobj_snap_y = 0;
+}
+
+
+int edobjProc(struct pad_s *pad)
+{
+    edobj_blink_timer += 5;
+    if (edobj_active_menu != 0) {
+        eduiMenuProcess(edobj_active_menu, pad);
+        return 0;
+    }
+    edobjDoInput(pad);
+    if (edobj_waypoint_mode) {
+        edobjDetermineNearestWaypoint(1.0f);
+    } else if (edobj_particle_mode) {
+        edobjDetermineNearestParticle(1.0f);
+    } else if (edobj_sound_mode) {
+        edobjDetermineNearestSound(1.0f);
+    } else if (!edobj_copy_mode) {
+        edobjDetermineNearestObject(1.0f);
+    }
+    if (pad->buttons & 0x800) {
+        edobj_waypoint_mode = 0;
+        edobj_copy_mode = 0;
+        edobj_particle_mode = 0;
+        edobj_sound_mode = 0;
+        return 1;
+    }
+    return 0;
+}
+
+
+void edobjcbSetLocalSoundType(void *menu, struct edobjitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edobj_localsoundtype_menu = 0;
+    ObjectPath[edobj_nearest].sound_id[edobj_nearest_sound] = item->value;
+    strcpy(ObjectPath[edobj_nearest].sound_name[edobj_nearest_sound],
+           edbitsGetSoundName(item->value));
+    edobj_sound_type = item->value;
+}
+
+
+void edobjcbSetLocalParticleType(void *menu, struct edobjitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edobj_localparticletype_menu = 0;
+    ObjectPath[edobj_nearest].particle_type[edobj_nearest_particle] = item->value;
+    strcpy(ObjectPath[edobj_nearest].particle_name[edobj_nearest_particle],
+           debtab[item->value]);
+    edobj_particle_type = item->value;
 }
 
 

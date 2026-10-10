@@ -189,7 +189,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:0017e0a8:DeletePlatinst"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:0017e230:NewScanHandelFull"
@@ -229,35 +229,35 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181bc0:NewShadow"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181c40:NewShadowMask"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181cd0:NewShadowTol"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181d58:NewShadowTolMask"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181df0:NewShadowPlat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181e70:NewShadowMaskPlat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181f00:NewShadowMaskPlatRot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00181f88:NewShadowTolPlat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182010:NewShadowTolMaskPlat"
@@ -269,11 +269,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:001820f8:AddPickupTerr"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182200:NewTerrAxisFreedom"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182280:NewShapeInit"
@@ -353,7 +353,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:001825a8:NewScanHandel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182610:NewRaySetDisablePalt"

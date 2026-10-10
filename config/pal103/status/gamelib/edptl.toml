@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0070:0018a280:edppPtlPlace"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:0018a380:edppDoInput"
@@ -381,7 +381,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195450:cbPtlSelGCode"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195518:cbCancelMessageMenu"
@@ -389,7 +389,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195540:cbSelEffectList"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195610:cbCancelEffectListMenu"
@@ -457,7 +457,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195ac0:cbPtlDefaultCollEnv"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195b98:cbPtlApplyCollEnv"
@@ -465,11 +465,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0070:00195c80:edptlcbSetSoundID"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195d38:edptlcbSetSoundControl"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195de8:edptlcbChangeSoundDelay"
@@ -517,7 +517,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196138:cbPtlSScaleMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196218:cbPtlChangeTextureSelect"
@@ -565,7 +565,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0070:00196750:cbChangeFileNameMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196838:cbMemCardLoadEffectsMenu"
@@ -617,7 +617,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196da0:edppEnter"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196e78:edppApply"
@@ -649,7 +649,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00197048:edptlcbSetSwitchType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:001970e0:edptlcbCancelSwitchTypeMenu"
@@ -669,7 +669,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00197170:cbMemCardErase"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00197270:cbChangeFileName"
@@ -693,4 +693,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00197338:CreateMessageMenu"
-state = "asm"
+state = "matching"

@@ -57,51 +57,51 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0083:001b73f0:edgraClumpsReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7418:edgracbSetInstanceType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7460:edgracbSetClumpWind"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b74a8:edgracbSetClumpHeight"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b74f0:edgracbToggleClumpReactive"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7520:edgracbCancelOptMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7528:edgracbCancelInstanceMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7550:edgracbCancelClumpPropertiesMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7578:edgraClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7598:edgraEnter"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b75b8:edgraClumpPlace"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7608:edgraClumpDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0083:001b7638:edgraProc"
