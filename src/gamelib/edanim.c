@@ -83,3 +83,161 @@
  *   0x001a6ae0 edanimcbSetSoundType
  *   0x001a6b40 edanimcbCancelSoundTypeMenu
  */
+
+struct nuinstance_s {
+    char pad00[0x50];
+};
+
+struct nuspecial_s {
+    char pad00[0x40];
+    struct nuinstance_s *instance;
+    char pad44[0x50 - 0x44];
+};
+
+struct nugscn_s {
+    char pad00[0x18];
+    int numinstance;
+    struct nuinstance_s *instances;
+    char pad20[0x24 - 0x20];
+    struct nuspecial_s *specials;
+};
+
+struct edanimitem_s {
+    char pad00[0x0C];
+    int value;
+    unsigned char toggle;
+    char pad11[0x4C - 0x11];
+    float fvalue;
+};
+
+struct edanimparam_s {
+    int id;
+    char pad004[0x10 - 0x04];
+    int switch_id;
+    float switch_var;
+    float switch_delay;
+    char pad01c[0xBC - 0x1C];
+    int particle_rate[8];
+    int particle_switch[8];
+    char pad0fc[0x240 - 0xFC];
+    float sound_timing[8];
+    char pad260[0x2D0 - 0x260];
+};
+
+extern struct edanimparam_s AnimParams[];
+
+extern struct nugscn_s *edanim_base_scene;
+extern void *edanim_active_menu;
+extern int edanim_nearest;
+extern int edanim_nearest_param_id;
+extern int edanim_nearest_particle;
+extern int edanim_nearest_sound;
+extern int edanim_next_param;
+extern int edanim_particle_mode;
+extern int edanim_particle_type;
+extern int edanim_sound_type;
+
+
+int edanimLookupInstanceIndex(int special)
+{
+    int i;
+
+    if (edanim_base_scene == 0) {
+        return -1;
+    }
+    for (i = 0; i < edanim_base_scene->numinstance; i++) {
+        if (&edanim_base_scene->instances[i]
+            == edanim_base_scene->specials[special].instance) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+void edanimRegisterBaseScene(struct nugscn_s *scene)
+{
+    edanim_base_scene = scene;
+}
+
+
+void edanimParamReset(void)
+{
+    int i;
+
+    for (i = 0; i < 64; i++) {
+        AnimParams[i].id = -1;
+    }
+    edanim_next_param = 0;
+}
+
+
+void edanimParamDestroy(int param)
+{
+    if (AnimParams[param].id != -1) {
+        AnimParams[param].id = -1;
+    }
+}
+
+
+void edanimcbSetSwitchId(void *menu, struct edanimitem_s *item)
+{
+    if (edanim_nearest != -1 && edanim_nearest_param_id != -1) {
+        AnimParams[edanim_nearest_param_id].switch_id = item->fvalue;
+    }
+}
+
+
+void edanimcbSetSwitchDelay(void *menu, struct edanimitem_s *item)
+{
+    if (edanim_nearest != -1 && edanim_nearest_param_id != -1) {
+        AnimParams[edanim_nearest_param_id].switch_delay = item->fvalue;
+    }
+}
+
+
+void edanimcbSetSwitchVar(void *menu, struct edanimitem_s *item)
+{
+    if (edanim_nearest != -1 && edanim_nearest_param_id != -1) {
+        AnimParams[edanim_nearest_param_id].switch_var = item->fvalue;
+    }
+}
+
+
+void edanimcbSetSoundTiming(void *menu, struct edanimitem_s *item)
+{
+    AnimParams[edanim_nearest_param_id].sound_timing[edanim_nearest_sound] = item->fvalue;
+}
+
+
+void edanimcbToggleParticleSwitch(void *menu, struct edanimitem_s *item)
+{
+    if (edanim_nearest_param_id != -1 && edanim_nearest_particle != -1) {
+        AnimParams[edanim_nearest_param_id].particle_switch[edanim_nearest_particle] =
+            item->toggle;
+    }
+}
+
+
+void edanimcbSetParticleRate(void *menu, struct edanimitem_s *item)
+{
+    AnimParams[edanim_nearest_param_id].particle_rate[edanim_nearest_particle] =
+        item->fvalue;
+}
+
+
+void edanimcbCancelOptMenu(void)
+{
+    edanim_active_menu = 0;
+}
+
+
+void edanimEnter(void)
+{
+    edanim_nearest = -1;
+    edanim_nearest_param_id = -1;
+    edanim_nearest_particle = -1;
+    edanim_particle_mode = 0;
+    edanim_particle_type = -1;
+    edanim_sound_type = -1;
+}

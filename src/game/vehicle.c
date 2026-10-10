@@ -368,13 +368,33 @@ extern struct nuvec_s v000;
 
 extern void ProcessFireFlyIntro(void);
 extern void InitWeatherBoss_a(void);
-extern void ProcessWeatherBoss_a(void *wb);
-extern void DrawWeatherBoss_a(void *wb);
+extern void ProcessWeatherBoss_a(struct weatherboss_s *wb);
+extern void DrawWeatherBoss_a(struct weatherboss_s *wb);
 extern void AddRockVel(struct nuvec_s *pos, struct nuvec_s *vel, s32 owner);
 extern void *memset(void *dst, s32 val, s32 len);
 extern char *best_cRPos;
 
-extern s32 WeatherBoss[];   /* weather boss state block (far) */
+/* EarthBoss state block (far). */
+struct earthboss_s {
+    char pad_000[0x10];
+    s32 health;                /* 0x10 */
+    char pad_014[0x2C - 0x14];
+    s32 action;                /* 0x2C */
+};
+extern struct earthboss_s EarthBoss;
+
+/* WeatherBoss state block (far). */
+struct weatherboss_s {
+    s32 active;                /* 0x000 */
+    char pad_004[0x5EC - 0x004];
+    s32 objectives[4];         /* 0x5EC */
+    char pad_5FC[0x608 - 0x5FC];
+    s32 nextaction;            /* 0x608 */
+    char pad_60C[0x618 - 0x60C];
+    s32 action;                /* 0x618 */
+    char pad_61C[0x660 - 0x61C];
+};
+extern struct weatherboss_s WeatherBoss;
 extern u8 VehicleMask[];    /* veh mask block, memset 0x2E8 (far) */
 
 /* HovaBlimp array, stride 0x134, 6 entries. */
@@ -386,14 +406,89 @@ extern struct hovablimp_s HovaBlimp[];
 
 /* JeepRock array, stride 0x3D4, 6 entries. */
 struct jeeprock_s {
-    char pad_00[0x18];
-    s32 exists;                /* 0x18 */
-    char pad_1C[0x3D4 - 0x1C];
+    struct nuvec_s pos;        /* 0x000 */
+    struct nuvec_s vel;        /* 0x00C */
+    s32 exists;                /* 0x018 */
+    char pad_01C[0x23C - 0x01C];
+    struct nuvec_s holdpos;    /* 0x23C */
+    struct nuvec_s oldholdpos; /* 0x248 */
+    char pad_254[0x26C - 0x254];
+    struct nuvec_s holdvel;    /* 0x26C */
+    char pad_278[0x3B4 - 0x278];
+    s32 held;                  /* 0x3B4 */
+    s32 owner;                 /* 0x3B8 */
+    f32 size;                  /* 0x3BC */
+    char pad_3C0[0x3D4 - 0x3C0];
 };
 extern struct jeeprock_s JeepRock[];
 
 extern s32 RumbleDisplayMode;
 extern s32 RumbleStoreTotalRoks;
+extern s32 RumbleStoreCrunchRoks;
+extern s32 RumbleStoreCrashRoks;
+extern s32 ShootRockSound;
+
+s32 AllRoksSkyward(void)
+{
+    s32 done = 1;
+    s32 i;
+
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0) {
+            if (JeepRock[i].pos.y < 10.0f) {
+                if (JeepRock[i].owner != 20 || JeepRock[i].holdvel.y < 5.0f) {
+                    JeepRock[i].exists = 0;
+                }
+                done = 0;
+            } else {
+                JeepRock[i].exists = 0;
+            }
+        }
+    }
+    if (done) {
+        RumbleDisplayMode = 0;
+        ShootRockSound = 0;
+    }
+    return done;
+}
+
+s32 GetRumbleCrunchRoks(void)
+{
+    s32 count;
+    s32 i;
+
+    if (RumbleDisplayMode == -1) {
+        return RumbleStoreCrunchRoks;
+    }
+    count = 0;
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0 && JeepRock[i].size > 0.0f &&
+            JeepRock[i].owner == -1) {
+            count++;
+        }
+    }
+    RumbleStoreCrunchRoks = count;
+    return count;
+}
+
+s32 GetRumblePlayerRoks(void)
+{
+    s32 count;
+    s32 i;
+
+    if (RumbleDisplayMode == -1) {
+        return RumbleStoreCrashRoks;
+    }
+    count = 0;
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0 && JeepRock[i].size > 0.0f &&
+            JeepRock[i].owner == 1) {
+            count++;
+        }
+    }
+    RumbleStoreCrashRoks = count;
+    return count;
+}
 
 s32 GetRumbleTotalRoks(void)
 {
@@ -526,17 +621,59 @@ void DrawBazookaToken(void)
     }
 }
 
+s32 WeatherBossNextAction(void)
+{
+    s32 action;
+    s32 next;
+    s32 tries;
+
+    if (WeatherBoss.nextaction == 0) {
+        next = 0;
+        tries = 1;
+        action = WeatherBoss.action;
+        do {
+            action++;
+            if (action > 4) {
+                action = 1;
+            }
+            if (WeatherBoss.objectives[action - 1] > 0) {
+                next = action;
+            }
+        } while (tries++ < 4 && next == 0);
+        return next;
+    }
+    WeatherBoss.action = WeatherBoss.nextaction;
+    return 0;
+}
+
+s32 GetCurrentWeatherBossObjectives(void)
+{
+    s32 total;
+    s32 i;
+
+    if (WeatherBoss.active != 0) {
+        total = 0;
+        for (i = 0; i < 4; i++) {
+            if (WeatherBoss.objectives[i] > 0) {
+                total += WeatherBoss.objectives[i];
+            }
+        }
+        return (total + 3) / 4;
+    }
+    return 0;
+}
+
 void ProcessWeatherBoss(void)
 {
-    if (WeatherBoss[0] != 0) {
-        ProcessWeatherBoss_a(WeatherBoss);
+    if (WeatherBoss.active != 0) {
+        ProcessWeatherBoss_a(&WeatherBoss);
     }
 }
 
 void DrawWeatherBoss(void)
 {
-    if (WeatherBoss[0] != 0) {
-        DrawWeatherBoss_a(WeatherBoss);
+    if (WeatherBoss.active != 0) {
+        DrawWeatherBoss_a(&WeatherBoss);
     }
 }
 
@@ -551,6 +688,33 @@ void InitJeepRocks(void)
 
     for (i = 5; i >= 0; i--) {
         JeepRock[i].exists = 0;
+    }
+}
+
+extern f32 RumbleCamTween;
+extern f32 RumbleCamTweenDest;
+extern f32 RumbleCamTweenInterest;
+extern f32 RUMZOOM;
+
+void UpdateRumbleCamTween(void)
+{
+    if (RumbleCamTweenDest > RumbleCamTween) {
+        RumbleCamTween += 0.02f;
+        if (RumbleCamTween > RumbleCamTweenDest) {
+            RumbleCamTween = RumbleCamTweenDest;
+        }
+    }
+    if (RumbleCamTweenDest < RumbleCamTween) {
+        RumbleCamTween -= 0.02f;
+        if (RumbleCamTween < RumbleCamTweenDest) {
+            RumbleCamTween = RumbleCamTweenDest;
+        }
+    }
+    if (EarthBoss.action != 7 || EarthBoss.health > 0) {
+        RumbleCamTweenInterest = (RumbleCamTween - 0.25f) * RUMZOOM;
+    }
+    if (RumbleCamTweenInterest < 0.0f) {
+        RumbleCamTweenInterest = 0.0f;
     }
 }
 
@@ -595,16 +759,17 @@ extern struct spacestation_s SpaceStationList[];
 /* trail array: stride 0x20, 128 entries. */
 struct trail_s {
     f32 field0;                /* 0x00 */
-    char pad_04[0x20 - 0x04];
+    char pad_04[0x18 - 0x04];
+    s32 alpha;                 /* 0x18 */
+    s32 basealpha;             /* 0x1C */
 };
 extern struct trail_s trail[128];
 extern f32 D_0062DF00;
 extern s32 trailpt;
 extern s32 trailair;
 
-extern s32 EarthBoss[];    /* far; field 0x10 at [4] */
 extern u8 PlayerAtlas[];   /* far */
-extern void ProcessAtlasAtlasCollisions_a(void *atlas, void *boss);
+extern void ProcessAtlasAtlasCollisions_a(void *atlas, struct earthboss_s *boss);
 extern void KillGameObject(struct obj_s *obj, s32 type);
 
 s32 GetCurrentFireFlyObjectives(void)
@@ -691,8 +856,30 @@ void UnembedRayCastAtlasSimple(struct NEWBUGGY *b, s16 *handle)
 
 void ProcessAtlasAtlasCollisions(void)
 {
-    if (EarthBoss[4] > 0) {
-        ProcessAtlasAtlasCollisions_a(PlayerAtlas, EarthBoss);
+    if (EarthBoss.health > 0) {
+        ProcessAtlasAtlasCollisions_a(PlayerAtlas, &EarthBoss);
+    }
+}
+
+void FadeOutLastTrail(s32 last, s32 count)
+{
+    f32 step;
+    f32 fade;
+    f32 base;
+    s32 i;
+    s32 idx;
+
+    step = 1.0f / (count + 1);
+    fade = 0.0f;
+    fade += step;
+    for (i = 0; i < count; i++) {
+        idx = (last - i) & 0x7F;
+        if (trail[idx].field0 == -10000.0f) {
+            return;
+        }
+        base = trail[idx].basealpha;
+        trail[idx].alpha = base * fade;
+        fade += step;
     }
 }
 
@@ -778,14 +965,125 @@ void DrawSpaceStations(void)
     }
 }
 
+/* Glider bullet pools: free/used pointer stacks for player and enemy bullets. */
+struct gliderbullet_s {
+    struct numtx_s mtx;        /* 0x00 */
+    struct nuvec_s vel;        /* 0x40 */
+    u16 life;                  /* 0x4C */
+    u16 lastlife;              /* 0x4E */
+};
+extern struct gliderbullet_s *FreeGliderBulletList[];
+extern struct gliderbullet_s *UsedGliderBulletList[];
+extern struct gliderbullet_s *FreeEnemyGliderBulletList[];
+extern struct gliderbullet_s *UsedEnemyGliderBulletList[];
+extern s32 FreeGliderBulletNum;
+extern s32 UsedGliderBulletNum;
+extern s32 FreeEnemyGliderBulletNum;
+extern s32 UsedEnemyGliderBulletNum;
+extern s32 BulletNumFrees;
+extern s32 BulletEnemyNumFrees;
+
+inline struct gliderbullet_s *GrabGliderBullet(s32 enemy)
+{
+    struct gliderbullet_s *b;
+
+    if (enemy) {
+        if (FreeEnemyGliderBulletNum != 0) {
+            FreeEnemyGliderBulletNum--;
+            b = FreeEnemyGliderBulletList[FreeEnemyGliderBulletNum];
+            UsedEnemyGliderBulletList[UsedEnemyGliderBulletNum++] = b;
+            return b;
+        }
+        return 0;
+    }
+    if (FreeGliderBulletNum != 0) {
+        FreeGliderBulletNum--;
+        b = FreeGliderBulletList[FreeGliderBulletNum];
+        UsedGliderBulletList[UsedGliderBulletNum++] = b;
+        return b;
+    }
+    return 0;
+}
+
+s32 AddGliderBullet(struct numtx_s *m, struct nuvec_s *pos, struct nuvec_s *vel,
+                    s32 enemy)
+{
+    struct gliderbullet_s *b;
+
+    b = GrabGliderBullet(enemy);
+    if (b != 0) {
+        if (enemy) {
+            b->life = 100;
+        } else if (Level == 0xD) {
+            b->life = 75;
+        } else if (Level == 0x1A) {
+            b->life = 37;
+        } else {
+            b->life = 150;
+        }
+        if (enemy) {
+            b->lastlife = b->life - 1;
+        } else {
+            b->lastlife = b->life + 1;
+        }
+        b->mtx = *m;
+        b->mtx._30 = pos->x;
+        b->mtx._31 = pos->y;
+        b->mtx._32 = pos->z;
+        b->vel.x = vel->x * 0.02f;
+        b->vel.y = vel->y * 0.02f;
+        b->vel.z = vel->z * 0.02f;
+        return 1;
+    }
+    return 0;
+}
+
+void FreeGliderBullet(s32 index, s32 enemy)
+{
+    if (enemy) {
+        BulletEnemyNumFrees++;
+        FreeEnemyGliderBulletList[FreeEnemyGliderBulletNum++] =
+            UsedEnemyGliderBulletList[index];
+        UsedEnemyGliderBulletList[index] =
+            UsedEnemyGliderBulletList[--UsedEnemyGliderBulletNum];
+    } else {
+        BulletNumFrees++;
+        FreeGliderBulletList[FreeGliderBulletNum++] = UsedGliderBulletList[index];
+        UsedGliderBulletList[index] = UsedGliderBulletList[--UsedGliderBulletNum];
+    }
+}
+
 struct asteroid_s {
     s32 active;                /* 0x00 */
     char pad_04[0x2C - 0x04];
     f32 radius;                /* 0x2C */
-    char pad_30[0x4C - 0x30];
+    char pad_30[0x38 - 0x30];
+    s32 inview;                /* 0x38 */
+    s32 age;                   /* 0x3C */
+    char pad_40[0x4C - 0x40];
 };
 extern struct asteroid_s AsteroidList[];   /* far; 100 entries, InitAsteroid's argument is always 0 */
 extern void InitAsteroid(s32 x);
+
+struct asteroid_s *FindFreeAsteroid(s32 passes)
+{
+    s32 i;
+    s32 pass;
+
+    for (i = 0; i < 100; i++) {
+        if (AsteroidList[i].active == 0) {
+            return &AsteroidList[i];
+        }
+    }
+    for (pass = 0; pass < passes; pass++) {
+        for (i = 0; i < 100; i++) {
+            if (AsteroidList[i].age <= pass && AsteroidList[i].inview == 0) {
+                return &AsteroidList[i];
+            }
+        }
+    }
+    return 0;
+}
 
 s32 CountAsteroids(void)
 {
@@ -905,4 +1203,15 @@ struct jeeprock_s *FindJeepRock(void)
         }
     }
     return 0;
+}
+
+void KeepHoldOnRock(struct jeeprock_s *rock, struct nuvec_s *pos,
+                    struct nuvec_s *vel)
+{
+    rock->pos = *pos;
+    rock->holdpos = *pos;
+    rock->oldholdpos = rock->holdpos;
+    rock->vel = *vel;
+    rock->holdvel = *vel;
+    rock->held = 1;
 }

@@ -125,7 +125,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00208a28:AddGliderBullet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00208bf0:CollideGliderBullets"
@@ -441,7 +441,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021ae90:AllRoksSkyward"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021af28:DrawJeepRocks"
@@ -477,11 +477,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021bed8:GetRumbleCrunchRoks"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021bf50:GetRumblePlayerRoks"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021bfc8:GetRumbleTotalRoks"
@@ -645,11 +645,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d8b0:GrabGliderBullet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d958:FreeGliderBullet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021da20:InitPlane"
@@ -665,7 +665,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021dbf0:FindFreeAsteroid"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021dc90:GetRandomGliderLevelEdgePoint"
@@ -761,11 +761,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021ed08:WeatherBossNextAction"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ed80:GetCurrentWeatherBossObjectives"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ede0:ProcessWeatherBoss"
@@ -861,7 +861,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021f8d8:UpdateRumbleCamTween"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f9a0:InitRumblePanel"
@@ -877,7 +877,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021fa98:FadeOutLastTrail"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021fb30:PointLineSide"
@@ -897,7 +897,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021fc30:KeepHoldOnRock"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021fcb8:AddRock"

@@ -109,11 +109,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5490:edanimLookupInstanceIndex"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a54f0:edanimRegisterBaseScene"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a54f8:edanimLookupSpecial"
@@ -121,7 +121,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5580:edanimParamReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a55b0:edanimPlayerAnimDistance"
@@ -129,7 +129,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5628:edanimParamDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5658:edanimSoundPlace"
@@ -145,15 +145,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a57b0:edanimcbSetSwitchId"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a57f0:edanimcbSetSwitchDelay"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5828:edanimcbSetSwitchVar"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5860:edanimcbCancelSwitchTypeMenu"
@@ -185,11 +185,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5ab0:edanimcbSetSoundTiming"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5ae0:edanimcbToggleParticleSwitch"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5b20:edanimcbSetParticleType"
@@ -197,7 +197,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5b70:edanimcbSetParticleRate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5ba8:edanimcbCancelParticleTypeMenu"
@@ -229,7 +229,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a6150:edanimcbCancelOptMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6158:edanimcbFileSave"
@@ -289,7 +289,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a66b8:edanimEnter"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a66d8:edanimProc"
