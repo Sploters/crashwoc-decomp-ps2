@@ -29,11 +29,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00116ab8:NuNodeDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00116ba8:NuNodeSetName"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00116c50:NuNodeDestroyHierarchy"
@@ -45,7 +45,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00116e08:NuNodeAddChild"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00116eb0:NuNodeRemoveChild"
@@ -65,7 +65,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117018:NuNodeIterator"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:001170b8:NuNodeDestroyHierarchyData"
@@ -85,7 +85,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0036:001173f8:NuMeshNodeCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117488:NuMeshNodeDestroy"
@@ -109,7 +109,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117738:NuSkinNodeCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117800:NuSkinNodeDestroy"
@@ -117,23 +117,23 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117870:NuSplineNodeCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117938:NuSplineNodeDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:001179a0:NuNodeStrCpy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117a28:NuNodeStrToUpper"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117aa0:NuNodeStrCat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117b18:NuNodeKeepNames"
@@ -141,11 +141,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117b20:resolveReferenceNodes"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117be8:NuNodeResolveReferenceNodes"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0036:00117ca8:NuMeshNodeSetGeometry"
