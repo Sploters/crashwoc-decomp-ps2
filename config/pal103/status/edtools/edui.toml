@@ -165,7 +165,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c03a8:eduiItemColourPickSetHSV"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c03d0:eduiItemColourPickSetRGB"
@@ -193,7 +193,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c09f0:eduiItemSliderSetGranularity"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c09f8:eduiItemSliderCreateInt"
@@ -201,7 +201,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c0b00:eduiItemNumberCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0b38:eduiItemColourSliderCreate"
@@ -217,7 +217,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c0ed0:eduiMenuAttach"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0f18:eduiMenuDetach"
@@ -225,11 +225,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c0f68:eduiMenuAddItem"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0fa0:eduiMenuHighlight"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1020:eduiMenuFitWidth"
@@ -237,7 +237,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1138:eduiInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1158:eduicbProcessGreyPick"
@@ -281,7 +281,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1930:cbgpcfgCopy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1970:cbgpcfgPaste"
@@ -305,15 +305,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1c70:cbSel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1c80:cbSubMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1cc0:cbGradChange"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1cc8:TestMenu"
