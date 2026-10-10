@@ -196,8 +196,8 @@ typedef union {
 } PlatStatusType;
 
 typedef struct {
-    u8 oldmtx[0x40];          /* 0x00 */
-    void *curmtx;             /* 0x40 */
+    struct numtx_s oldmtx;    /* 0x00 */
+    struct numtx_s *curmtx;   /* 0x40 */
     s16 terrno;               /* 0x44 */
     s16 instance;             /* 0x46 */
     PlatStatusType status;    /* 0x48 */
@@ -277,6 +277,9 @@ extern tertype *ShadPoly;
 extern s32 TempScanStack[];
 extern void *TempStackPtr;
 extern s32 TerrPlatDis;
+extern s32 PlatImpactId;
+extern struct nuvec_s PlatImpactNorm;
+extern tertype PlatImpactTer;
 
 extern s32 NuAtan2D(f32 x, f32 z);
 extern f32 NuFsqrt(f32 x);
@@ -300,6 +303,27 @@ extern short InsidePolLines(f32 x, f32 y, f32 z,
 extern s32 CheckCylinder(s32 p0, s32 p1, s32 *flags, s32 type);
 extern s32 HitWallSpline(void);
 
+void TerrainPlatformOldUpdate(void) {
+    s32 i;
+
+    if (CurTerr != 0) {
+        for (i = 0; i < 128; i++) {
+            if (CurTerr->platdata[i].curmtx != 0) {
+                CurTerr->platdata[i].oldmtx = *CurTerr->platdata[i].curmtx;
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            if (CurTerr->TrackInfo[i].ptrid != 0) {
+                CurTerr->TrackInfo[i].timer--;
+                if (CurTerr->TrackInfo[i].timer <= 0) {
+                    CurTerr->TrackInfo[i].ptrid = 0;
+                }
+            }
+        }
+    }
+}
+
+
 //NGC MATCH
 void RotateVec(struct nuvec_s *in, struct nuvec_s *out) {
     float tz;
@@ -312,6 +336,37 @@ void RotateVec(struct nuvec_s *in, struct nuvec_s *out) {
              in->x * NuTrigTable[(s32)TerI->ay & 0xffff];
     out->x = tz * NuTrigTable[(s32)TerI->ay & 0xffff] +
              in->x * NuTrigTable[(s32)(TerI->ay + 16384.0f) & 0xffff];
+}
+
+void RotateTerrain(tertype *ter) {
+    float sinax;
+    float cosax;
+    float sinay;
+    float cosay;
+    float tz;
+
+    sinax = NuTrigTable[(s32)TerI->ax & 0xffff];
+    cosax = NuTrigTable[(s32)(TerI->ax + 16384.0f) & 0xffff];
+    sinay = NuTrigTable[(s32)TerI->ay & 0xffff];
+    cosay = NuTrigTable[(s32)(TerI->ay + 16384.0f) & 0xffff];
+    TerI->rotter.pnts[0].y = ter->pnts[0].y * cosax - ter->pnts[0].z * sinax;
+    tz = ter->pnts[0].y * sinax + ter->pnts[0].z * cosax;
+    TerI->rotter.pnts[0].z = tz * cosay - ter->pnts[0].x * sinay;
+    TerI->rotter.pnts[0].x = tz * sinay + ter->pnts[0].x * cosay;
+    TerI->rotter.pnts[1].y = ter->pnts[1].y * cosax - ter->pnts[1].z * sinax;
+    tz = ter->pnts[1].y * sinax + ter->pnts[1].z * cosax;
+    TerI->rotter.pnts[1].z = tz * cosay - ter->pnts[1].x * sinay;
+    TerI->rotter.pnts[1].x = tz * sinay + ter->pnts[1].x * cosay;
+    TerI->rotter.pnts[2].y = ter->pnts[2].y * cosax - ter->pnts[2].z * sinax;
+    tz = ter->pnts[2].y * sinax + ter->pnts[2].z * cosax;
+    TerI->rotter.pnts[2].z = tz * cosay - ter->pnts[2].x * sinay;
+    TerI->rotter.pnts[2].x = tz * sinay + ter->pnts[2].x * cosay;
+    if (ter->norm[1].y < 65536.0f) {
+        TerI->rotter.pnts[3].y = ter->pnts[3].y * cosax - ter->pnts[3].z * sinax;
+        tz = ter->pnts[3].y * sinax + ter->pnts[3].z * cosax;
+        TerI->rotter.pnts[3].z = tz * cosay - ter->pnts[3].x * sinay;
+        TerI->rotter.pnts[3].x = tz * sinay + ter->pnts[3].x * cosay;
+    }
 }
 
 //NGC MATCH
@@ -1087,6 +1142,140 @@ s32 HitTerrPoly(tertype *ter, s32 terrindex) {
     return hit;
 }
 
+/* PS2 switch structure reconstructed from 0x00182b00. */
+inline void TerrainMoveImpactData(void) {
+    switch (TerI->hittype) {
+        case 0:
+            break;
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 0x11:
+        case 0x12:
+        case 0x13:
+        case 0x14:
+            if (TerI->hitterrno != -1) {
+                TerrPolyInfo = *TerI->hitter;
+                TerrPoly = &TerrPolyInfo;
+                TerrPolyObj = TerI->hitterrno;
+            }
+            return;
+    }
+}
+
+inline void FullDeflect(struct nuvec_s *norm, struct nuvec_s *vel, struct nuvec_s *out) {
+    f32 dot;
+
+    dot = norm->x * -vel->x + norm->y * -vel->y + norm->z * -vel->z + 0.001f;
+    out->x = norm->x * dot + vel->x;
+    out->y = norm->y * dot + vel->y;
+    out->z = norm->z * dot + vel->z;
+}
+
+inline void PlatformConnect(void *id, struct nuvec_s *curvel, struct nuvec_s *vvel, s32 platid) {
+    TerrainTrackInfoType *track;
+    s32 c;
+
+    if (CurTrackInfo != 0) {
+        CurTrackInfo->timer = 4;
+        CurTrackInfo->platid = platid;
+        CurTrackInfo->platinf |= 1;
+        return;
+    }
+    for (c = 0; c < 4; c++) {
+        if (CurTerr->TrackInfo[c].ptrid == 0) {
+            track = &CurTerr->TrackInfo[c];
+            goto found;
+        }
+    }
+    track = 0;
+found:
+    CurTrackInfo = track;
+    if (track != 0) {
+        track->timer = 4;
+        track->ptrid = id;
+        track->platid = platid;
+        track->platinf |= 1;
+        curvel->y = 0.0f;
+        vvel->y = 0.0f;
+    }
+}
+
+void TerrainImpact(struct nuvec_s *vpos, struct nuvec_s *vvel, u8 *flags) {
+    f32 dx;
+    f32 dy;
+    f32 dz;
+
+    TerrainMoveImpactData();
+    switch (TerI->hittype) {
+        case 0:
+            flags[0] = 0;
+            vpos->x = TerI->curpos.x + TerI->curvel.x;
+            vpos->y = (TerI->curpos.y + TerI->curvel.y) * TerI->yscale - TerI->size * TerI->yscale;
+            vpos->z = TerI->curpos.z + TerI->curvel.z;
+            break;
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            TerI->hittime -= TerI->timeadj;
+            if (TerI->hittime < 0.0f) {
+                TerI->hittime = 0.0f;
+            }
+            dx = TerI->curvel.x * TerI->hittime;
+            dy = TerI->curvel.y * TerI->hittime;
+            dz = TerI->curvel.z * TerI->hittime;
+            TerI->curpos.x += dx;
+            TerI->curpos.y += dy;
+            TerI->curpos.z += dz;
+            TerI->curvel.x -= dx;
+            TerI->curvel.y -= dy;
+            TerI->curvel.z -= dz;
+            FullDeflect(&TerI->hitnorm, &TerI->curvel, &TerI->curvel);
+            FullDeflect(&TerI->uhitnorm, vvel, vvel);
+            if (TerI->uhitnorm.y < 0.707f) {
+                flags[0] = 0;
+                terrhitflags |= 1;
+                TerI->curpos.x += TerI->hitnorm.x * 0.002f;
+                TerI->curpos.z += TerI->hitnorm.z * 0.002f;
+                TerI->curvel.x += TerI->hitnorm.x * 0.003f;
+                TerI->curvel.z += TerI->hitnorm.z * 0.003f;
+                vvel->x += TerI->hitnorm.x * 0.003f;
+                vvel->z += TerI->hitnorm.z * 0.003f;
+            } else {
+                terrhitflags |= 2;
+                flags[0] = 1;
+                flags[1] = 1;
+                TerI->curpos.y += TerI->hitnorm.y * 0.001f;
+            }
+            break;
+        case 0x11:
+        case 0x12:
+        case 0x13:
+        case 0x14:
+            FullDeflect(&TerI->hitnorm, &TerI->curvel, &TerI->curvel);
+            FullDeflect(&TerI->uhitnorm, vvel, vvel);
+            if (TerI->uhitnorm.y < 0.707f) {
+                TerI->curpos.x += TerI->hitnorm.x * 0.005f;
+                TerI->curpos.y += TerI->hitnorm.y * 0.002f;
+                TerI->curpos.z += TerI->hitnorm.z * 0.005f;
+                TerI->curvel.x += TerI->hitnorm.x * 0.005f;
+                TerI->curvel.y += TerI->hitnorm.y * 0.002f;
+                TerI->curvel.z += TerI->hitnorm.z * 0.005f;
+                flags[0] = 1;
+            } else {
+                TerI->curpos.y += TerI->hitnorm.y * 0.005f;
+                TerI->curvel.y += TerI->hitnorm.y * 0.01f;
+            }
+            break;
+    }
+    if ((TerI->hittype != 0) && (TerI->hittype < 0x10) && (TerI->hitterrno != -1) &&
+        (CurTerr->terr[TerI->hitterrno].type == 1) && (TerI->uhitnorm.y > 0.707f)) {
+        PlatformConnect(TerI->flags, &TerI->curvel, vvel, CurTerr->terr[TerI->hitterrno].info);
+    }
+}
+
 /* PS2 switch structure reconstructed from 0x00179f50. */
 s32 TerrainImpactPlatform(u8 *flags) {
     switch (TerI->hittype) {
@@ -1145,6 +1334,14 @@ s32 TerrainImpactPlatform(u8 *flags) {
 
 void TerrainSetCur(void *curterr) {
     CurTerr = curterr;
+}
+
+void AddCollisionSphere(struct nuvec_s *pos, f32 radius) {
+    if (curSphereter < 16) {
+        SphereData[curSphereter].pos = *pos;
+        SphereData[curSphereter].radius = radius;
+        curSphereter++;
+    }
 }
 
 void *CrashDataPtr(void) {
@@ -1208,7 +1405,24 @@ void noterraininit(void) {
     curPickInst = 0;
 }
 
-void UpdatePlatinst(s32 id, void *mtx) {
+s32 FindPlatInst(s32 instance) {
+    s32 i;
+    s32 found;
+
+    if (instance == -1) {
+        return -1;
+    }
+    found = -1;
+    for (i = 0; i < 128; i++) {
+        if ((CurTerr->platdata[i].curmtx != 0) && (CurTerr->platdata[i].instance == instance)) {
+            found = i;
+            break;
+        }
+    }
+    return found;
+}
+
+void UpdatePlatinst(s32 id, struct numtx_s *mtx) {
     if ((id >= 0) && (id < 128)) {
         CurTerr->platdata[id].curmtx = mtx;
     }
@@ -1218,6 +1432,18 @@ void PlatInstRotate(s32 id, s32 rot) {
     CurTerr->platdata[id].status.bit.rotate = rot;
 }
 
+void PlatInstBounce(s32 id, f32 plrgrav, f32 tension, f32 damp) {
+    if ((id >= 0) && (id < 128)) {
+        if (CurTerr->platdata[id].plrgrav == 0.0f) {
+            CurTerr->platdata[id].ypos = 0.0f;
+            CurTerr->platdata[id].yvel = 0.0f;
+        }
+        CurTerr->platdata[id].plrgrav = plrgrav;
+        CurTerr->platdata[id].tension = tension;
+        CurTerr->platdata[id].damp = damp;
+    }
+}
+
 s32 PlatInstGetHit(s32 id) {
     if ((id >= 0) && (id < 128)) {
         return CurTerr->platdata[id].status.bit.hit;
@@ -1225,9 +1451,22 @@ s32 PlatInstGetHit(s32 id) {
     return 0;
 }
 
-void TerrainPlatGetMtx(s32 id, u8 **oldmtx, void **curmtx) {
+s32 PlatImpactInfo(struct nuvec_s *norm, s32 *info0, s32 *info1) {
+    s32 id;
+
+    if (PlatImpactId != 0) {
+        *norm = PlatImpactNorm;
+        *info0 = PlatImpactTer.info[0];
+        *info1 = PlatImpactTer.info[1];
+    }
+    id = PlatImpactId;
+    PlatImpactId = 0;
+    return id;
+}
+
+void TerrainPlatGetMtx(s32 id, struct numtx_s **oldmtx, struct numtx_s **curmtx) {
     if (id >= 0) {
-        *oldmtx = CurTerr->platdata[id].oldmtx;
+        *oldmtx = &CurTerr->platdata[id].oldmtx;
         *curmtx = CurTerr->platdata[id].curmtx;
     }
 }
@@ -1277,29 +1516,16 @@ TerrainTrackInfoType *AllocTerrId(void) {
     return 0;
 }
 
-void OffPlat(void) {
+void FullReflect(struct nuvec_s *norm, struct nuvec_s *vel, struct nuvec_s *out) {
+    f32 dot;
+
+    dot = norm->x * -vel->x + norm->y * -vel->y + norm->z * -vel->z;
+    out->x = norm->x * dot * 2.0f + vel->x;
+    out->y = norm->y * dot * 2.0f + vel->y;
+    out->z = norm->z * dot * 2.0f + vel->z;
 }
 
-/* PS2 switch structure reconstructed from 0x00182b00. */
-void TerrainMoveImpactData(void) {
-    switch (TerI->hittype) {
-        case 0:
-            break;
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 0x11:
-        case 0x12:
-        case 0x13:
-        case 0x14:
-            if (TerI->hitterrno != -1) {
-                TerrPolyInfo = *TerI->hitter;
-                TerrPoly = &TerrPolyInfo;
-                TerrPolyObj = TerI->hitterrno;
-            }
-            return;
-    }
+void OffPlat(void) {
 }
 
 // NGC MATCH (PS2 layout/control flow verified against 0x0017c7d8)
@@ -1526,4 +1752,50 @@ cleanup:
     curSphereter = 0;
     TerrShapeAdjCnt = 0;
     curPickInst = 0;
+}
+
+void RayImpact(struct nuvec_s *vec) {
+    switch (TerI->hittype) {
+        case 0:
+            break;
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 0x11:
+        case 0x12:
+        case 0x13:
+        case 0x14:
+            if (TerI->hitterrno != -1) {
+                TerrPolyInfo = *TerI->hitter;
+                TerrPoly = &TerrPolyInfo;
+                TerrPolyObj = TerI->hitterrno;
+            }
+            break;
+    }
+
+    switch (TerI->hittype) {
+        case 0:
+            break;
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            TerI->hittime -= TerI->timeadj;
+            if (TerI->hittime < 0.0f) {
+                TerI->hittime = 0.0f;
+            }
+            vec->x = TerI->curvel.x * TerI->hittime;
+            vec->y = TerI->curvel.y * TerI->hittime;
+            vec->z = TerI->curvel.z * TerI->hittime;
+            break;
+        case 0x11:
+        case 0x12:
+        case 0x13:
+        case 0x14:
+            vec->x = 0.0f;
+            vec->y = 0.0f;
+            vec->z = 0.0f;
+            break;
+    }
 }
