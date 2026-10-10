@@ -192,7 +192,7 @@ struct nuvec_s {
 
 struct edppptl_s {
     struct nuvec_s pos;
-    char pad0C[0x4];
+    int type;
     int debris;
     char pad14[0x20];
     int switchid;
@@ -234,16 +234,28 @@ struct debtypedef_s {
     unsigned char effectlist;
     char pad11[0x1];
     short genrate;
-    char pad14[0xE];
+    char pad14[0x4];
+    short ivalon;
+    short ivalonran;
+    short ivaloff;
+    short ivaloffran;
+    char pad20[0x2];
     unsigned char texturetype;
     char pad23[0x5];
     float cuton;
     float cutoff;
     float drawcutoff;
     float emitvel;
-    char pad38[0x60];
+    struct nuvec_s varemit;
+    struct nuvec_s varemitrand;
+    struct nuvec_s varstart;
+    struct nuvec_s varstartrand;
+    char pad68[0x30];
     float gravity;
-    char pad9C[0x23C];
+    float etime;
+    char padA0[0x8];
+    float jib[4];
+    char padB8[0x220];
     struct debphysics_s *physics;
     char pad2DC[0x40];
     unsigned char numcollspheres;
@@ -345,10 +357,10 @@ extern int D_0062F328;
 extern int D_0062F32C;
 extern int D_0062F330;
 extern int D_0062F334;
-extern int D_0062F344;
-extern int D_0062F348;
-extern int D_0062F34C;
-extern int D_0062F350;
+extern struct edptlitem_s *D_0062F344;
+extern struct edptlitem_s *D_0062F348;
+extern struct edptlitem_s *D_0062F34C;
+extern struct edptlitem_s *D_0062F350;
 extern unsigned char D_0062F358;
 extern char D_00484DE0[];
 extern int D_0062F318;
@@ -363,6 +375,27 @@ extern void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, 
 
 extern void *edpp_mtl;
 extern unsigned char edpp_effect_list;
+
+#define ptljibitem0 D_0062F344
+#define ptljibitem1 D_0062F348
+#define ptljibitem2 D_0062F34C
+#define ptljibitem3 D_0062F350
+
+extern void *namemenu;
+extern char D_00617F88[];
+#define nameduplicatemessage D_00617F88
+
+extern int NuFileReadInt(void *file);
+extern float NuFileReadFloat(void *file);
+extern void NuFileWriteInt(void *file, int value);
+extern void NuFileWriteFloat(void *file, float value);
+extern void edppPtlCreate(struct nuvec_s *pos, int type);
+extern void edppRestartAllEffectsInLevel(void);
+extern void edcamSet(void);
+extern void edppDrawCursor(void);
+extern void eduiMenuRender(void *menu);
+extern void GenericDebinfoDmaTypeUpdate(struct debtypedef_s *dt);
+extern void CreateMessageMenu(void *parent, char *message, int flags);
 
 
 void ParticleReset(void) {
@@ -420,6 +453,46 @@ void edppPtlDestroy(int index) {
 }
 
 
+int edppWrite(void *file) {
+    int count;
+    int i;
+
+    count = 0;
+    for (i = 0; i < 256; i++) {
+        if (edpp_ptls[i].debris != -1) {
+            count++;
+        }
+    }
+    NuFileWriteInt(file, count);
+    for (i = 0; i < count; i++) {
+        NuFileWriteFloat(file, edpp_ptls[i].pos.x);
+        NuFileWriteFloat(file, edpp_ptls[i].pos.y);
+        NuFileWriteFloat(file, edpp_ptls[i].pos.z);
+        NuFileWriteInt(file, edpp_ptls[i].type);
+    }
+    return 1;
+}
+
+
+int edppRead(void *file) {
+    struct nuvec_s pos;
+    int count;
+    int i;
+    int type;
+
+    count = NuFileReadInt(file);
+    edppDestroyAllParticles();
+    for (i = 0; i < count; i++) {
+        pos.x = NuFileReadFloat(file);
+        pos.y = NuFileReadFloat(file);
+        pos.z = NuFileReadFloat(file);
+        type = NuFileReadInt(file);
+        edppPtlCreate(&pos, type);
+    }
+    return 1;
+}
+
+
 int edppProc(struct pad_s *pad) {
     unsigned int mask;
 
@@ -434,10 +507,20 @@ int edppProc(struct pad_s *pad) {
 }
 
 
-void edppHighlightNearest(void) {
+inline void edppHighlightNearest(void) {
     if (edpp_nearest != -1) {
         edbitsDrawCube(edpp_ptls[edpp_nearest].pos.x, edpp_ptls[edpp_nearest].pos.y,
                        edpp_ptls[edpp_nearest].pos.z, 0.5f, 0.5f, 0.5f, 0, 0, 0, 0, -1, edpp_mtl);
+    }
+}
+
+
+void edppRender(void) {
+    edcamSet();
+    edppDrawCursor();
+    edppHighlightNearest();
+    if (edpp_active_menu != 0) {
+        eduiMenuRender(edpp_active_menu);
     }
 }
 
@@ -552,6 +635,31 @@ void cbPtlChangeEmitVel(void *menu, struct edptlitem_s *item) {
 }
 
 
+void cbPtlChangeX(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    if (menu == 0) {
+        return;
+    }
+    if (menu == ptlvaremitmenu) {
+        dt->varemit.x = item->fvalue;
+        dt->varemitrand.x = (item->fvalue * 2.0f) * (1.0 / 2147483648.0);
+    } else if (menu == ptlvarstartmenu) {
+        dt->varstart.x = item->fvalue;
+        dt->varstartrand.x = (item->fvalue * 2.0f) * (1.0 / 2147483648.0);
+    }
+}
+
+
 void cbPtlChangeCutOff(void *menu, struct edptlitem_s *item) {
     struct debkey_s *deb;
     struct debtypedef_s *dt;
@@ -626,6 +734,34 @@ void cbPtlChangeGenRate(void *menu, struct edptlitem_s *item) {
 void cbCancelChangeGenRateMenu(void) {
     eduiMenuDestroy(changegenratemenu);
     changegenratemenu = 0;
+}
+
+
+void cbPtlApplyJib(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    if (ptljibitem0 != 0) {
+        dt->jib[0] = ptljibitem0->fvalue;
+    }
+    if (ptljibitem1 != 0) {
+        dt->jib[1] = ptljibitem1->fvalue;
+    }
+    if (ptljibitem2 != 0) {
+        dt->jib[2] = ptljibitem2->fvalue;
+    }
+    if (ptljibitem3 != 0) {
+        dt->jib[3] = ptljibitem3->fvalue;
+    }
+    GenericDebinfoDmaTypeUpdate(dt);
 }
 
 
@@ -870,6 +1006,74 @@ void cbPtlCancelTextureMenu(void) {
 }
 
 
+void cbPtlChangeIvalOn(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->ivalon = item->fvalue;
+    UpdateTotalPtls(dt);
+}
+
+
+void cbPtlChangeIvalOnRan(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->ivalonran = item->fvalue;
+    UpdateTotalPtls(dt);
+}
+
+
+void cbPtlChangeIvalOff(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->ivaloff = item->fvalue;
+    UpdateTotalPtls(dt);
+}
+
+
+void cbPtlChangeIvalOffRan(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->ivaloffran = item->fvalue;
+    UpdateTotalPtls(dt);
+}
+
+
 void cbPtlCancelEmitTimeMenu(void) {
     eduiMenuDestroy(emittimemenu);
     emittimemenu = 0;
@@ -923,6 +1127,19 @@ void cbPtlSnapToggle(void *menu, struct edptlitem_s *item) {
 }
 
 
+void edptlcbResetParticles(void) {
+    int i;
+
+    for (i = 0; i < 256; i++) {
+        if (edpp_ptls[i].debris != -1) {
+            DebFreeInstantly(&edpp_ptls[i].debris);
+            edpp_ptls[i].debris = i;
+        }
+    }
+    edppRestartAllEffectsInLevel();
+}
+
+
 void cbPtlCancel(void) {
     edpp_active_menu = 0;
 }
@@ -947,6 +1164,40 @@ void cbChangeName(void *menu, struct edptlitem_s *item) {
             strcpy(deb, item->text);
         }
     }
+}
+
+
+void cbCancelChangeNameMenu(void *menu) {
+    char *name;
+
+    if (edpp_create_type != -1) {
+        name = debtab[edpp_create_type];
+        if (name != 0) {
+            if (name[0] == 0) {
+                CreateMessageMenu(menu, nameduplicatemessage, 0);
+                return;
+            }
+            eduiMenuDestroy(namemenu);
+            namemenu = 0;
+        }
+    }
+}
+
+
+void cbPtlChangeETime(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->etime = item->fvalue;
+    UpdateTotalPtls(dt);
 }
 
 
