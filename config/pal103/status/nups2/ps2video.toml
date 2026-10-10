@@ -61,11 +61,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a248:NuMcDelete"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a288:NuMcSeek"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a2c8:NuMcWriteFloat"
@@ -89,23 +89,23 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016a458:NuMcReadFloat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a490:NuMcReadInt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a4c8:NuMcReadUnsignedInt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a500:NuMcReadShort"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a538:NuMcReadChar"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a570:tbsetCreate"
@@ -113,7 +113,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016a680:tbsetDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a6a8:tbslotReset"
@@ -169,11 +169,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016ac58:NuEnableVBlankE"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016ac90:NuDisableVBlankE"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016acd0:NuIntAddVBlankE"
@@ -185,11 +185,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016ade8:NuEnableVBlankS"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016ae20:NuDisableVBlankS"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016ae60:NuIntAddVBlankS"
