@@ -153,7 +153,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f1b0:edobjResetAnimsToZero"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f230:edobjRegisterBaseScene"
@@ -165,7 +165,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f278:edobjLookupInstance"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f300:edobjObjectDestroyAll"
@@ -173,15 +173,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f338:edobjPlayerObjectDistance"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f3a0:edobjRenderCutoffTest"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f418:edobjcbResetAnims"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f498:edobjLookupInstanceIndex"
@@ -193,7 +193,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f540:edobjParticlePlace"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019f5c8:edobjWaypointPlace"
@@ -257,11 +257,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019fb88:edobjcbChangeWaypointZRot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019fbf0:edobjcbChangeWaypointTime"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019fc70:edobjcbSetInstanceType"
@@ -317,7 +317,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019ff38:edobjcbToggleSoundType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:0019fff0:edobjcbSetSoundTiming"
@@ -377,11 +377,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0071:001a07c0:edobjcbSetLocalSoundType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:001a0858:edobjcbSetLocalParticleType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0071:001a08f8:edobjcbSoundTypeMenu"
