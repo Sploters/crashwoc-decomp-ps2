@@ -72,20 +72,27 @@
 struct debinfo_s;
 
 struct deb_s {
-    s32 field_000;
-    u8 pad_004[0x47C];
-    s16 field_480;
-    u8 pad_482[2];
+    void *chunks[256];
+    struct numtx_s rotmtx;
+    struct numtx_s emitrotmtx;
+    s16 chunkcount;
+    s16 debtype;
     s16 on;
     s16 limit;
     u8 pad_488[2];
     s16 index;
-    s16 field_48C;
-    s16 field_48E;
+    s16 reqchunkcount;
+    s16 reqcount;
     struct nuvec_s emitpos;
     u8 pad_49C[0x14];
     struct deb_s *next;
-    u8 pad_4B4[0x94];
+    u8 pad_4B4[4];
+    s16 rotory;
+    s16 rotorz;
+    s32 instances;
+    s16 oncount;
+    s16 delay;
+    u8 pad_4C4[0x84];
     s32 trigger;
     s32 trigger_param;
     f32 trigger_value;
@@ -105,12 +112,59 @@ struct debpart_s {
     f32 rate;
 };
 
+struct debtypedef_s {
+    char name[0x10];
+    u8 pad_10[8];
+    s16 ival_on;
+    s16 ival_on_ran;
+    s16 ival_off;
+    s16 ival_off_ran;
+    s8 gensort;
+    u8 pad_21[0x17];
+    struct nuvec_s variable_emit;
+};
+
+union debchannel_u {
+    f32 coord;
+    u8 colour;
+};
+
+struct debtri_s {
+    union debchannel_u v0x;
+    union debchannel_u v0y;
+    union debchannel_u v1x;
+    union debchannel_u v1y;
+    f32 v2x;
+    f32 v2y;
+    u8 pad_18[8];
+};
+
+struct debdma_s {
+    u8 pad_00[0x14];
+    f32 gtime;
+    u8 pad_18[0x18];
+    s32 u0;
+    s32 v0;
+    s32 u1;
+    s32 v1;
+    s32 u2;
+    s32 v2;
+    s32 u3;
+    s32 v3;
+    u8 pad_50[0x10];
+    struct debtri_s tri[64];
+};
+
 struct chunkctrl_s {
     u8 pad_000[0x10];
     struct chunkctrl_s *next;
 };
 
 extern struct deb_s debkeydata[];
+extern struct debtypedef_s *debtab[128];
+extern struct numtx_s numtx_identity;
+extern f32 NuTrigTable[];
+extern s32 globalframes;
 extern struct deb_s *debris_emitter_stack[];
 extern s16 freedebkeys[];
 extern s32 freedebkeyptr;
@@ -123,6 +177,110 @@ void SetupDebris(void);
 struct debpart_s *GenDebIndex(struct deb_s *deb, struct debinfo_s *info);
 f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 void DebFree(s32 *key);
+void DebReAlloc2(struct deb_s *deb);
+void AddDebrisEffect(s32 *key, s32 type, f32 x, f32 y, f32 z);
+void NuMtxRotateZ(struct numtx_s *m, s32 angle);
+void NuMtxRotateY(struct numtx_s *m, s32 angle);
+s32 strcmp(const char *a, const char *b);
+
+
+void SplashEffect(struct debdma_s *dma) {
+    struct debtri_s *tri;
+    s32 i;
+
+    dma->gtime = -0.6f;
+    dma->u0 = 0xC00;
+    dma->v0 = 0x400;
+    dma->u1 = 0xDF0;
+    dma->v1 = 0x400;
+    dma->u2 = 0xC00;
+    dma->v2 = 0x5F0;
+    dma->u3 = 0xDF0;
+    dma->v3 = 0x5F0;
+    tri = dma->tri;
+    for (i = 0; i < 64; i++) {
+        tri->v0x.coord = (NuTrigTable[(u16)((i << 9) + 0x4000)] * -75.0f
+                          - NuTrigTable[(u16)(i << 9)] * 75.0f) * 640.0f * 0.00390625f;
+        tri->v0y.coord = NuTrigTable[(u16)(i << 9)] * -75.0f
+                       + NuTrigTable[(u16)((i << 9) + 0x4000)] * 75.0f;
+        tri->v2x = (NuTrigTable[(u16)((i << 9) + 0x4000)] * 75.0f
+                    - NuTrigTable[(u16)(i << 9)] * 75.0f) * 640.0f * 0.00390625f;
+        tri->v2y = NuTrigTable[(u16)(i << 9)] * 75.0f
+                 + NuTrigTable[(u16)((i << 9) + 0x4000)] * 75.0f;
+        tri->v1x.coord = NuTrigTable[(u16)(i << 9)] * 150.0f * 640.0f * 0.00390625f;
+        tri->v1y.coord = NuTrigTable[(u16)((i << 9) + 0x4000)] * -150.0f;
+        tri->v0x.colour = 0x1E;
+        tri->v0y.colour = 0x20;
+        tri->v1x.colour = 0x30;
+        if (i < 41) {
+            tri->v1y.colour = 0x30;
+        } else {
+            tri->v1y.colour = (64 - i) * 2;
+        }
+        tri++;
+    }
+}
+
+
+void SplashBodyEffect(struct debdma_s *dma) {
+    struct debtri_s *tri;
+    s32 i;
+    s32 size;
+
+    dma->gtime = 0.0f;
+    dma->u0 = 0;
+    dma->v0 = 0;
+    dma->u1 = 0x3F0;
+    dma->v1 = 0;
+    dma->u2 = 0;
+    dma->v2 = 0x3F0;
+    dma->u3 = 0x3F0;
+    dma->v3 = 0x3F0;
+    tri = dma->tri;
+    for (i = 0; i < 64; i++, tri++) {
+        size = 75 + i * 2;
+        tri->v0x.coord = ((f32)-size * NuTrigTable[0x8000] - (f32)size * NuTrigTable[0x4000])
+                       * 640.0f * 0.00390625f;
+        tri->v0y.coord = (f32)-size * NuTrigTable[0x4000] + (f32)size * NuTrigTable[0x8000];
+        tri->v2x = ((f32)size * NuTrigTable[0x8000] - (f32)size * NuTrigTable[0x4000])
+                 * 640.0f * 0.00390625f;
+        tri->v2y = (f32)size * NuTrigTable[0x4000] + (f32)size * NuTrigTable[0x8000];
+        tri->v1x.coord = (f32)(size * 2) * NuTrigTable[0x4000] * 640.0f * 0.00390625f;
+        tri->v1y.coord = (f32)(-size * 2) * NuTrigTable[0x8000];
+        tri->v0x.colour = 0x1E;
+        tri->v0y.colour = 0x20;
+        tri->v1x.colour = 0x30;
+        tri->v1y.colour = (64 - i) * 80 / 64;
+    }
+}
+
+
+void DebrisStartOffset(s32 key, s32 offset) {
+    struct debtypedef_s *type;
+    s32 looptime;
+    s32 loopfrac;
+
+    if (key != -1) {
+        type = debtab[debkeydata[key].debtype];
+        if (type->ival_on_ran != 0 || type->ival_off_ran != 0) {
+            debkeydata[key].delay = 0;
+        } else {
+            if (type->gensort == 7) {
+                debkeydata[key].delay = 0;
+                debkeydata[key].rotory = offset * type->variable_emit.y;
+                debkeydata[key].rotorz = offset * type->variable_emit.z;
+            }
+            looptime = type->ival_on + type->ival_off;
+            loopfrac = globalframes % looptime - offset;
+            if (loopfrac == 0) {
+                debkeydata[key].delay = 0;
+            } else {
+                debkeydata[key].delay = looptime - loopfrac;
+            }
+            debkeydata[key].oncount = type->ival_on;
+        }
+    }
+}
 
 
 void DebrisOff(s32 *key) {
@@ -141,6 +299,58 @@ void DebrisOn(s32 *key) {
     if (*key != -1) {
         deb = &debkeydata[*key];
         deb->on = 1;
+    }
+}
+
+
+void AddFiniteShotDebrisEffect(s32 *key, s32 type, struct nuvec_s *pos, s32 instances) {
+    AddDebrisEffect(key, type, pos->x, pos->y, pos->z);
+    if (*key != -1) {
+        debkeydata[*key].instances = instances;
+        debkeydata[*key].delay = 0;
+    }
+}
+
+
+void DebReAlloc(struct deb_s *deb, s32 count) {
+    deb->reqcount = count;
+    deb->reqchunkcount = (count + 31) / 32;
+    if (deb->reqchunkcount == deb->chunkcount) {
+        deb->limit = count;
+    } else {
+        DebReAlloc2(deb);
+    }
+}
+
+
+void DebrisOrientation(s32 key, s16 rotz, s16 roty) {
+    if (key != -1) {
+        debkeydata[key].rotmtx = numtx_identity;
+        NuMtxRotateZ(&debkeydata[key].rotmtx, rotz);
+        NuMtxRotateY(&debkeydata[key].rotmtx, roty);
+    }
+}
+
+
+void DebrisOrientationMtx(s32 key, struct numtx_s *mtx) {
+    if (key != -1) {
+        debkeydata[key].rotmtx = *mtx;
+        debkeydata[key].rotmtx._30 = 0.0f;
+        debkeydata[key].rotmtx._31 = 0.0f;
+        debkeydata[key].rotmtx._32 = 0.0f;
+    }
+}
+
+
+void DebrisPosOrientationMtx(s32 key, struct numtx_s *mtx) {
+    if (key != -1) {
+        debkeydata[key].rotmtx = *mtx;
+        debkeydata[key].emitpos.x = mtx->_30;
+        debkeydata[key].emitpos.y = mtx->_31;
+        debkeydata[key].emitpos.z = mtx->_32;
+        debkeydata[key].rotmtx._30 = 0.0f;
+        debkeydata[key].rotmtx._31 = 0.0f;
+        debkeydata[key].rotmtx._32 = 0.0f;
     }
 }
 
@@ -193,6 +403,18 @@ void DebrisSetRenderGroup(s32 group) {
 }
 
 
+s32 LookupDebrisEffect(char *name) {
+    s32 i;
+
+    for (i = 1; i < 128; i++) {
+        if (debtab[i] != 0 && strcmp(debtab[i]->name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 void DebrisRegisterCutoffCameraVec(struct nuvec_s *vec) {
     CutoffCameraVec = vec;
 }
@@ -203,6 +425,27 @@ f32 CameraEmitterDistance(struct nuvec_s *pos) {
         return 0.0f;
     }
     return NuVecDist(pos, CutoffCameraVec, 0);
+}
+
+
+s32 DebrisFindAllOfType(s32 type, struct nuvec_s **list, s32 max, s32 skip, s32 activeonly) {
+    s32 i;
+    s32 found;
+
+    found = 0;
+    for (i = 0; i < 256; i++) {
+        if (debkeydata[i].debtype == type
+            && (!activeonly || debkeydata[i].chunkcount != 0)) {
+            if (found - skip >= 0 && found - skip < max) {
+                list[found - skip] = &debkeydata[i].emitpos;
+            }
+            found++;
+            if (found - skip >= max) {
+                break;
+            }
+        }
+    }
+    return found - skip;
 }
 
 
@@ -270,6 +513,12 @@ struct debpart_s *GenDebIndexSort(struct deb_s *deb, struct debinfo_s *info) {
 }
 
 
+void GenDebMomAdjFromPos(struct deb_s *deb, struct debinfo_s *info, struct debpart_s *part) {
+    part->mom.x = part->pos.x * 2.0;
+    part->mom.z = part->pos.z * 2.0;
+}
+
+
 void GenDebMomAdjFromPosAll(struct deb_s *deb, struct debinfo_s *info, struct debpart_s *part) {
     part->mom.x = part->pos.x * deb_mom_scale;
     part->mom.y = part->pos.y * deb_mom_scale;
@@ -304,11 +553,11 @@ s32 DebAlloc(void) {
     }
     key = freedebkeys[freedebkeyptr++];
     deb = &debkeydata[key];
-    deb->field_480 = 0;
+    deb->chunkcount = 0;
     deb->limit = 0;
-    deb->field_48C = 0;
-    deb->field_48E = 0;
-    deb->field_000 = 0;
+    deb->reqchunkcount = 0;
+    deb->reqcount = 0;
+    deb->chunks[0] = 0;
     return key;
 }
 
@@ -347,6 +596,16 @@ void DebFreeWithoutKey(struct deb_s *deb) {
             DebFree(&key);
             break;
         }
+    }
+}
+
+
+void DebrisEmitterOrientationMtx(s32 key, struct numtx_s *mtx) {
+    if (key != -1) {
+        debkeydata[key].emitrotmtx = *mtx;
+        debkeydata[key].emitrotmtx._30 = 0.0f;
+        debkeydata[key].emitrotmtx._31 = 0.0f;
+        debkeydata[key].emitrotmtx._32 = 0.0f;
     }
 }
 
