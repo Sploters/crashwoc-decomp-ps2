@@ -120,6 +120,15 @@
 
 typedef unsigned int u32;
 
+typedef struct { float x, y, z; } NuVec3;
+
+typedef struct { float m[4][4]; } NuMtx;
+
+typedef struct {
+    NuMtx mtx;
+    float fov;
+} NuCamera;
+
 extern struct numtl_s *D_00633078;
 #define GlobalMtl D_00633078
 
@@ -144,18 +153,85 @@ extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern char D_00614770[];
 extern char D_00614790[];
 
-extern int NuHGobjRndrMtxDwa(void *hobj, void *mtx, int a2, int a3, void *dwa, int blend);
+extern int NuHGobjRndrMtxDwa(void *hobj, NuMtx *mtx, int nlayers, short *layer, NuMtx *dwa, int blend);
+extern void NuHGobjEval(void *hobj, int njoints, void *joints, NuMtx *mtx);
+extern NuMtx D_0067DA40[];
+#define hgobj_joint_mtx D_0067DA40
 extern int NuRndrStreamTri3dClip(void *verts, int num, void *mtx, void *strm);
 extern int NuRndrStreamTriStrip3dClip(void *verts, int num, void *mtx, void *strm);
 extern void NuMtlBuildRenderList(void);
 extern void NuRndrOTFlush(void);
 extern void NuRndrStreamFlush(void);
+extern void NuRndrStreamInit(int size);
+extern void NuFntInit(void);
+extern void NuMtxSetIdentity(NuMtx *m);
+extern void NuRndrDeformerWeightsArrayInit(void);
+extern void NuRndrOTInit(void);
+extern int NuRndrCylCapMakeData(void);
+extern int NuRndrCylMakeData(void);
+extern void NuRndrShadowDirCol(NuVec3 *dir, u32 col);
+extern int NRCylCapData;
+extern int NRCylData;
+extern int NuRndrShadowCnt;
+extern NuMtx D_00689A40;
+#define rndr_identity_mtx D_00689A40
+extern NuVec3 D_00614760;
+#define default_light_dir D_00614760
 
-typedef struct { float x, y, z; } NuVec3;
+extern void NuLgtArcLaserDraw(int mode);
+extern void NuRndrShadowStencil(int mode, void *fxdata);
+extern void NuLightFxSetup(void);
+extern void NuLightProcessSpot(int mode);
+extern void NuLightFogDraw(int mode);
+extern void NuRndrShadow(int mode);
+extern void NuRndrWater(void);
+extern int txupload_on;
+
+extern NuCamera global_camera;
+extern void NuVecCrossRel(NuVec3 *dst, NuVec3 *origin, NuVec3 *a, NuVec3 *b);
+extern int NuAtan2D(float x, float z);
+extern void NuVecRotateX(NuVec3 *dst, NuVec3 *src, int angle);
+
+typedef struct nurndrwaterrip_s {
+    NuVec3 pos;
+    float startsize;
+    float endsize;
+    float size;
+    u32 colour;
+    u32 curcolour;
+    short timer;
+    short duration;
+} nurndrwaterrip_s;
+
+extern nurndrwaterrip_s NuRndrWaterRipDat[];
+
+typedef struct nurndrotitem_s {
+    char pad00[0xC];
+    struct nurndrotitem_s *next;
+    float depth;
+} nurndrotitem_s;
+
+typedef struct nurndrotbin_s {
+    char pad00[0xC];
+    nurndrotitem_s *head;
+    char pad10[0xC];
+} nurndrotbin_s;
+
+typedef struct ottri_s {
+    struct ottri_s *next;
+    void *tri;
+} ottri_s;
+
+extern float otscale;
+extern nurndrotbin_s D_00689AA0[];
+#define ot_bins D_00689AA0
 
 extern void *memset(void *s, int c, unsigned int n);
-extern char ot_tri[];
+extern ottri_s *ot_tri[];
+extern ottri_s ot_tribuff[];
+extern ottri_s *ot_free;
 extern int ot_highest;
+extern float NuTrigTable[];
 
 extern NuVec3 curlight;
 extern u32 curlightcol;
@@ -177,6 +253,9 @@ struct RndrPacketStream {
 };
 
 extern struct RndrPacketStream *rndrstream_2d;
+extern struct RndrPacketStream *rndrstream_3d;
+extern int nurndr_pixel_width;
+extern int nurndr_pixel_height;
 extern u32 *rndrstream_free;
 extern struct numtl_s *numtl_defaultmtl2d;
 extern int PS2_REZ_W;
@@ -348,8 +427,78 @@ void NuRndrGradRect2di(int x, int y, int width, int height,
 }
 
 
-int NuHGobjRndrMtx(void *hobj, void *mtx, int a2, int a3, void *dwa) {
-    return NuHGobjRndrMtxDwa(hobj, mtx, a2, a3, dwa, 0);
+void NuRndrWaterRippleUpdate(int frames) {
+    float t;
+    float fade;
+    int i;
+
+    for (i = 0; i < 32; i++) {
+        if (NuRndrWaterRipDat[i].timer != 0) {
+            NuRndrWaterRipDat[i].timer -= frames;
+            if (NuRndrWaterRipDat[i].timer <= 0) {
+                NuRndrWaterRipDat[i].timer = 0;
+            } else {
+                t = (float)NuRndrWaterRipDat[i].timer / (float)NuRndrWaterRipDat[i].duration;
+                NuRndrWaterRipDat[i].size = (NuRndrWaterRipDat[i].startsize - NuRndrWaterRipDat[i].endsize) * t
+                    + NuRndrWaterRipDat[i].endsize;
+                if (t > 0.75f) {
+                    fade = (1.0f - t) * 4.0f;
+                } else {
+                    fade = t * 1.3333334f;
+                }
+                NuRndrWaterRipDat[i].curcolour =
+                    ((int)((float)(NuRndrWaterRipDat[i].colour >> 24) * fade) << 24)
+                    + (NuRndrWaterRipDat[i].colour & 0xFFFFFF);
+            }
+        }
+    }
+}
+
+
+void NuHGobjRndr(void *hobj, NuMtx *mtx, int nlayers, short *layer) {
+    NuHGobjEval(hobj, 0, 0, hgobj_joint_mtx);
+    NuHGobjRndrMtxDwa(hobj, mtx, nlayers, layer, hgobj_joint_mtx, 0);
+}
+
+
+int NuHGobjRndrMtx(void *hobj, NuMtx *mtx, int nlayers, short *layer, NuMtx *dwa) {
+    return NuHGobjRndrMtxDwa(hobj, mtx, nlayers, layer, dwa, 0);
+}
+
+
+void NuRndrInitEx(int streamsize) {
+    int i;
+
+    NuRndrStreamInit(streamsize);
+    NuFntInit();
+    NuMtxSetIdentity(&rndr_identity_mtx);
+    NuRndrDeformerWeightsArrayInit();
+    NuRndrOTInit();
+    NRCylCapData = NuRndrCylCapMakeData();
+    NRCylData = NuRndrCylMakeData();
+    NuRndrShadowDirCol(&default_light_dir, 0x10808080);
+    NuRndrShadowCnt = 0;
+    for (i = 0; i < 32; i++) {
+        NuRndrWaterRipDat[i].timer = 0;
+    }
+}
+
+
+void NuRndrInit(void) {
+    int i;
+
+    NuRndrStreamInit(0x100000);
+    NuFntInit();
+    NuMtxSetIdentity(&rndr_identity_mtx);
+    NuRndrDeformerWeightsArrayInit();
+    NuRndrOTInit();
+    NRCylCapData = NuRndrCylCapMakeData();
+    NRCylData = NuRndrCylMakeData();
+    NuRndrShadowDirCol(&default_light_dir, 0x10808080);
+    NuRndrShadowCnt = 0;
+    for (i = 0; i < 32; i++) {
+        NuRndrWaterRipDat[i].timer = 0;
+    }
 }
 
 
@@ -442,6 +591,40 @@ void NuRndrShadowOnOff(int on) {
 }
 
 
+void NuRndrRectUV3diNS(int x, int y, int width, int height, u32 colour, u32 z,
+                       float u0, float v0, float u1, float v1) {
+    x += (PS2_VCNTR_X - (nurndr_pixel_width >> 1)) << 4;
+    y += (PS2_VCNTR_Y - (nurndr_pixel_height >> 1)) << 4;
+    *((unsigned long long *)rndrstream_3d->cur)++ = 6;
+    *rndrstream_3d->cur++ = colour;
+    *((float *)rndrstream_3d->cur)++ = 1.0f;
+    *((float *)rndrstream_3d->cur)++ = u0;
+    *((float *)rndrstream_3d->cur)++ = v0;
+    *((short *)rndrstream_3d->cur)++ = x;
+    *((short *)rndrstream_3d->cur)++ = y;
+    *rndrstream_3d->cur++ = z;
+    *((float *)rndrstream_3d->cur)++ = u1;
+    *((float *)rndrstream_3d->cur)++ = v1;
+    *((short *)rndrstream_3d->cur)++ = x + width;
+    *((short *)rndrstream_3d->cur)++ = y + height;
+    *rndrstream_3d->cur++ = z;
+}
+
+
+void NuRndrFx(int mode, void *fxdata) {
+    NuLgtArcLaserDraw(mode);
+    NuRndrShadowStencil(mode, fxdata);
+    NuLightFxSetup();
+    NuLightProcessSpot(mode);
+    NuLightFogDraw(mode);
+    if (nurndr_shadowson) {
+        NuRndrShadow(mode);
+    }
+    NuRndrWater();
+    txupload_on = 1;
+}
+
+
 void NuRndrShadowDirCol(NuVec3 *dir, u32 col) {
     curlight = *dir;
     curlightcol = col;
@@ -452,6 +635,28 @@ void NuRndrShadowDirCol(NuVec3 *dir, u32 col) {
 void NuRndrWaterLevelTint(float level, u32 tint) {
     NuRndrWaterLevel = level;
     NuRndrWaterTint = tint;
+}
+
+
+void NuRndrAddWaterRipple(NuVec3 *pos, int duration, u32 colour, float startsize, float endsize) {
+    nurndrwaterrip_s *rip;
+    int i;
+
+    for (i = 0; i < 32; i++) {
+        rip = &NuRndrWaterRipDat[i];
+        if (rip->timer == 0) {
+            pos->y += 0.01f;
+            rip->pos = *pos;
+            rip->startsize = startsize;
+            rip->size = startsize;
+            rip->endsize = endsize;
+            rip->colour = colour;
+            rip->curcolour = 0;
+            rip->timer = duration;
+            rip->duration = duration;
+            return;
+        }
+    }
 }
 
 
@@ -483,11 +688,89 @@ void NuRndrDeformerWeightsArrayInit(void) {
 }
 
 
+void NuRndrOTInsertItem(nurndrotitem_s *item) {
+    nurndrotbin_s *bin;
+    int index;
+
+    index = (int)(item->depth * otscale);
+    if (index < 0) {
+        index = 0;
+    }
+    if (index > 0xFFF) {
+        index = 0xFFF;
+    }
+    bin = &ot_bins[index];
+    item->next = bin->head;
+    bin->head = item;
+}
+
+
 void OTTriInit(void) {
     memset(ot_tri, 0, 0x4000);
     ot_highest = 0;
 }
 
 
+int OTTriInsert(void *tri, float depth) {
+    int index;
+
+    if (ot_free > ot_tribuff) {
+        index = (int)depth;
+        if (index > 0xFFF) {
+            index = 0xFFF;
+        }
+        if (index < 0) {
+            index = 0;
+        }
+        ot_free--;
+        ot_highest = (ot_highest > index) ? ot_highest : index;
+        ot_free->next = ot_tri[index];
+        ot_tri[index] = ot_free;
+        ot_free->tri = tri;
+        return 1;
+    }
+    return 0;
+}
+
+
+float GlobalCam3DNClip(NuVec3 *p0, NuVec3 *p1, NuVec3 *p2) {
+    NuVec3 normal;
+
+    NuVecCrossRel(&normal, p0, p1, p2);
+    return (p0->x - global_camera.mtx.m[3][0]) * normal.x
+        + (p0->y - global_camera.mtx.m[3][1]) * normal.y
+        + (p0->z - global_camera.mtx.m[3][2]) * normal.z;
+}
+
+
+void RotateCyl(NuVec3 *v, float xang, float yang) {
+    float sinx;
+    float cosx;
+    float siny;
+    float cosy;
+    float x;
+    float z;
+
+    sinx = NuTrigTable[(int)xang & 0xFFFF];
+    cosx = NuTrigTable[(int)(xang + 16384.0f) & 0xFFFF];
+    siny = NuTrigTable[(int)yang & 0xFFFF];
+    cosy = NuTrigTable[(int)(yang + 16384.0f) & 0xFFFF];
+    x = v->x;
+    z = v->y * sinx + v->z * cosx;
+    v->y = v->y * cosx - v->z * sinx;
+    v->z = z * cosy - x * siny;
+    v->x = z * siny + x * cosy;
+}
+
+
 void NuRndrTest(void) {
+}
+
+
+void NuRndrAnglesZX(NuVec3 *dir, NuVec3 *angles) {
+    NuVec3 rotated;
+
+    angles->x = NuAtan2D(dir->z, dir->y);
+    NuVecRotateX(&rotated, dir, (int)-angles->x);
+    angles->z = -NuAtan2D(rotated.x, rotated.y);
 }
