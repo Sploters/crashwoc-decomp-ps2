@@ -194,10 +194,16 @@ struct edppptl_s {
     struct nuvec_s pos;
     int type;
     int debris;
-    char pad14[0x20];
+    short rotz;
+    short roty;
+    short emitrotz;
+    short emitroty;
+    char pad1C[0x14];
+    int switchtype;
     int switchid;
     float switchvar;
-    char pad3C[0x4];
+    short refrotz;
+    short refroty;
     float bounceoffset;
     float bouncefactor;
     short group;
@@ -207,7 +213,10 @@ struct edppptl_s {
 struct debkey_s {
     char pad000[0x482];
     short debtype;
-    char pad484[0xC8];
+    char pad484[0x28];
+    void *gencode;
+    char pad4B0[0x98];
+    int switchtype;
     int switchid;
     float switchvar;
     char pad554[0x4];
@@ -223,6 +232,11 @@ struct debphysics_s {
     float gravity;
 };
 
+struct debenvkey_s {
+    float time;
+    float value;
+};
+
 struct debsound_s {
     int id;
     int control;
@@ -231,7 +245,7 @@ struct debsound_s {
 
 struct debtypedef_s {
     char name[0x10];
-    unsigned char effectlist;
+    signed char effectlist;
     char pad11[0x1];
     short genrate;
     char pad14[0x4];
@@ -239,7 +253,8 @@ struct debtypedef_s {
     short ivalonran;
     short ivaloff;
     short ivaloffran;
-    char pad20[0x2];
+    char pad20[0x1];
+    unsigned char gencode;
     unsigned char texturetype;
     char pad23[0x5];
     float cuton;
@@ -255,19 +270,40 @@ struct debtypedef_s {
     float etime;
     char padA0[0x8];
     float jib[4];
-    char padB8[0x220];
+    char padB8[0xC8];
+    struct debenvkey_s defcollenv[8];
+    char pad1C0[0x118];
     struct debphysics_s *physics;
-    char pad2DC[0x40];
+    struct debenvkey_s collenv[8];
     unsigned char numcollspheres;
     char pad31D[0x7];
     struct debsound_s sounds[4];
 };
 
-struct edptlconfirmmenu_s {
-    char pad00[0x24];
-    void (*callback)(void *menu, int arg);
+struct edptlmenu_s {
+    char pad00[0x10];
+    int x;
+    int y;
+    char pad18[0xC];
+    void (*callback)(struct edptlmenu_s *menu, int arg);
     char pad28[0x8];
     int detacharg;
+};
+
+struct edptlfont_s {
+    unsigned int colour;
+    char pad04[0xC];
+};
+
+struct numtx_s {
+    float _00, _01, _02, _03;
+    float _10, _11, _12, _13;
+    float _20, _21, _22, _23;
+    float _30, _31, _32, _33;
+};
+
+struct camera_s {
+    struct numtx_s mtx;
 };
 
 struct pad_s {
@@ -289,7 +325,7 @@ extern int edpp_dpad_mode;
 extern int edpp_snap_enabled;
 extern void *edpp_active_menu;
 extern void *changegenratemenu;
-extern void *messagemenu;
+extern struct edptlmenu_s *messagemenu;
 extern void *effectlistmenu;
 extern void *edptl_switch_menu;
 extern void *edptl_group_menu;
@@ -317,8 +353,8 @@ extern void *etimemenu;
 extern void *confirmmenu;
 extern void *edptl_switchtype_menu;
 extern void *edptl_sounds_menu;
-extern void *sscalemenu;
-extern void *filenamemenu;
+extern struct edptlmenu_s *sscalemenu;
+extern struct edptlmenu_s *filenamemenu;
 extern void *loadeffectsmenu;
 extern void *mergeeffectsmenu;
 extern void *deleteeffectsmenu;
@@ -347,7 +383,8 @@ extern void cbPtlDeleteEffect(void);
 extern char D_00484DC0[];
 #define savefilename D_00484DC0
 
-extern char D_006B3B30[];
+extern struct nuvec_s D_006B3B30;
+#define edpp_game_loc D_006B3B30
 
 extern void *ptljibmenu;
 extern void *ptlsizemenu;
@@ -374,7 +411,7 @@ extern void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, 
                            int rotx, int roty, int rotz, int flags, int colour, void *mtl);
 
 extern void *edpp_mtl;
-extern unsigned char edpp_effect_list;
+extern signed char edpp_effect_list;
 
 #define ptljibitem0 D_0062F344
 #define ptljibitem1 D_0062F348
@@ -395,7 +432,70 @@ extern void edcamSet(void);
 extern void edppDrawCursor(void);
 extern void eduiMenuRender(void *menu);
 extern void GenericDebinfoDmaTypeUpdate(struct debtypedef_s *dt);
-extern void CreateMessageMenu(void *parent, char *message, int flags);
+static void CreateMessageMenu(struct edptlmenu_s *parent, char *message, int flags);
+
+extern short edpp_rotz;
+extern short edpp_roty;
+extern short edpp_emitrotz;
+extern short edpp_emitroty;
+extern short edpp_refrotz;
+extern short edpp_refroty;
+extern int edpp_first_time_this_level;
+extern void *gencodetab[];
+extern struct camera_s global_camera;
+extern void *app_fnt;
+extern struct edptlitem_s *edui_last_item;
+
+extern struct edptlfont_s D_00617F98;
+extern struct edptlfont_s D_00617FE0;
+extern char D_00618500[];
+extern char D_006185B8[];
+extern char D_006185D8[];
+extern char D_0062F370[];
+
+#define edpp_menu_font D_00617F98
+#define edpp_message_font D_00617FE0
+#define sscalemenutitle D_00618500
+#define memcarderasemessage D_006185B8
+#define filenamemenutitle D_006185D8
+#define messagemenutitle D_0062F370
+
+extern void DebrisEmiterPos(int key, float x, float y, float z);
+extern void DebrisOrientation(int key, int rotz, int roty);
+extern void DebrisEmitterOrientation(int key, int rotz, int roty);
+extern void DebrisReflectionOrientation(int key, float offset, float factor, int rotz, int roty);
+extern struct nuvec_s *edmainQueryLocVec(void);
+extern void *memset(void *dst, int value, unsigned int size);
+extern struct edptlmenu_s *eduiMenuCreate(int x, int y, int w, int h, void *font, void *cancelcb,
+                                          char *title);
+extern void eduiMenuAddItem(struct edptlmenu_s *menu, void *item);
+extern int eduiMenuAttach(struct edptlmenu_s *parent, struct edptlmenu_s *child);
+extern void *eduiItemSelCreate(int type, struct edptlfont_s *font, int value, int group, void *cb,
+                               char *label);
+extern void *eduiItemSliderCreateInt(void *data, struct edptlfont_s *font, int group, void *cb,
+                                     int min, int max, int value, char *label);
+extern void *eduiItemTextPickCreate(void *data, struct edptlfont_s *font, void *cb, char *label);
+extern void cbPtlCancelSScaleMenu(void);
+extern void cbPtlChangeSScale(void *menu, struct edptlitem_s *item);
+extern void cbCancelChangeFileNameMenu(void);
+extern void cbChangeFileName(void *menu, struct edptlitem_s *item);
+
+
+int edppPtlPlace(int index, struct nuvec_s *pos) {
+    DebrisEmiterPos(edpp_ptls[index].debris, pos->x, pos->y, pos->z);
+    DebrisOrientation(edpp_ptls[index].debris, edpp_rotz, edpp_roty);
+    DebrisEmitterOrientation(edpp_ptls[index].debris, edpp_emitrotz, edpp_emitroty);
+    DebrisReflectionOrientation(edpp_ptls[index].debris, edpp_ptls[index].bounceoffset,
+                                edpp_ptls[index].bouncefactor, edpp_refrotz, edpp_refroty);
+    edpp_ptls[index].pos = *pos;
+    edpp_ptls[index].emitrotz = edpp_emitrotz;
+    edpp_ptls[index].emitroty = edpp_emitroty;
+    edpp_ptls[index].rotz = edpp_rotz;
+    edpp_ptls[index].roty = edpp_roty;
+    edpp_ptls[index].refrotz = edpp_refrotz;
+    edpp_ptls[index].refroty = edpp_refroty;
+    return index;
+}
 
 
 void ParticleReset(void) {
@@ -553,7 +653,7 @@ void edptlcbEmptyClipboard(void) {
 }
 
 
-void edptlcbPasteClipboard(struct edptlconfirmmenu_s *menu) {
+void edptlcbPasteClipboard(struct edptlmenu_s *menu) {
     struct debtypedef_s *dt;
     int arg;
 
@@ -571,7 +671,7 @@ void edptlcbPasteClipboard(struct edptlconfirmmenu_s *menu) {
 }
 
 
-void edptlcbCutClipboard(struct edptlconfirmmenu_s *menu) {
+void edptlcbCutClipboard(struct edptlmenu_s *menu) {
     struct debtypedef_s *dt;
     int arg;
 
@@ -774,9 +874,52 @@ void cbPtlSelType(void *menu, struct edptlitem_s *item) {
 }
 
 
+void cbPtlSelGCode(struct edptlmenu_s *menu, struct edptlitem_s *item) {
+    struct debtypedef_s *dt;
+
+    eduiMenuDetach(menu);
+    edpp_active_menu = 0;
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    dt = debtab[debkeydata[edpp_ptls[edpp_nearest].debris].debtype];
+    dt->gencode = item->value - 1;
+    debkeydata[edpp_ptls[edpp_nearest].debris].gencode = gencodetab[item->value - 1];
+}
+
+
 void cbCancelMessageMenu(void) {
     eduiMenuDestroy(messagemenu);
     messagemenu = 0;
+}
+
+
+void cbSelEffectList(struct edptlmenu_s *menu, struct edptlitem_s *item) {
+    int arg;
+    int i;
+
+    arg = 0;
+    if (item->value != edpp_effect_list) {
+        edpp_effect_list = item->value;
+        edpp_create_type = -1;
+        for (i = 1; i < 128; i++) {
+            if (debtab[i] != 0
+                && ((struct debtypedef_s *)debtab[i])->effectlist == edpp_effect_list) {
+                edpp_create_type = i;
+                break;
+            }
+        }
+    }
+    if (menu->detacharg != 0) {
+        arg = menu->detacharg;
+        eduiMenuDetach(menu);
+    }
+    if (menu->callback != 0) {
+        menu->callback(menu, arg);
+    }
 }
 
 
@@ -852,7 +995,7 @@ void edptlcbCancelDpadModeMenu(void) {
 
 void edptlcbJumpToGameLocation(void *menu, struct edptlitem_s *item) {
     item->toggle = 0;
-    edcamSetPosAng(D_006B3B30, 0, 0);
+    edcamSetPosAng(&edpp_game_loc, 0, 0);
 }
 
 
@@ -899,6 +1042,80 @@ void cbChangeNumCollSpheres(void *menu, struct edptlitem_s *item) {
     deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
     dt = debtab[deb->debtype];
     dt->numcollspheres = item->fvalue;
+}
+
+
+void cbPtlDefaultCollEnv(struct edptlmenu_s *menu) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+    int arg;
+    int i;
+
+    arg = 0;
+    if (edpp_nearest != -1 && edpp_ptls[edpp_nearest].debris != -1) {
+        deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+        dt = debtab[deb->debtype];
+        for (i = 0; i < 8; i++) {
+            dt->collenv[i].time = dt->defcollenv[i].time;
+            dt->collenv[i].value = dt->defcollenv[i].value / 10000.0f;
+        }
+    }
+    if (menu->detacharg != 0) {
+        arg = menu->detacharg;
+        eduiMenuDetach(menu);
+    }
+    if (menu->callback != 0) {
+        menu->callback(menu, arg);
+    }
+}
+
+
+void edptlcbSetSoundID(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+    unsigned int slot;
+    int id;
+
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edptl_soundid_menu = 0;
+    slot = (unsigned int)item->value >> 16;
+    id = item->value - (slot << 16);
+    if (id == 9999) {
+        id = -1;
+    }
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->sounds[slot].id = id;
+}
+
+
+void edptlcbSetSoundControl(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+    unsigned int slot;
+    int control;
+
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edptl_soundcontrol_menu = 0;
+    slot = (unsigned int)item->value >> 16;
+    control = item->value - (slot << 16);
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->sounds[slot].control = control;
 }
 
 
@@ -977,6 +1194,22 @@ void cbPtlCancelVarEmitMenu(void) {
 void cbPtlCancelVarStartMenu(void) {
     eduiMenuDestroy(ptlvarstartmenu);
     ptlvarstartmenu = 0;
+}
+
+
+void cbPtlSScaleMenu(struct edptlmenu_s *menu) {
+    struct edptlfont_s font;
+
+    font = edpp_menu_font;
+    sscalemenu = eduiMenuCreate(0x46, 0x46, 0xB4, 0x12C, app_fnt, cbPtlCancelSScaleMenu,
+                                sscalemenutitle);
+    if (sscalemenu != 0) {
+        eduiMenuAddItem(sscalemenu, eduiItemSliderCreateInt(0, &font, 0, cbPtlChangeSScale, 1, 0x13,
+                                                            edpp_slider_scale, sscalemenutitle));
+        eduiMenuAttach(menu, sscalemenu);
+        sscalemenu->x = menu->x + 10;
+        sscalemenu->y = menu->y + 40;
+    }
 }
 
 
@@ -1092,6 +1325,23 @@ void cbPtlCancelGravMenu(void) {
 }
 
 
+void cbChangeFileNameMenu(struct edptlmenu_s *menu) {
+    struct edptlfont_s font;
+
+    font = edpp_menu_font;
+    filenamemenu = eduiMenuCreate(0x46, 0x46, 0xB4, 0xFA, app_fnt, cbCancelChangeFileNameMenu,
+                                  filenamemenutitle);
+    if (filenamemenu != 0) {
+        eduiMenuAddItem(filenamemenu, eduiItemTextPickCreate(0, &font, cbChangeFileName,
+                                                             filenamemenutitle));
+        strcpy(edui_last_item->text, savefilename);
+        eduiMenuAttach(menu, filenamemenu);
+        filenamemenu->x = menu->x + 10;
+        filenamemenu->y = menu->y + 40;
+    }
+}
+
+
 void cbCancelMemCardMenu(void) {
     eduiMenuDestroy(memcardmenu);
     memcardmenu = 0;
@@ -1151,6 +1401,28 @@ void edppClose(void) {
 }
 
 
+void edppEnter(void) {
+    struct nuvec_s origin;
+
+    memset(&origin, 0, sizeof(origin));
+    if (edmainQueryLocVec() != 0) {
+        edpp_game_loc = *edmainQueryLocVec();
+    } else {
+        edpp_game_loc.x = global_camera.mtx._30;
+        edpp_game_loc.y = global_camera.mtx._31;
+        edpp_game_loc.z = global_camera.mtx._32;
+    }
+    if (edpp_first_time_this_level != 0) {
+        if (edmainQueryLocVec() != 0) {
+            edcamSetPosAng(edmainQueryLocVec(), 0, 0);
+        } else {
+            edcamSetPosAng(&origin, 0, 0);
+        }
+        edpp_first_time_this_level = 0;
+    }
+}
+
+
 void edppApply(void) {
 }
 
@@ -1207,7 +1479,7 @@ void cbCancelChangeETimeMenu(void) {
 }
 
 
-void cbConfirmMenuNo(struct edptlconfirmmenu_s *menu) {
+void cbConfirmMenuNo(struct edptlmenu_s *menu) {
     int arg;
 
     arg = 0;
@@ -1224,6 +1496,21 @@ void cbConfirmMenuNo(struct edptlconfirmmenu_s *menu) {
 void cbCancelConfirmMenu(void) {
     eduiMenuDestroy(confirmmenu);
     confirmmenu = 0;
+}
+
+
+void edptlcbSetSwitchType(void *menu, struct edptlitem_s *item) {
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edptl_switchtype_menu = 0;
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    edpp_ptls[edpp_nearest].switchtype = item->value;
+    debkeydata[edpp_ptls[edpp_nearest].debris].switchtype = item->value;
 }
 
 
@@ -1250,7 +1537,41 @@ void cbPtlCancelSScaleMenu(void) {
 }
 
 
+static inline void CreateMessageMenu(struct edptlmenu_s *parent, char *message, int flags) {
+    struct edptlfont_s font;
+
+    font = edpp_message_font;
+    if (flags == 1) {
+        font.colour = 0x8000C000;
+    }
+    messagemenu = eduiMenuCreate(0x46, 0x46, 0xB4, 0xFA, app_fnt, cbCancelMessageMenu,
+                                 messagemenutitle);
+    if (messagemenu != 0) {
+        eduiMenuAddItem(messagemenu, eduiItemSelCreate(1, &font, 0, 0, 0, message));
+        eduiMenuAttach(parent, messagemenu);
+        messagemenu->x = parent->x + 10;
+        messagemenu->y = parent->y + 40;
+    }
+}
+
+
+void cbMemCardErase(struct edptlmenu_s *menu) {
+    int arg;
+
+    arg = 0;
+    if (menu->detacharg != 0) {
+        arg = menu->detacharg;
+        eduiMenuDetach(menu);
+    }
+    if (menu->callback != 0) {
+        menu->callback(menu, arg);
+    }
+    CreateMessageMenu((struct edptlmenu_s *)arg, memcarderasemessage, 0);
+}
+
+
 void cbChangeFileName(void *menu, struct edptlitem_s *item) {
+
     strcpy(savefilename, item->text);
 }
 
