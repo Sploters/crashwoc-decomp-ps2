@@ -25,11 +25,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:00169160:idmacGs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:001692a0:idmacVif1"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:001693d0:NuPs2InitVideo"
@@ -45,19 +45,19 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016a148:NuMcOpen"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a188:NuMcRead"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a1c8:NuMcWrite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a208:NuMcClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a248:NuMcDelete"
@@ -149,7 +149,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a908:NuPs2VideoSetPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a988:NuPs2GrabScreen"
@@ -209,19 +209,19 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016b038:ps2videoGetFreeMem"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b090:NuPs2CopyCurrentBackBuffer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b100:NuPs2CopyCurrentFrontBuffer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b170:NuPs2CopyCurrentZBuffer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b1e0:NuPs2GetCurrentBackBuffer"
