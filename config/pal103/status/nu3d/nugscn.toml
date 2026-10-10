@@ -45,7 +45,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00146350:MakeFaceOnDma"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:001464b8:CvtNuIFFGeomTri"
@@ -109,7 +109,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00149b40:ReadAnimationLibrary"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00149d50:ReadSplineSet"
@@ -153,15 +153,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014bb08:NuGScnRemove"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014bbd0:NuGScnLoad"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014bcb8:NuGScnRead"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014bdb8:NuGScnTranslate"
@@ -185,7 +185,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c000:NuGSceneProcessCrossFade"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c098:NuGScnMtlUpdate"
@@ -193,7 +193,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c0a0:NuSpecialFind"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c130:NuSpecialGetPos"
@@ -209,15 +209,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c230:NuSplineFind"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c2b8:NuSplineFindAllSub"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c370:NuSplineGetRandomPoint"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c428:NuSceneReAssignTexAnims"
@@ -229,7 +229,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:0014c5f0:CvtNuIFFFaceOnGeom"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c6d8:CvtNuIFFNodeHierarchy"
