@@ -114,7 +114,7 @@ extern void *vtCloseDirect(void *packet);
 extern int NuPower2(int value);
 
 extern int D_00633088;
-extern void *D_006AD5E0[];
+extern int D_006AD5E0[];
 extern nuvec_s D_006AD5F0;
 extern u32 D_006AD600[];
 extern int NuLightOldSpotCnt;
@@ -128,6 +128,8 @@ extern void *NuLgtFxFogClr;
 #define nulight_current D_006AD5D0
 #define nulight_ambient D_006AD5F0
 #define nulgt_packet_buffer D_006AD600
+#define nulight_stamp D_00633088
+#define nulight_stamps D_006AD5E0
 
 
 void NuLightInit(void) {
@@ -137,7 +139,7 @@ void NuLightInit(void) {
     for (i = 0; i < 3; i++) {
         nulight_dirs[i].x = nulight_dirs[i].y = nulight_dirs[i].z = 0.0f;
         nulight_current[i] = 0;
-        D_006AD5E0[i] = 0;
+        nulight_stamps[i] = 0;
     }
     nulight_ambient.x = 0.15f;
     nulight_ambient.y = 0.15f;
@@ -147,7 +149,7 @@ void NuLightInit(void) {
         nulights[i].used = 0;
     }
 
-    D_00633088 = 0;
+    nulight_stamp = 0;
     NuLightSpotCnt = 0;
     NuLightOldSpotCnt = 0;
     NuLightHazePolyCnt = 0;
