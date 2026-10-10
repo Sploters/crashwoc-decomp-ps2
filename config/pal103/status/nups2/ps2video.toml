@@ -69,23 +69,23 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a2c8:NuMcWriteFloat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a318:NuMcWriteInt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a368:NuMcWriteUnsignedInt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a3b8:NuMcWriteShort"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a408:NuMcWriteChar"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016a458:NuMcReadFloat"
@@ -157,11 +157,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016aae0:NuPs2EnableAutoScreenSwap"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016ab60:NuPs2DisableAutoScreenSwap"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016abd0:NuPs2GetViewport"
@@ -181,7 +181,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016ad88:NuIntRemVBlankE"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016ade8:NuEnableVBlankS"
@@ -197,15 +197,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:0016af18:NuIntRemVBlankS"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016af78:NuEnableVBlank"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016afd0:NuDisableVBlank"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b038:ps2videoGetFreeMem"
@@ -269,7 +269,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b440:ifnVBlankE"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b4b0:ifnVBlankS"

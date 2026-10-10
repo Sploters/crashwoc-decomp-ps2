@@ -108,6 +108,13 @@ typedef struct TbSet {
     int extra[16];
 } TbSet;
 
+typedef struct NuVBlankHandler {
+    struct NuVBlankHandler *next;
+    struct NuVBlankHandler *prev;
+    void (*fn)(void);
+    int priority;
+} NuVBlankHandler;
+
 /* EE timer 1 counter: a free-running 16-bit tick used for screen-swap timing. */
 #define EE_T1_COUNT (*(volatile unsigned int *)0x10000800)
 #define EE_T0_COUNT (*(volatile unsigned int *)0x10000000)
@@ -127,7 +134,11 @@ extern int sceMcClose(int fd);
 extern int sceMcDelete(int port, int slot, const char *name);
 extern int sceMcSeek(int fd, int offset, int mode);
 extern int sceMcSync(int mode, int *cmd, int *result);
+extern int abs(int value);
+extern void NuPs2ScreenSwap(int vsync);
 extern int EnableIntc(int cause);
+extern int VU1_DmaGetStatus(void);
+extern int sceGsSyncPath(int mode, unsigned short timeout);
 extern int DisableIntc(int cause);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern void *memcpy(void *dst, const void *src, unsigned int n);
@@ -165,6 +176,10 @@ extern int D_0062F06C;
 extern int D_0062F074;
 extern int D_0062F078;
 extern int D_0062F080;
+extern int D_0062F058;
+extern NuVBlankHandler *D_0062F070;
+extern NuVBlankHandler *D_0062F07C;
+extern int D_006331CC;
 
 #define NuPs2FrameCount D_006331C4
 #define NuPs2SwapTime   D_0062F03C
@@ -189,6 +204,23 @@ extern int D_0062F080;
 #define vblank_end_disable    D_0062F074
 #define vblank_start_handler  D_0062F078
 #define vblank_start_disable  D_0062F080
+#define auto_screen_swap      D_0062F058
+#define vblank_end_list       D_0062F070
+#define vblank_start_list     D_0062F07C
+#define in_vblank_end         D_006331CC
+
+
+inline int GetElapsedTime(void)
+{
+    int elapsed;
+
+    elapsed = EE_T1_COUNT - NuPs2SwapTime;
+    NuPs2SwapDelay = elapsed;
+    if (elapsed < 0) {
+        NuPs2SwapDelay = elapsed + 0x10000;
+    }
+    return NuPs2SwapDelay;
+}
 
 
 static inline int tbslotEnd(TbSet *set, int slot)
@@ -363,6 +395,71 @@ int NuMcSeek(int fd, int offset, int mode, int async)
 }
 
 
+int NuMcWriteFloat(int fd, float value, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcWrite(fd, &value, sizeof(value));
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
+int NuMcWriteInt(int fd, int value, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcWrite(fd, &value, sizeof(value));
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
+int NuMcWriteUnsignedInt(int fd, unsigned int value, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcWrite(fd, &value, sizeof(value));
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
+int NuMcWriteShort(int fd, short value, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcWrite(fd, &value, sizeof(value));
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
+int NuMcWriteChar(int fd, char value, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcWrite(fd, &value, sizeof(value));
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
 float NuMcReadFloat(int fd)
 {
     float value;
@@ -488,6 +585,30 @@ void NuPs2VideoSetPos(int x, int y)
 }
 
 
+void NuPs2EnableAutoScreenSwap(void)
+{
+    if (!auto_screen_swap) {
+        while (VU1_DmaGetStatus()) {
+        }
+        sceGsSyncPath(0, 0);
+        while (abs(GetElapsedTime()) < 50) {
+        }
+        auto_screen_swap = 1;
+    }
+}
+
+
+void NuPs2DisableAutoScreenSwap(void)
+{
+    if (auto_screen_swap) {
+        while (abs(GetElapsedTime()) >= 100) {
+        }
+        auto_screen_swap = 0;
+        sceGsSyncPath(0, 0);
+    }
+}
+
+
 void NuEnableVBlankE(void)
 {
     if (vblank_end_handler) {
@@ -509,6 +630,21 @@ void NuDisableVBlankE(void)
 }
 
 
+void NuIntRemVBlankE(NuVBlankHandler *handler)
+{
+    DisableIntc(3);
+    if (handler->prev) {
+        handler->prev->next = handler->next;
+    } else {
+        vblank_end_list = handler->next;
+    }
+    if (handler->next) {
+        handler->next->prev = handler->prev;
+    }
+    EnableIntc(3);
+}
+
+
 void NuEnableVBlankS(void)
 {
     if (vblank_start_handler) {
@@ -521,6 +657,53 @@ void NuEnableVBlankS(void)
 
 void NuDisableVBlankS(void)
 {
+    if (vblank_start_handler) {
+        if (vblank_start_disable == 0) {
+            DisableIntc(2);
+        }
+        vblank_start_disable++;
+    }
+}
+
+
+void NuIntRemVBlankS(NuVBlankHandler *handler)
+{
+    DisableIntc(2);
+    if (handler->prev) {
+        handler->prev->next = handler->next;
+    } else {
+        vblank_start_list = handler->next;
+    }
+    if (handler->next) {
+        handler->next->prev = handler->prev;
+    }
+    EnableIntc(2);
+}
+
+
+void NuEnableVBlank(void)
+{
+    if (vblank_start_handler) {
+        if (--vblank_start_disable == 0) {
+            EnableIntc(2);
+        }
+    }
+    if (vblank_end_handler) {
+        if (--vblank_end_disable == 0) {
+            EnableIntc(3);
+        }
+    }
+}
+
+
+void NuDisableVBlank(void)
+{
+    if (vblank_end_handler) {
+        if (vblank_end_disable == 0) {
+            DisableIntc(3);
+        }
+        vblank_end_disable++;
+    }
     if (vblank_start_handler) {
         if (vblank_start_disable == 0) {
             DisableIntc(2);
@@ -645,14 +828,18 @@ int ifnVif1(int ca)
 }
 
 
-int GetElapsedTime(void)
+int ifnVBlankE(int ca)
 {
-    int elapsed;
+    NuVBlankHandler *handler;
 
-    elapsed = EE_T1_COUNT - NuPs2SwapTime;
-    NuPs2SwapDelay = elapsed;
-    if (elapsed < 0) {
-        NuPs2SwapDelay = elapsed + 0x10000;
+    in_vblank_end = 1;
+    if (auto_screen_swap) {
+        NuPs2ScreenSwap(1);
     }
-    return NuPs2SwapDelay;
+    for (handler = vblank_end_list; handler; handler = handler->next) {
+        handler->fn();
+    }
+    in_vblank_end = 0;
+    ExitHandler();
+    return 1;
 }
