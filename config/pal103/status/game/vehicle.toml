@@ -421,7 +421,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00219f90:TrailPointInPoly"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021a138:SetTrailPos"
@@ -473,7 +473,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021be58:MoveVehicle"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021bed8:GetRumbleCrunchRoks"
@@ -521,7 +521,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c2f8:GetMaxLevelObjectives"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c370:LoadVehicleStuff"
@@ -541,7 +541,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c580:InitVehMask"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c5f0:SetNewMaskStuff"
@@ -593,7 +593,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021cfd8:InitWeatherBossTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d040:ProcessWeatherBossTarget"
@@ -657,7 +657,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021db00:DrawPlane"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021db68:DrawFarmLevelExtra"
@@ -689,7 +689,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021df38:DrawAsteroids"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021df90:PossIntersect"
@@ -713,7 +713,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021e3f0:ProcessGunBoats"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e448:InitBigGun"
@@ -725,7 +725,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021e6c8:ProcessBigGuns"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e720:DrawBigGuns"
@@ -737,7 +737,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021e8c0:ProcessBattleShips"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e918:PrintWeatherBossAction"
@@ -785,7 +785,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021ef90:ProcessWeatherResearchLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021eff8:GetCurrentWeatherResearchObjectives"
