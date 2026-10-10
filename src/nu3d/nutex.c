@@ -267,8 +267,10 @@ void NuTexPalChangeStreamTemp(int tex) {
 
 
 int NuTexGetTextAddr(int tex) {
-    if (TexList[tex - 1].flags & 0x10000) {
-        return TexList[tex - 1].texaddr ? TexList[tex - 1].texaddr : gs_botfree;
+    NuTex *entry = &TexList[tex - 1];
+
+    if (entry->flags & 0x10000) {
+        return entry->texaddr ? entry->texaddr : gs_botfree;
     }
     return 0;
 }

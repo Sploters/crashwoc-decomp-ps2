@@ -738,7 +738,10 @@ def _sonyize_seg(seg):
         decompals `as` only on a register dependency. Comment/blank lines do
         not separate the two -- gcc emits its own `#nop` markers between them,
         and those are only annotations (retail ApplyFriction has no nop at one
-        of them), never a nop to materialize.
+        of them), never a nop to materialize. A local label between the write
+        and compare also emits no instruction. Put that padding before the
+        label, so incoming branches skip the fall-through hazard nop (as in
+        NuVpSetClipping).
       * in the delay slot of a branch gcc left unfilled (see _BRANCH_OPS):
         Sony's `as` nops it, the decompals `as` swaps the preceding
         instruction in. The branch is wrapped in `.set noreorder` so the swap
@@ -747,7 +750,7 @@ def _sonyize_seg(seg):
     out = []
     prev_insn = None
     reorder = True
-    for line in seg:
+    for index, line in enumerate(seg):
         m = _SET_REORDER_RE.match(line)
         if m:
             reorder = m.group(1) is None
@@ -764,6 +767,21 @@ def _sonyize_seg(seg):
             prev_insn = "\tnop"
             continue
         out.append(_sonyize(line))
+        if _writes_fpr_via_mtc1(line):
+            next_index = index + 1
+            crossed_label = False
+            while next_index < len(seg):
+                following = seg[next_index]
+                if _LOCAL_LABEL_RE.match(following):
+                    crossed_label = True
+                elif not _is_noise(following):
+                    break
+                next_index += 1
+            if (crossed_label and next_index < len(seg)
+                    and _CCOND_RE.match(seg[next_index])):
+                out.append("\tnop")
+                prev_insn = "\tnop"
+                continue
         if not _is_noise(line):
             prev_insn = line
     return out
@@ -1154,7 +1172,12 @@ def _assemble_hybrid(hybrid_s, out_o):
     `as` assembles both the slices (it already produces the byte-verified
     expected objects from the same text) and ee-gcc's compiler output
     (`.extern SYM, n` + macro forms resolve to R_MIPS_GPREL16 under -G8,
-    probed) without padding. The whole-unit byte gates remain the arbiter
+    probed) without padding. Internal alignment directives still emit their
+    required padding, but section-end rounding must be disabled: a retail TU
+    can end on a four-byte boundary even when C uses eight-byte alignment
+    internally (nucore/nustring). The canonical extents already own all tail
+    padding; adding more shifts subsequent TUs in the loaded image.
+    The whole-unit byte gates remain the arbiter
     of every matching claim, so a divergent encoding fails loudly.
     """
     as_bin = tool_path(AS)
@@ -1163,7 +1186,7 @@ def _assemble_hybrid(hybrid_s, out_o):
     out_o = Path(out_o)
     out_o.parent.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run(
-        [as_bin, "-EL", "-march=r5900", "-G8",
+        [as_bin, "-EL", "-march=r5900", "-G8", "-no-pad-sections",
          "-o", str(out_o), str(hybrid_s)],
         capture_output=True, text=True)
     if proc.returncode != 0:

@@ -60,3 +60,61 @@
  *   0x0014c6d8 CvtNuIFFNodeHierarchy
  *   0x0014c768 FindSplinePtSize
  */
+
+extern void *D_006330B0;
+extern int D_006330B8;
+#define temp_workspace D_006330B0
+#define temp_workspace_size D_006330B8
+
+void NuGScnSetTmpWkspc(void *workspace, int size)
+{
+    temp_workspace = workspace;
+    temp_workspace_size = size;
+}
+
+struct numtx_s {
+    float _00, _01, _02, _03;
+    float _10, _11, _12, _13;
+    float _20, _21, _22, _23;
+    float _30, _31, _32, _33;
+}; /* 0x40 */
+
+struct nuvec_s {
+    float x;
+    float y;
+    float z;
+};
+
+struct nuinstance_s {
+    struct numtx_s matrix;          /* 0x00 */
+};
+
+struct nuspecial_s {
+    struct numtx_s mtx;             /* 0x00 */
+    struct nuinstance_s *instance;  /* 0x40 */
+    char *name;                     /* 0x44 */
+    int flags;                      /* 0x48: bit 0 = ext (own matrix) */
+};
+
+struct nuhspecial_s {
+    void *scene;                    /* 0x00 */
+    struct nuspecial_s *special;    /* 0x04 */
+};
+
+void NuExtSpecialDelete(struct nuhspecial_s *sph)
+{
+    sph->special->flags &= ~1;
+}
+
+void NuSpecialGetPos(struct nuhspecial_s *sph, struct nuvec_s *pos)
+{
+    struct numtx_s *mtx;
+
+    mtx = &sph->special->mtx;
+    if ((sph->special->flags & 1) == 0) {
+        mtx = &sph->special->instance->matrix;
+    }
+    pos->x = mtx->_30;
+    pos->y = mtx->_31;
+    pos->z = mtx->_32;
+}

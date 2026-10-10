@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0015:00107f20:NuMtxMulH"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:001083b8:NuMtxMulR"

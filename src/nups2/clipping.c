@@ -36,6 +36,19 @@
 #define CLIP_PREV_SHIFT 6
 #define CLIP_PREV(bit)  ((bit) << CLIP_PREV_SHIFT)
 
+typedef struct ClipVec4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} ClipVec4;
+
+/* Only the clip-space vector is used by the intersection helpers. */
+typedef struct ClipPoint {
+    unsigned char pad00[0x30];
+    ClipVec4 clip;
+} ClipPoint;
+
 extern int clipflags;
 
 
@@ -96,4 +109,45 @@ int TestPrevTop(void)
 int TestPrevBottom(void)
 {
     return clipflags & CLIP_PREV(CLIP_BOTTOM);
+}
+
+
+float IntersectZN(ClipPoint *curr, ClipPoint *prev)
+{
+    ClipVec4 *a = &curr->clip;
+    ClipVec4 *b = &prev->clip;
+
+    return (-b->z - b->w) / (((a->z - b->z) + a->w) - b->w);
+}
+
+
+float IntersectLeft(ClipPoint *curr, ClipPoint *prev)
+{
+    return (-prev->clip.x - prev->clip.w) /
+           (((curr->clip.x - prev->clip.x) + curr->clip.w) - prev->clip.w);
+}
+
+
+float IntersectRight(ClipPoint *curr, ClipPoint *prev)
+{
+    return (prev->clip.w - prev->clip.x) /
+           ((curr->clip.x - prev->clip.x) - (curr->clip.w - prev->clip.w));
+}
+
+
+float IntersectTop(ClipPoint *curr, ClipPoint *prev)
+{
+    ClipVec4 *a = &curr->clip;
+    ClipVec4 *b = &prev->clip;
+
+    return (b->w - b->y) / ((a->y - b->y) - (a->w - b->w));
+}
+
+
+float IntersectBottom(ClipPoint *curr, ClipPoint *prev)
+{
+    ClipVec4 *a = &curr->clip;
+    ClipVec4 *b = &prev->clip;
+
+    return (-b->y - b->w) / (((a->y - b->y) + a->w) - b->w);
 }

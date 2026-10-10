@@ -65,7 +65,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0042:00140018:NuLightGetLight"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:00140030:NuLigthSetPolyHazeMat"
@@ -81,7 +81,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0042:00140190:NuLightFog"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:001401b0:NuLightFogClear"
@@ -93,7 +93,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0042:001402c8:NuLgtSetArcMat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:001402e0:NuLightAddHazePoly"
@@ -113,4 +113,4 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0042:001404e8:NuLgtRand"
-state = "asm"
+state = "matching"
