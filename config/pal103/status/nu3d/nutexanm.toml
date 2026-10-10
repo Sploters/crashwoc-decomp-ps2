@@ -57,11 +57,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015a500:NuTexAnimProgFind"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015a548:NuTexAnimProgDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015a5a8:NuTexAnimProgCreate"
@@ -69,7 +69,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0053:0015a690:NuTexAnimProgWrite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015a6e8:NuTexAnimProgRead"
@@ -97,15 +97,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015a9b0:NuTexAnimProcessList"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015a9f8:NuTexAnimFind"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015aa50:NuTexAnimDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015aac0:NuTexAnimCreate"
@@ -113,7 +113,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0053:0015ac30:NuTexAnimAddList"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015ac88:NuTexAnimRemoveList"
@@ -121,7 +121,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0053:0015ad20:NuTexAnimProcess"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015ad90:NuTexAnimProgInit"
@@ -129,7 +129,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015adf0:pftaTex"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015ae50:pftaTexAdj"
@@ -145,11 +145,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0053:0015b048:pftaOn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015b090:pftaOff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015b0d8:pftaLabel"
@@ -173,7 +173,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015b2f8:pftaScriptname"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0053:0015b330:NuTexAnimResetList"
