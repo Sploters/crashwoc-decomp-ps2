@@ -64,3 +64,158 @@
  *   0x001c53d0 NuSoundFindFree
  *   0x001c5428 NuSoundFindLoopInfo
  */
+
+typedef struct nuvec_s {
+    float x;
+    float y;
+    float z;
+} nuvec_s;
+
+typedef struct NuSoundLoopInfo {
+    int id;
+    short pitch;
+    short channel;
+    short active;
+    short pad;
+    int reserved;
+} NuSoundLoopInfo;
+
+extern int strlen(const char *s);
+
+void SetIOPCommand(short command, short count);
+void SetIOPCommandEx(short command, short size, void *data);
+
+extern short IOPCommandData[];
+extern volatile unsigned char SOUND_SPUKeyStatus[];
+extern NuSoundLoopInfo NuSndLoopInfo[];
+extern nuvec_s *NuSoundListenPos;
+extern int NuSndSteroPitch;
+
+
+int SOUND_StopSound(unsigned int channel)
+{
+    if (channel >= 0x30) {
+        return -1;
+    }
+    IOPCommandData[0] = channel;
+    SetIOPCommand(4, 1);
+    return 0;
+}
+
+
+int NuSoundGetSteroPitch(void)
+{
+    return NuSndSteroPitch;
+}
+
+
+void NuSoundListener(nuvec_s *pos)
+{
+    NuSoundListenPos = pos;
+}
+
+
+int NuSoundKeyStatus(unsigned int channel)
+{
+    if (channel >= 0x30) {
+        return 0;
+    }
+    return SOUND_SPUKeyStatus[channel];
+}
+
+
+void NuSoundSetGlobalDat(char *dat)
+{
+    SetIOPCommandEx(0x1E, strlen(dat) + 1, dat);
+}
+
+
+int SOUND_FindFreeSPUChannel(unsigned int first, unsigned int last)
+{
+    unsigned int channel;
+
+    if (first >= 0x30) {
+        return -2;
+    }
+    if (last < first || last >= 0x30) {
+        return -3;
+    }
+    for (channel = first; channel <= last; channel++) {
+        if (SOUND_SPUKeyStatus[channel] == 0) {
+            SOUND_SPUKeyStatus[channel] = 3;
+            return channel;
+        }
+    }
+    return -1;
+}
+
+
+void SOUND_Pause(void)
+{
+    SetIOPCommand(0xA, 0);
+}
+
+
+void SOUND_Resume(void)
+{
+    SetIOPCommand(0xB, 0);
+}
+
+
+void SOUND_InitStreamData(void)
+{
+    SetIOPCommand(0xC, 0);
+}
+
+
+void NuSoundInitLoopInfo(void)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        NuSndLoopInfo[i].id = 0;
+        NuSndLoopInfo[i].channel = i + 0x18;
+        NuSndLoopInfo[i].active = 0;
+        NuSndLoopInfo[i].pitch = 0;
+    }
+}
+
+
+int NuSoundFindFree(int channel)
+{
+    int i;
+    int candidate;
+
+    for (i = 0; i < 0x12; i++) {
+        candidate = (channel - 6 + i) % 0x12 + 6;
+        if (SOUND_SPUKeyStatus[candidate] == 0) {
+            return candidate;
+        }
+    }
+    return channel;
+}
+
+
+NuSoundLoopInfo *NuSoundFindLoopInfo(int id)
+{
+    NuSoundLoopInfo *info;
+    int free;
+    int i;
+
+    free = -1;
+    for (i = 0; i < 8; i++) {
+        info = &NuSndLoopInfo[i];
+        if (info->active == 0) {
+            free = i;
+        }
+        if (info->id == id) {
+            return info;
+        }
+    }
+    if (free == -1) {
+        return 0;
+    }
+    NuSndLoopInfo[free].id = id;
+    NuSndLoopInfo[free].pitch = 0;
+    return &NuSndLoopInfo[free];
+}

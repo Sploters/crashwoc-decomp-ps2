@@ -293,11 +293,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0070:00194848:edppWrite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00194910:edppRead"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00194998:edppProc"
@@ -309,7 +309,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00194a70:edppRender"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00194b08:cbPtlChangeGrav"
@@ -345,7 +345,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00194f00:cbPtlChangeX"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00194ff8:cbPtlChangeCutOff"
@@ -373,7 +373,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0070:00195348:cbPtlApplyJib"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00195408:cbPtlSelType"
@@ -533,19 +533,19 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:001963c8:cbPtlChangeIvalOn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196448:cbPtlChangeIvalOnRan"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:001964c8:cbPtlChangeIvalOff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196548:cbPtlChangeIvalOffRan"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:001965c8:cbPtlCancelEmitTimeMenu"
@@ -605,7 +605,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196d00:edptlcbResetParticles"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196d70:cbPtlCancel"
@@ -629,11 +629,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196ec8:cbCancelChangeNameMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196f30:cbPtlChangeETime"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0070:00196fa8:cbCancelChangeETimeMenu"

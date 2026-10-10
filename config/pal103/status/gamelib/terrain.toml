@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:00171220:TerrainPlatformOldUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00171310:TerrainPlatformNewUpdate"
@@ -57,7 +57,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:00172608:RotateTerrain"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00172808:DeRotateTerrain"
@@ -121,7 +121,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:00179900:TerrainImpact"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00179f50:TerrainImpactPlatform"
@@ -165,7 +165,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:0017d448:RayImpact"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:0017d5e8:NewRayCast"
@@ -265,7 +265,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:001820a8:AddCollisionSphere"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:001820f8:AddPickupTerr"
@@ -313,7 +313,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182390:FindPlatInst"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182410:UpdatePlatinst"
@@ -325,7 +325,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182468:PlatInstBounce"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:001824c8:PlatInstGetHit"
@@ -333,7 +333,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:001824f8:PlatImpactInfo"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182548:PlatformCrush"
@@ -389,7 +389,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182918:FullDeflect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182990:FullDeflectTest"
@@ -397,7 +397,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:00182a80:FullReflect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182b00:TerrainMoveImpactData"
@@ -405,7 +405,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182c08:PlatformConnect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00182ca0:OffPlat"

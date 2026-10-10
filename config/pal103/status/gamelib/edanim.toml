@@ -125,7 +125,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a55b0:edanimPlayerAnimDistance"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5628:edanimParamDestroy"
@@ -133,7 +133,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5658:edanimSoundPlace"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a56b0:edanimParticlePlace"
@@ -141,7 +141,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5750:edanimcbSetSwitchType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a57b0:edanimcbSetSwitchId"
@@ -165,15 +165,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a58b0:edanimcbSetBouncyPlayerGrav"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5910:edanimcbSetBouncyTension"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5970:edanimcbSetBouncyDamping"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a59d0:edanimcbCancelBouncyMenu"
@@ -193,7 +193,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5b20:edanimcbSetParticleType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5b70:edanimcbSetParticleRate"
@@ -241,19 +241,19 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a62d8:edanimcbMCTBCardPresent"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6330:edanimcbMCTBCardType"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6388:edanimcbMCTBCardCheckFormat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a63e0:edanimcbMCTBCardFreeSpace"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6430:edanimcbMCTBCardSlotsUsed"
@@ -329,4 +329,4 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a6b40:edanimcbCancelSoundTypeMenu"
-state = "asm"
+state = "matching"
