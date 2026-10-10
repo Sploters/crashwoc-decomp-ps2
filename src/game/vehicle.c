@@ -395,7 +395,41 @@ struct weatherboss_s {
     char pad_61C[0x660 - 0x61C];
 };
 extern struct weatherboss_s WeatherBoss;
-extern u8 VehicleMask[];    /* veh mask block, memset 0x2E8 (far) */
+struct MYDRAW {
+    struct anim_s anim;            /* 0x00 */
+    struct CharacterModel *model;  /* 0x1C */
+    s32 index;                     /* 0x20 */
+    s32 numjoints;                 /* 0x24 */
+    void *jointlist;               /* 0x28 */
+    s32 field2C;                   /* 0x2C */
+    struct Nearest_Light_s lights; /* 0x30 */
+};
+
+/* VehicleMask: stride 0x174, 2 entries. */
+struct vehmask_s {
+    s32 active;                /* 0x000 */
+    s32 id;                    /* 0x004 */
+    s32 killatend;             /* 0x008 */
+    struct nuvec_s pos;        /* 0x00C */
+    struct MYDRAW draw;        /* 0x018 */
+    f32 drawangy;              /* 0x0F8 */
+    s32 action;                /* 0x0FC */
+    s32 lastaction;            /* 0x100 */
+    s32 effecttype;            /* 0x104 */
+    f32 tween;                 /* 0x108 */
+    f32 tweeninc;              /* 0x10C */
+    f32 ang;                   /* 0x110 */
+    struct nuvec_s store[2];   /* 0x114 */
+    struct nuvec_s *point[2];  /* 0x12C */
+    struct nuvec_s offset[2];  /* 0x134 */
+    f32 anginc[2];             /* 0x14C */
+    f32 rad[2];                /* 0x154 */
+    f32 scale[2];              /* 0x15C */
+    f32 tiltx[2];              /* 0x164 */
+    f32 drawscale;             /* 0x16C */
+    s32 seen;                  /* 0x170 */
+};
+extern struct vehmask_s VehicleMask[];
 
 /* HovaBlimp array, stride 0x134, 6 entries. */
 struct hovablimp_s {
@@ -564,6 +598,58 @@ void InitVehMasks(void)
     memset(VehicleMask, 0, 0x2E8);
 }
 
+extern s32 MyInitModelNew(struct MYDRAW *draw, s32 id, s32 action, s32 numjoints,
+                          void *jointlist, struct nuvec_s *pos);
+
+void InitVehMask(s32 index, s32 id)
+{
+    struct vehmask_s *mask = &VehicleMask[index];
+
+    memset(mask, 0, sizeof(struct vehmask_s));
+    if (MyInitModelNew(&mask->draw, id, 0x22, 0, 0, &mask->pos) != 0) {
+        mask->id = id;
+    }
+}
+
+void SetNewMaskStuff(s32 index, struct nuvec_s *centre, struct nuvec_s *offset,
+                     f32 rad, f32 anginc, f32 tweeninc, s32 fixed,
+                     s32 killatend, f32 scale, f32 tiltx)
+{
+    struct vehmask_s *mask = &VehicleMask[index];
+
+    mask->killatend = killatend;
+    if (mask->active != 0) {
+        mask->tween = 1.0f;
+        mask->tweeninc = tweeninc * 0.02f;
+        mask->offset[1] = mask->offset[0];
+        mask->anginc[1] = mask->anginc[0];
+        mask->rad[1] = mask->rad[0];
+        mask->scale[1] = mask->scale[0];
+        mask->tiltx[1] = mask->tiltx[0];
+        if (mask->point[0] == &mask->store[0]) {
+            mask->point[1] = &mask->store[1];
+            mask->store[1] = *mask->point[0];
+        } else {
+            mask->point[1] = mask->point[0];
+        }
+    } else {
+        mask->tween = 0.0f;
+        mask->active = 1;
+        mask->point[1] = &v000;
+    }
+    if (fixed != 0) {
+        mask->store[0] = *centre;
+        mask->point[0] = &mask->store[0];
+    } else {
+        mask->point[0] = centre;
+    }
+    mask->offset[0] = *offset;
+    mask->anginc[0] = anginc * 0.02f;
+    mask->rad[0] = rad;
+    mask->scale[0] = scale;
+    mask->tiltx[0] = tiltx;
+}
+
 void ProcessCrashteroidsIntro(void)
 {
     ProcessFireFlyIntro();
@@ -605,13 +691,35 @@ void InitWeatherBoss(void)
     InitWeatherBoss_a();
 }
 
-struct MYDRAW;
 extern struct MYDRAW IconMainDraw;
 extern s32 BazookaIconOn;
 extern struct nuvec_s BazookaTokenCurrentPos;
 extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
 extern s32 MyDrawModelNew(struct MYDRAW *Draw, struct numtx_s *mC,
                           struct numtx_s *loc_mtx);
+
+struct plane_s {
+    struct nuvec_s pos;        /* 0x00 */
+    struct nuvec_s vel;        /* 0x0C */
+    f32 actiontimer;           /* 0x18 */
+    s32 actionstatus;          /* 0x1C */
+    s32 active;                /* 0x20 */
+    struct MYDRAW draw;        /* 0x24 */
+};
+
+extern struct nuvec_s D_005A6DC0;
+#define plane_scale D_005A6DC0
+
+extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
+
+void DrawPlane(struct plane_s *plane)
+{
+    if (plane->active != 0) {
+        NuMtxSetScale(&mTEMP, &plane_scale);
+        NuMtxTranslate(&mTEMP, &plane->pos);
+        MyDrawModelNew(&plane->draw, &mTEMP, 0);
+    }
+}
 
 void DrawBazookaToken(void)
 {
@@ -1159,13 +1267,40 @@ void DrawEarthBossLevelExtra(void)
     DrawVehMasks();
 }
 
-f32 PointLineSide(struct nuvec_s *p, struct nuvec_s *a, struct nuvec_s *b)
+inline f32 PointLineSide(struct nuvec_s *p, struct nuvec_s *a, struct nuvec_s *b)
 {
-    f32 px = p->x, pz = p->z;
-    f32 ax = a->x, az = a->z;
-    f32 bx = b->x, bz = b->z;
+    f32 dx1 = b->x - p->x;
+    f32 dz1 = b->z - p->z;
+    f32 dx2 = b->x - a->x;
+    f32 dz2 = b->z - a->z;
 
-    return (bx - px) * (bz - az) - (bz - pz) * (bx - ax);
+    return dx1 * dz2 - dz1 * dx2;
+}
+
+s32 TrailPointInPoly(struct nuvec_s *point, struct nuvec_s *a, struct nuvec_s *b,
+                     struct nuvec_s *c, struct nuvec_s *d)
+{
+    struct nuvec_s *src = a;
+    s32 i;
+
+    for (i = 0; i < 2; i++) {
+        if (PointLineSide(point, a, b) > 0.0f) {
+            if (PointLineSide(point, b, c) > 0.0f &&
+                PointLineSide(point, c, d) > 0.0f &&
+                PointLineSide(point, d, a) > 0.0f) {
+                *point = *src;
+                return 1;
+            }
+        } else if (PointLineSide(point, b, c) <= 0.0f &&
+                   PointLineSide(point, c, d) <= 0.0f &&
+                   PointLineSide(point, d, a) <= 0.0f) {
+            *point = *src;
+            return 1;
+        }
+        src = b;
+        point++;
+    }
+    return 0;
 }
 
 s32 PointsSame(struct nuvec_s *a, struct nuvec_s *b)
@@ -1214,4 +1349,135 @@ void KeepHoldOnRock(struct jeeprock_s *rock, struct nuvec_s *pos,
     rock->vel = *vel;
     rock->holdvel = *vel;
     rock->held = 1;
+}
+
+
+extern s32 GetTotalFireBossObjectives(void);
+
+s32 GetMaxLevelObjectives(void)
+{
+    switch (Level) {
+    case 0x12:
+    case 0xD:
+        return 6;
+    case 0x18:
+        return 100;
+    case 0x24:
+        return 12;
+    case 0x16:
+        return GetTotalFireBossObjectives();
+    case 0x1A:
+    case 0x15:
+        return 3;
+    default:
+        return 1;
+    }
+}
+
+
+extern void MoveGlider(struct creature_s *c, struct pad_s *pad);
+extern void MoveAtlas(struct creature_s *c, struct pad_s *pad);
+extern void MovePlayerJeep(struct creature_s *c, struct pad_s *pad);
+
+void MoveVehicle(struct creature_s *c, struct pad_s *pad)
+{
+    switch (c->obj.vehicle) {
+    case 0x81:
+    case 0x8B:
+    case 0x36:
+        MoveGlider(c, pad);
+        return;
+    case 0x53:
+        MoveAtlas(c, pad);
+        return;
+    case 0x63:
+        MovePlayerJeep(c, pad);
+        return;
+    }
+}
+
+
+extern struct nuvec_s WeatherBossTargetPos;
+extern struct nuvec_s WeatherBossTargetVel;
+extern f32 WeatherBossTargetAppearTimer;
+extern struct nuvec_s SetNuVec(f32 x, f32 y, f32 z);
+
+void InitWeatherBossTarget(void)
+{
+    WeatherBossTargetPos = SetNuVec(0.0f, 0.0f, -15.0f);
+    WeatherBossTargetVel = v000;
+    WeatherBossTargetAppearTimer = 0.0f;
+}
+
+
+extern void DrawAsteroid(struct asteroid_s *asteroid);
+
+void DrawAsteroids(void)
+{
+    s32 i;
+
+    for (i = 0; i < 100; i++) {
+        if (AsteroidList[i].active != 0) {
+            DrawAsteroid(&AsteroidList[i]);
+        }
+    }
+}
+
+
+/* GunBoatList: stride 0x134, 4 entries. */
+struct gunboat_s {
+    s32 active;                /* 0x000 */
+    char pad_004[0x134 - 0x004];
+};
+extern struct gunboat_s GunBoatList[];
+extern void ProcessGunBoat(struct gunboat_s *boat);
+
+void ProcessGunBoats(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (GunBoatList[i].active != 0) {
+            ProcessGunBoat(&GunBoatList[i]);
+        }
+    }
+}
+
+
+extern void ProcessBigGun(struct biggun_s *gun);
+
+inline void ProcessBigGuns(void)
+{
+    s32 i;
+
+    for (i = 0; i < 12; i++) {
+        if (BigGunList[i].active != 0) {
+            ProcessBigGun(&BigGunList[i]);
+        }
+    }
+}
+
+
+extern void ProcessBattleShip(struct battleship_s *ship);
+
+void ProcessBattleShips(void)
+{
+    s32 i;
+
+    for (i = 0; i < 6; i++) {
+        if (BattleShipList[i].active != 0) {
+            ProcessBattleShip(&BattleShipList[i]);
+        }
+    }
+}
+
+
+extern void ProcessGliderBullets(void);
+extern void ProcessGliderBombs(void);
+
+void ProcessWeatherResearchLevel(struct pad_s *pad)
+{
+    ProcessGliderBullets();
+    ProcessGliderBombs();
+    ProcessBigGuns();
 }

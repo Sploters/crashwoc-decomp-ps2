@@ -128,6 +128,18 @@ extern struct edanimparam_s AnimParams[];
 
 extern struct nugscn_s *edanim_base_scene;
 extern void *edanim_active_menu;
+extern void *edanim_bouncy_menu;
+extern void *edanim_localparticle_menu;
+extern void *edanim_localparticletype_menu;
+extern void *edanim_localsound_menu;
+extern void *edanim_localsoundtype_menu;
+extern void *edanim_mctb_menu;
+extern void *edanim_options_menu;
+extern void *edanim_particle_menu;
+extern void *edanim_particletype_menu;
+extern void *edanim_sound_menu;
+extern void *edanim_switch_menu;
+extern void *edanim_switchtype_menu;
 extern int edanim_nearest;
 extern int edanim_nearest_param_id;
 extern int edanim_nearest_particle;
@@ -136,6 +148,8 @@ extern int edanim_next_param;
 extern int edanim_particle_mode;
 extern int edanim_particle_type;
 extern int edanim_sound_type;
+
+extern void eduiMenuDestroy(void *menu);
 
 
 int edanimLookupInstanceIndex(int special)
@@ -204,6 +218,27 @@ void edanimcbSetSwitchVar(void *menu, struct edanimitem_s *item)
 }
 
 
+void edanimcbCancelSwitchTypeMenu(void)
+{
+    eduiMenuDestroy(edanim_switchtype_menu);
+    edanim_switchtype_menu = 0;
+}
+
+
+void edanimcbCancelSwitchMenu(void)
+{
+    eduiMenuDestroy(edanim_switch_menu);
+    edanim_switch_menu = 0;
+}
+
+
+void edanimcbCancelBouncyMenu(void)
+{
+    eduiMenuDestroy(edanim_bouncy_menu);
+    edanim_bouncy_menu = 0;
+}
+
+
 void edanimcbSetSoundTiming(void *menu, struct edanimitem_s *item)
 {
     AnimParams[edanim_nearest_param_id].sound_timing[edanim_nearest_sound] = item->fvalue;
@@ -226,9 +261,43 @@ void edanimcbSetParticleRate(void *menu, struct edanimitem_s *item)
 }
 
 
+void edanimcbCancelParticleTypeMenu(void)
+{
+    eduiMenuDestroy(edanim_particletype_menu);
+    edanim_particletype_menu = 0;
+}
+
+
+void edanimcbCancelLocalParticleMenu(void)
+{
+    eduiMenuDestroy(edanim_localparticle_menu);
+    edanim_localparticle_menu = 0;
+}
+
+
+void edanimcbCancelLocalSoundMenu(void)
+{
+    eduiMenuDestroy(edanim_localsound_menu);
+    edanim_localsound_menu = 0;
+}
+
+
 void edanimcbCancelOptMenu(void)
 {
     edanim_active_menu = 0;
+}
+
+
+void edanimcbCancelMCTBMenu(void)
+{
+    eduiMenuDestroy(edanim_mctb_menu);
+    edanim_mctb_menu = 0;
+}
+
+
+void edanimClose(void)
+{
+    eduiMenuDestroy(edanim_options_menu);
 }
 
 
@@ -240,4 +309,32 @@ void edanimEnter(void)
     edanim_particle_mode = 0;
     edanim_particle_type = -1;
     edanim_sound_type = -1;
+}
+
+
+void edanimcbCancelLocalParticleTypeMenu(void)
+{
+    eduiMenuDestroy(edanim_localparticletype_menu);
+    edanim_localparticletype_menu = 0;
+}
+
+
+void edanimcbCancelParticleMenu(void)
+{
+    eduiMenuDestroy(edanim_particle_menu);
+    edanim_particle_menu = 0;
+}
+
+
+void edanimcbCancelLocalSoundTypeMenu(void)
+{
+    eduiMenuDestroy(edanim_localsoundtype_menu);
+    edanim_localsoundtype_menu = 0;
+}
+
+
+void edanimcbCancelSoundMenu(void)
+{
+    eduiMenuDestroy(edanim_sound_menu);
+    edanim_sound_menu = 0;
 }

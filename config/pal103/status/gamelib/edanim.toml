@@ -157,11 +157,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5860:edanimcbCancelSwitchTypeMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5888:edanimcbCancelSwitchMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a58b0:edanimcbSetBouncyPlayerGrav"
@@ -177,7 +177,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a59d0:edanimcbCancelBouncyMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a59f8:edanimcbToggleSoundType"
@@ -201,7 +201,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5ba8:edanimcbCancelParticleTypeMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5bd0:edanimcbLocalParticleTypeMenu"
@@ -209,7 +209,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a5d48:edanimcbCancelLocalParticleMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a5d70:edanimcbParticleMenu"
@@ -221,7 +221,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a6008:edanimcbCancelLocalSoundMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6030:edanimcbSoundMenu"
@@ -281,11 +281,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a6670:edanimcbCancelMCTBMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6698:edanimClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a66b8:edanimEnter"
@@ -305,11 +305,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a68c0:edanimcbCancelLocalParticleTypeMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a68e8:edanimcbCancelParticleMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6910:edanimcbSoundTypeMenu"
@@ -317,11 +317,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0073:001a6a90:edanimcbCancelLocalSoundTypeMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6ab8:edanimcbCancelSoundMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0073:001a6ae0:edanimcbSetSoundType"

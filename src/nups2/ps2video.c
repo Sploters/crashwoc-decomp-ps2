@@ -124,7 +124,12 @@ extern int sceMcOpen(int port, int slot, const char *name, int mode);
 extern int sceMcRead(int fd, void *buf, int size);
 extern int sceMcWrite(int fd, const void *buf, int size);
 extern int sceMcClose(int fd);
+extern int sceMcDelete(int port, int slot, const char *name);
+extern int sceMcSeek(int fd, int offset, int mode);
 extern int sceMcSync(int mode, int *cmd, int *result);
+extern int EnableIntc(int cause);
+extern int DisableIntc(int cause);
+extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern void *memcpy(void *dst, const void *src, unsigned int n);
 
 #define ExitHandler() __asm__ volatile ("sync\n\tei")
@@ -155,6 +160,11 @@ extern NuPs2GsReg D_002EA190;
 extern NuPs2GsReg D_002EA1A0;
 extern NuPs2GsReg D_002EA300;
 extern NuPs2GsReg D_002EA310;
+extern char D_006164E0[];
+extern int D_0062F06C;
+extern int D_0062F074;
+extern int D_0062F078;
+extern int D_0062F080;
 
 #define NuPs2FrameCount D_006331C4
 #define NuPs2SwapTime   D_0062F03C
@@ -174,6 +184,11 @@ extern NuPs2GsReg D_002EA310;
 #define NuPs2ZBufReg0   D_002EA1A0
 #define NuPs2FrameReg1  D_002EA300
 #define NuPs2ZBufReg1   D_002EA310
+#define ps2video_file   D_006164E0
+#define vblank_end_handler    D_0062F06C
+#define vblank_end_disable    D_0062F074
+#define vblank_start_handler  D_0062F078
+#define vblank_start_disable  D_0062F080
 
 
 static inline int tbslotEnd(TbSet *set, int slot)
@@ -322,6 +337,98 @@ int NuMcClose(int fd, int async)
 }
 
 
+int NuMcDelete(int port, int slot, const char *name, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcDelete(port, slot, name);
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
+int NuMcSeek(int fd, int offset, int mode, int async)
+{
+    int cmd;
+    int result;
+
+    result = sceMcSeek(fd, offset, mode);
+    if (!async) {
+        sceMcSync(0, &cmd, &result);
+    }
+    return result;
+}
+
+
+float NuMcReadFloat(int fd)
+{
+    float value;
+    int cmd;
+    int result;
+
+    result = sceMcRead(fd, &value, sizeof(value));
+    sceMcSync(0, &cmd, &result);
+    return value;
+}
+
+
+int NuMcReadInt(int fd)
+{
+    int value;
+    int cmd;
+    int result;
+
+    result = sceMcRead(fd, &value, sizeof(value));
+    sceMcSync(0, &cmd, &result);
+    return value;
+}
+
+
+unsigned int NuMcReadUnsignedInt(int fd)
+{
+    unsigned int value;
+    int cmd;
+    int result;
+
+    result = sceMcRead(fd, &value, sizeof(value));
+    sceMcSync(0, &cmd, &result);
+    return value;
+}
+
+
+short NuMcReadShort(int fd)
+{
+    short value;
+    int cmd;
+    int result;
+
+    result = sceMcRead(fd, &value, sizeof(value));
+    sceMcSync(0, &cmd, &result);
+    return value;
+}
+
+
+char NuMcReadChar(int fd)
+{
+    char value;
+    int cmd;
+    int result;
+
+    result = sceMcRead(fd, &value, sizeof(value));
+    sceMcSync(0, &cmd, &result);
+    return value;
+}
+
+
+void tbsetDestroy(TbSet *set)
+{
+    NuMemFreeFn(set, ps2video_file, 0x1E7);
+}
+
+
 void tbslotReset(TbSet *set, int slot)
 {
     int current;
@@ -378,6 +485,48 @@ void NuPs2VideoSetPos(int x, int y)
     NuPs2DispEnv[0].display.dy = NuPs2DisplayY0 + y;
     NuPs2DispEnv[1].display.dx = NuPs2DisplayX1 + x;
     NuPs2DispEnv[1].display.dy = NuPs2DisplayY1 + y;
+}
+
+
+void NuEnableVBlankE(void)
+{
+    if (vblank_end_handler) {
+        if (--vblank_end_disable == 0) {
+            EnableIntc(3);
+        }
+    }
+}
+
+
+void NuDisableVBlankE(void)
+{
+    if (vblank_end_handler) {
+        if (vblank_end_disable == 0) {
+            DisableIntc(3);
+        }
+        vblank_end_disable++;
+    }
+}
+
+
+void NuEnableVBlankS(void)
+{
+    if (vblank_start_handler) {
+        if (--vblank_start_disable == 0) {
+            EnableIntc(2);
+        }
+    }
+}
+
+
+void NuDisableVBlankS(void)
+{
+    if (vblank_start_handler) {
+        if (vblank_start_disable == 0) {
+            DisableIntc(2);
+        }
+        vblank_start_disable++;
+    }
 }
 
 

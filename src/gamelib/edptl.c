@@ -184,32 +184,71 @@ struct edptlitem_s {
     float fvalue;
 };
 
+struct nuvec_s {
+    float x;
+    float y;
+    float z;
+};
+
 struct edppptl_s {
-    char pad00[0x10];
+    struct nuvec_s pos;
+    char pad0C[0x4];
     int debris;
-    char pad14[0x24];
+    char pad14[0x20];
+    int switchid;
     float switchvar;
     char pad3C[0x4];
     float bounceoffset;
     float bouncefactor;
-    char pad48[0x4];
+    short group;
+    char pad4A[0x2];
 };
 
 struct debkey_s {
     char pad000[0x482];
     short debtype;
-    char pad484[0xCC];
+    char pad484[0xC8];
+    int switchid;
     float switchvar;
     char pad554[0x4];
     float bounceoffset;
     float bouncefactor;
-    char pad560[0xC];
+    char pad560[0x8];
+    short group;
+    char pad56A[0x2];
+};
+
+struct debphysics_s {
+    char pad00[0x14];
+    float gravity;
+};
+
+struct debsound_s {
+    int id;
+    int control;
+    int delay;
 };
 
 struct debtypedef_s {
-    char pad00[0x30];
+    char name[0x10];
+    unsigned char effectlist;
+    char pad11[0x1];
+    short genrate;
+    char pad14[0xE];
+    unsigned char texturetype;
+    char pad23[0x5];
+    float cuton;
+    float cutoff;
     float drawcutoff;
     float emitvel;
+    char pad38[0x60];
+    float gravity;
+    char pad9C[0x23C];
+    struct debphysics_s *physics;
+    char pad2DC[0x40];
+    unsigned char numcollspheres;
+    char pad31D[0x7];
+    struct debsound_s sounds[4];
 };
 
 struct edptlconfirmmenu_s {
@@ -223,8 +262,6 @@ struct pad_s {
     unsigned char unk_0x000[0x564];
     unsigned int buttons;
 };
-
-struct nuvec_s;
 
 extern struct edppptl_s edpp_ptls[256];
 
@@ -320,6 +357,12 @@ extern void NuStrCpy(char *dst, char *src);
 extern void DebFreeInstantly(int *key);
 extern void edppDoInput(struct pad_s *pad);
 extern void eduiMenuProcess(void *menu, struct pad_s *pad);
+extern void UpdateTotalPtls(struct debtypedef_s *dt);
+extern void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, float sizez,
+                           int rotx, int roty, int rotz, int flags, int colour, void *mtl);
+
+extern void *edpp_mtl;
+extern unsigned char edpp_effect_list;
 
 
 void ParticleReset(void) {
@@ -391,6 +434,31 @@ int edppProc(struct pad_s *pad) {
 }
 
 
+void edppHighlightNearest(void) {
+    if (edpp_nearest != -1) {
+        edbitsDrawCube(edpp_ptls[edpp_nearest].pos.x, edpp_ptls[edpp_nearest].pos.y,
+                       edpp_ptls[edpp_nearest].pos.z, 0.5f, 0.5f, 0.5f, 0, 0, 0, 0, -1, edpp_mtl);
+    }
+}
+
+
+void cbPtlChangeGrav(void *menu, struct edptlitem_s *item) {
+    struct debtypedef_s *dt;
+    struct debtypedef_s *current;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    dt = debtab[debkeydata[edpp_ptls[edpp_nearest].debris].debtype];
+    dt->gravity = item->fvalue;
+    current = debtab[debkeydata[edpp_ptls[edpp_nearest].debris].debtype];
+    current->physics->gravity = item->fvalue;
+}
+
+
 void edptlcbEmptyClipboard(void) {
     int saved;
 
@@ -399,6 +467,42 @@ void edptlcbEmptyClipboard(void) {
     cbPtlDeleteEffect();
     edpp_create_type = saved;
     edptl_clipboard_entry = -1;
+}
+
+
+void edptlcbPasteClipboard(struct edptlconfirmmenu_s *menu) {
+    struct debtypedef_s *dt;
+    int arg;
+
+    dt = debtab[edptl_clipboard_entry];
+    dt->effectlist = edpp_effect_list;
+    edptl_clipboard_entry = -1;
+    arg = 0;
+    if (menu->detacharg != 0) {
+        arg = menu->detacharg;
+        eduiMenuDetach(menu);
+    }
+    if (menu->callback != 0) {
+        menu->callback(menu, arg);
+    }
+}
+
+
+void edptlcbCutClipboard(struct edptlconfirmmenu_s *menu) {
+    struct debtypedef_s *dt;
+    int arg;
+
+    dt = debtab[edpp_create_type];
+    dt->effectlist = 4;
+    edptl_clipboard_entry = edpp_create_type;
+    arg = 0;
+    if (menu->detacharg != 0) {
+        arg = menu->detacharg;
+        eduiMenuDetach(menu);
+    }
+    if (menu->callback != 0) {
+        menu->callback(menu, arg);
+    }
 }
 
 
@@ -448,6 +552,44 @@ void cbPtlChangeEmitVel(void *menu, struct edptlitem_s *item) {
 }
 
 
+void cbPtlChangeCutOff(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->cutoff = item->fvalue;
+    if (dt->cutoff < dt->cuton) {
+        dt->cuton = dt->cutoff;
+    }
+}
+
+
+void cbPtlChangeCutOn(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->cuton = item->fvalue;
+    if (dt->cutoff < dt->cuton) {
+        dt->cutoff = dt->cuton;
+    }
+}
+
+
 void cbPtlChangeDrawCutOff(void *menu, struct edptlitem_s *item) {
     struct debkey_s *deb;
     struct debtypedef_s *dt;
@@ -461,6 +603,23 @@ void cbPtlChangeDrawCutOff(void *menu, struct edptlitem_s *item) {
     deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
     dt = debtab[deb->debtype];
     dt->drawcutoff = item->fvalue;
+}
+
+
+void cbPtlChangeGenRate(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->genrate = item->fvalue;
+    UpdateTotalPtls(dt);
 }
 
 
@@ -491,6 +650,18 @@ void cbCancelEffectListMenu(void) {
 }
 
 
+void edptlcbSetSwitchId(void *menu, struct edptlitem_s *item) {
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    edpp_ptls[edpp_nearest].switchid = item->fvalue;
+    debkeydata[edpp_ptls[edpp_nearest].debris].switchid = item->fvalue;
+}
+
+
 void edptlcbSetSwitchVar(void *menu, struct edptlitem_s *item) {
     if (edpp_nearest == -1) {
         return;
@@ -517,6 +688,18 @@ void edptlcbCancelGroupMenu(void) {
 
 void edptlcbSetMasterGroup(void *menu, struct edptlitem_s *item) {
     debris_render_group = item->fvalue;
+}
+
+
+void edptlcbSetGroup(void *menu, struct edptlitem_s *item) {
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    edpp_ptls[edpp_nearest].group = item->fvalue;
+    debkeydata[edpp_ptls[edpp_nearest].debris].group = item->fvalue;
 }
 
 
@@ -564,6 +747,38 @@ void cbPtlCancelJibMenu(void) {
 void edptlcbCancelBounceMenu(void) {
     eduiMenuDestroy(edptl_bounce_menu);
     edptl_bounce_menu = 0;
+}
+
+
+void cbChangeNumCollSpheres(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->numcollspheres = item->fvalue;
+}
+
+
+void edptlcbChangeSoundDelay(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->sounds[item->value].delay = item->fvalue;
 }
 
 
@@ -626,6 +841,22 @@ void cbPtlCancelVarEmitMenu(void) {
 void cbPtlCancelVarStartMenu(void) {
     eduiMenuDestroy(ptlvarstartmenu);
     ptlvarstartmenu = 0;
+}
+
+
+void cbPtlSelTextureType(void *menu, struct edptlitem_s *item) {
+    struct debkey_s *deb;
+    struct debtypedef_s *dt;
+
+    if (edpp_nearest == -1) {
+        return;
+    }
+    if (edpp_ptls[edpp_nearest].debris == -1) {
+        return;
+    }
+    deb = &debkeydata[edpp_ptls[edpp_nearest].debris];
+    dt = debtab[deb->debtype];
+    dt->texturetype = item->value;
 }
 
 
