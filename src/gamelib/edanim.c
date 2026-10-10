@@ -91,7 +91,8 @@ struct nuvec_s {
 };
 
 struct nuinstance_s {
-    char pad00[0x50];
+    float mtx[4][4];
+    char pad40[0x50 - 0x40];
 };
 
 struct nuspecial_s {
@@ -99,14 +100,15 @@ struct nuspecial_s {
     struct nuvec_s pos;
     float pos_w;
     struct nuinstance_s *instance;
-    char pad44[0x50 - 0x44];
+    char *name;
+    char pad48[0x50 - 0x48];
 };
 
 struct nugscn_s {
     char pad00[0x18];
     int numinstance;
     struct nuinstance_s *instances;
-    char pad20[0x24 - 0x20];
+    int numspecial;
     struct nuspecial_s *specials;
 };
 
@@ -116,6 +118,11 @@ struct edanimitem_s {
     unsigned char toggle;
     char pad11[0x4C - 0x11];
     float fvalue;
+};
+
+struct pad_s {
+    char pad000[0x564];
+    unsigned int buttons;
 };
 
 struct edanimparam_s {
@@ -128,7 +135,13 @@ struct edanimparam_s {
     char pad01c[0xBC - 0x1C];
     int particle_rate[8];
     int particle_switch[8];
-    char pad0fc[0x240 - 0xFC];
+    struct nuvec_s particle_pos[8];
+    unsigned short particle_rotz[8];
+    unsigned short particle_roty[8];
+    char pad17c[0x180 - 0x17C];
+    char sound_name[8][16];
+    int sound_type[8];
+    int sound_switch[8];
     float sound_timing[8];
     struct nuvec_s sound_pos[8];
     int bouncy_instance;
@@ -161,6 +174,10 @@ extern int edanim_next_param;
 extern int edanim_particle_mode;
 extern int edanim_particle_type;
 extern int edanim_sound_type;
+extern int edanim_sound_mode;
+extern unsigned short edanim_emitrotz;
+extern unsigned short edanim_emitroty;
+extern void *edanim_mtl_zoff;
 extern void *edanim_soundtype_menu;
 
 extern char D_0062F6E0[];
@@ -179,6 +196,24 @@ extern char D_00619700[];
 #define mctb_text_not_formatted D_006196F0
 #define mctb_text_free_space D_00619700
 
+extern char D_00619710[];
+extern char D_00619748[];
+extern char D_00619758[];
+extern char D_00619768[];
+extern char D_00619778[];
+extern char D_00619788[];
+extern char D_00619798[];
+extern char D_006197A8[];
+
+#define mctb_text_slots_used D_00619710
+#define mctb_text_load_failed D_00619748
+#define mctb_text_deleted D_00619758
+#define mctb_text_delete_failed D_00619768
+#define mctb_text_unformatted D_00619778
+#define mctb_text_unformat_failed D_00619788
+#define mctb_text_formatted_ok D_00619798
+#define mctb_text_format_failed D_006197A8
+
 extern void eduiMenuDestroy(void *menu);
 extern void eduiMenuDetach(void *menu);
 extern void eduiCreateMessageMenu(void *menu, char *text, int flag);
@@ -191,6 +226,61 @@ extern int saveloadCheckCardType(void);
 extern int saveloadCheckCardFormatted(void);
 extern int saveloadCheckCardFreeSpace(int port);
 extern int sprintf(char *buf, const char *fmt, ...);
+extern int saveloadCheckSlotsUsed(void);
+extern int saveloadLoadSlot(int slot, char *text, int size);
+extern int saveloadDeleteSlot(int slot);
+extern int saveloadUnFormatCard(void);
+extern int saveloadFormatCard(void);
+extern int strncmp(const char *a, const char *b, int n);
+extern char *strcpy(char *dst, const char *src);
+extern char *edbitsGetSoundName(int type);
+extern void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, float sizez,
+                           int rotx, int roty, int rotz, int flags, int colour, void *mtl);
+extern void edcamSet(void);
+extern void NuFntScale(int x, int y);
+extern void eduiMenuRender(void *menu);
+extern void eduiMenuProcess(void *menu, struct pad_s *pad);
+extern void edanimDrawCursor(void);
+extern void edanimRenderParticleEmitters(int param);
+extern void edanimRenderSoundEmitters(int param);
+extern void edanimDoInput(struct pad_s *pad);
+extern void edanimDetermineNearestAnim(float range);
+extern void edanimDetermineNearestParticle(float range);
+extern void edanimDetermineNearestSound(float range);
+
+
+void edanimRender(void)
+{
+    int colour;
+    struct nuinstance_s *instance;
+
+    edcamSet();
+    edanimDrawCursor();
+    if (edanim_nearest != -1) {
+        if (edanim_particle_mode) {
+            colour = 0xFF00FF00;
+        } else if (edanim_sound_mode) {
+            colour = 0xFFFF0000;
+        } else if (edanim_nearest_param_id != -1) {
+            colour = 0xFFFFFFFF;
+        } else {
+            colour = 0xFF808080;
+        }
+        instance = edanim_base_scene->specials[edanim_nearest].instance;
+        edbitsDrawCube(instance->mtx[3][0], instance->mtx[3][1], instance->mtx[3][2],
+                       0.5f, 0.5f, 0.5f, 0, 0, 0, 0, colour, edanim_mtl_zoff);
+        if (edanim_particle_mode) {
+            edanimRenderParticleEmitters(edanim_nearest_param_id);
+        }
+        if (edanim_sound_mode) {
+            edanimRenderSoundEmitters(edanim_nearest_param_id);
+        }
+    }
+    if (edanim_active_menu != 0) {
+        NuFntScale(12, 12);
+        eduiMenuRender(edanim_active_menu);
+    }
+}
 
 
 int edanimLookupInstanceIndex(int special)
@@ -213,6 +303,21 @@ int edanimLookupInstanceIndex(int special)
 void edanimRegisterBaseScene(struct nugscn_s *scene)
 {
     edanim_base_scene = scene;
+}
+
+
+int edanimLookupSpecial(char *name)
+{
+    int i;
+
+    if (edanim_base_scene != 0) {
+        for (i = 0; i < edanim_base_scene->numspecial; i++) {
+            if (strncmp(edanim_base_scene->specials[i].name, name, 19) == 0) {
+                return i;
+            }
+        }
+    }
+    return -1;
 }
 
 
@@ -250,6 +355,16 @@ void edanimSoundPlace(int slot, struct nuvec_s *wpos)
     struct nuvec_s *origin = &edanim_base_scene->specials[edanim_nearest].pos;
 
     NuVecSub(&AnimParams[edanim_nearest_param_id].sound_pos[slot], wpos, origin);
+}
+
+
+void edanimParticlePlace(int slot, struct nuvec_s *wpos)
+{
+    struct nuvec_s *origin = &edanim_base_scene->specials[edanim_nearest].pos;
+
+    NuVecSub(&AnimParams[edanim_nearest_param_id].particle_pos[slot], wpos, origin);
+    AnimParams[edanim_nearest_param_id].particle_rotz[slot] = edanim_emitrotz;
+    AnimParams[edanim_nearest_param_id].particle_roty[slot] = edanim_emitroty;
 }
 
 
@@ -358,6 +473,21 @@ void edanimcbCancelBouncyMenu(void)
 }
 
 
+void edanimcbToggleSoundType(void *menu, struct edanimitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edanim_soundtype_menu = 0;
+    if (item->toggle == 0) {
+        AnimParams[edanim_nearest_param_id].sound_switch[edanim_nearest_sound] = 0;
+        AnimParams[edanim_nearest_param_id].sound_timing[edanim_nearest_sound] = 1.0f;
+    } else {
+        AnimParams[edanim_nearest_param_id].sound_switch[edanim_nearest_sound] = 1;
+        AnimParams[edanim_nearest_param_id].sound_timing[edanim_nearest_sound] = 50.0f;
+    }
+}
+
+
 void edanimcbSetSoundTiming(void *menu, struct edanimitem_s *item)
 {
     AnimParams[edanim_nearest_param_id].sound_timing[edanim_nearest_sound] = item->fvalue;
@@ -461,6 +591,59 @@ void edanimcbMCTBCardFreeSpace(void *menu)
 }
 
 
+void edanimcbMCTBCardSlotsUsed(void *menu)
+{
+    char text[32];
+    int used;
+
+    used = saveloadCheckSlotsUsed();
+    sprintf(text, mctb_text_slots_used, used);
+    eduiCreateMessageMenu(menu, text, 1);
+}
+
+
+void edanimcbMCTBCardLoadSlot(void *menu, struct edanimitem_s *item)
+{
+    char text[32];
+
+    if (saveloadLoadSlot(item->value, text, 32)) {
+        eduiCreateMessageMenu(menu, text, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_load_failed, 0);
+    }
+}
+
+
+void edanimcbMCTBCardDeleteSlot(void *menu, struct edanimitem_s *item)
+{
+    if (saveloadDeleteSlot(item->value)) {
+        eduiCreateMessageMenu(menu, mctb_text_deleted, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_delete_failed, 0);
+    }
+}
+
+
+void edanimcbMCTBCardUnFormat(void *menu)
+{
+    if (saveloadUnFormatCard()) {
+        eduiCreateMessageMenu(menu, mctb_text_unformatted, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_unformat_failed, 0);
+    }
+}
+
+
+void edanimcbMCTBCardFormat(void *menu)
+{
+    if (saveloadFormatCard()) {
+        eduiCreateMessageMenu(menu, mctb_text_formatted_ok, 1);
+    } else {
+        eduiCreateMessageMenu(menu, mctb_text_format_failed, 0);
+    }
+}
+
+
 void edanimcbCancelMCTBMenu(void)
 {
     eduiMenuDestroy(edanim_mctb_menu);
@@ -482,6 +665,40 @@ void edanimEnter(void)
     edanim_particle_mode = 0;
     edanim_particle_type = -1;
     edanim_sound_type = -1;
+}
+
+
+int edanimProc(struct pad_s *pad)
+{
+    if (edanim_active_menu != 0) {
+        eduiMenuProcess(edanim_active_menu, pad);
+        return 0;
+    }
+    edanimDoInput(pad);
+    if (edanim_particle_mode) {
+        edanimDetermineNearestParticle(1.0f);
+    } else if (edanim_sound_mode) {
+        edanimDetermineNearestSound(1.0f);
+    } else {
+        edanimDetermineNearestAnim(1.0f);
+    }
+    if (pad->buttons & 0x800) {
+        edanim_particle_mode = 0;
+        return 1;
+    }
+    return 0;
+}
+
+
+void edanimcbSetLocalSoundType(void *menu, struct edanimitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edanim_localsoundtype_menu = 0;
+    AnimParams[edanim_nearest_param_id].sound_type[edanim_nearest_sound] = item->value;
+    strcpy(AnimParams[edanim_nearest_param_id].sound_name[edanim_nearest_sound],
+           edbitsGetSoundName(item->value));
+    edanim_sound_type = item->value;
 }
 
 
@@ -510,6 +727,19 @@ void edanimcbCancelSoundMenu(void)
 {
     eduiMenuDestroy(edanim_sound_menu);
     edanim_sound_menu = 0;
+}
+
+
+void edanimcbSetSoundType(void *menu, struct edanimitem_s *item)
+{
+    eduiMenuDetach(menu);
+    eduiMenuDestroy(menu);
+    edanim_soundtype_menu = 0;
+    if (item->value == 99999) {
+        edanim_sound_type = -1;
+    } else {
+        edanim_sound_type = item->value;
+    }
 }
 
 
