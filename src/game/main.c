@@ -1439,3 +1439,116 @@ void BGLoadLevel(void)
     for (;;) {
     }
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef short s16;
+typedef long long s64;
+typedef float f32;
+typedef double f64;
+void *NuLightCreate();
+s32 NuLightUpdate(void *);
+s32 NuMtxSetRotationX(void *, s32);
+extern void *D_0062FAE8;
+
+void InitLights(void) {
+    void *temp_v0;
+
+    temp_v0 = NuLightCreate();
+    D_0062FAE8 = temp_v0;
+    if (temp_v0 != ((void *)0)) {
+        (*( s32 *)((s8 *)(temp_v0) + ( 4))) = 1;
+        (*( f32 *)((s8 *)(temp_v0) + ( 0x1C))) = 1.0f;
+        (*( s32 *)((s8 *)(temp_v0) + ( 0))) = 0;
+        (*( s32 *)((s8 *)(temp_v0) + ( 8))) = 0;
+        (*( s32 *)((s8 *)(temp_v0) + ( 0xC))) = 0;
+        (*( s32 *)((s8 *)(temp_v0) + ( 0x10))) = 0;
+        (*( s32 *)((s8 *)(temp_v0) + ( 0x14))) = 0;
+        (*( s32 *)((s8 *)(temp_v0) + ( 0x18))) = 0;
+        NuMtxSetRotationX(temp_v0 + 0x40, 0xC000);
+        NuLightUpdate(D_0062FAE8);
+    }
+}
+
+
+
+s32 NuTexAnimProcess();
+s32 NuTexAnimSetSignals(s32);
+extern s32 WeatherBossDead;
+extern f32 WeatherBossSkeletonTimer;
+extern s32 texanimbits;
+
+void SetTexAnimSignals(void) {
+    s8 temp_a0;
+    s8 temp_v1;
+    void *temp_v0;
+
+    if ((*( s8 *)((s8 *)(player) + ( 0))) != 0) {
+        temp_a0 = (*( s8 *)((s8 *)(player) + ( 0x149)));
+        if (temp_a0 != 3) {
+            if (temp_a0 != 8) {
+                if ((*( u8 *)((s8 *)(player) + ( 0xCE1))) != 0) {
+                    goto block_4;
+                }
+                goto block_7;
+            }
+            goto block_5;
+        }
+block_4:
+block_5:
+        texanimbits |= 2;
+    } else {
+block_7:
+        texanimbits &= 0xFFFFFFFD;
+    }
+    temp_v0 = (*( void **)((s8 *)(player) + ( 0xC)));
+    if (temp_v0 != ((void *)0)) {
+        if ((*( s16 *)((s8 *)(temp_v0) + ( 0x16E))) >= 2) {
+            texanimbits |= 4;
+        } else {
+            goto block_11;
+        }
+    } else {
+block_11:
+        texanimbits &= 0xFFFFFFFB;
+    }
+    if ((*( s8 *)((s8 *)(player) + ( 0))) != 0) {
+        temp_v1 = (*( s8 *)((s8 *)(player) + ( 0x149)));
+        if (temp_v1 != 0) {
+            if (temp_v1 != 0x12) {
+                texanimbits |= 0x20;
+            } else {
+                goto block_16;
+            }
+        } else {
+            goto block_16;
+        }
+    } else {
+block_16:
+        texanimbits &= 0xFFFFFFDF;
+    }
+    if (Level == 0x17) {
+        texanimbits |= 0x40;
+    } else {
+        texanimbits &= 0xFFFFFFBF;
+    }
+    if (Level == 0x18) {
+        if (WeatherBossSkeletonTimer != 0.0f) {
+            texanimbits |= 0x100;
+        } else {
+            goto block_23;
+        }
+    } else {
+block_23:
+        texanimbits &= 0xFFFFFEFF;
+    }
+    if (Level == 0x18) {
+        if (WeatherBossDead != 0) {
+            texanimbits |= 0x200;
+        }
+    }
+    NuTexAnimSetSignals(texanimbits);
+    NuTexAnimProcess();
+}

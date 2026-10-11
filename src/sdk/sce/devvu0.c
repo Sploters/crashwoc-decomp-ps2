@@ -16,3 +16,36 @@
  *   0x002636e8 sceDevVu0GetCnd
  *   0x002637c8 sceDevVu0PutCnd
  */
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+
+
+s32 sceDevVu0Continue(void)
+{
+  s32 temp_v0;
+  s32 var_v0;
+  temp_v0 = sceDevVu0Sync();
+  var_v0 = 0;
+  if (temp_v0 < 4)
+  {
+    if (temp_v0 > ((short) 0))
+    {
+      var_v0 = 1;
+      sceDevVu0Exec(sceDevVu0GetTpc());
+    }
+  }
+  return var_v0;
+}

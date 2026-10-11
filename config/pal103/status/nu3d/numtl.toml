@@ -49,7 +49,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011be50:NuMtlInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011be98:NuMtlGetSysBuffSize"
@@ -57,7 +57,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011bea8:NuMtlInitEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011bf80:NuMtlClose"
@@ -69,7 +69,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0038:0011c080:NuMtlDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011c130:NuMtlUpdate"
@@ -101,7 +101,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011c300:NuMtlRemove"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011c358:NuMtlReadEventDefault"

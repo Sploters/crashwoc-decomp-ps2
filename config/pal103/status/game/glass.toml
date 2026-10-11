@@ -29,11 +29,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0107:002398f0:InitSpecular"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0107:00239960:InitEnviro"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0107:002399d0:SpecularGivenMaterial"
@@ -45,12 +45,12 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0107:00239ca8:InitFlickerPal"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0107:00239cb0:FlickerPalGivenMaterial"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0107:00239cb8:DrawGlassCreatures"
-state = "asm"
+state = "matching"

@@ -375,3 +375,109 @@ int FindSplinePtSize(char *name)
     }
     return 12;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+s32 (*NuDebugMsgProlog(s32 *, s32))(s32 *);
+s32 NuFileRead(s32, void *, s32);
+s32 NuFileReadInt(s32);
+void *NuMemAllocFn(s32, s32 *, s32);
+extern s32 D_00614D00[];
+extern s32 D_00614E08[];
+extern s32 cvt_numsplines;
+extern void *cvt_spline_cvs;
+extern void *cvt_splines;
+
+void CvtNuIFFSplineSet(s32 arg0) {
+    s32 temp_s0;
+    s32 temp_s0_2;
+    s32 temp_v0;
+    s32 temp_v0_3;
+    s32 temp_v0_5;
+    s32 var_a0;
+    void *temp_v0_2;
+    void *temp_v0_4;
+    void *var_lo;
+    void *var_v1;
+
+    NuDebugMsgProlog(&D_00614D00[0], 0x31E)(&D_00614E08[0]);
+    temp_v0 = NuFileReadInt(arg0);
+    temp_s0 = temp_v0 * 0x3C;
+    temp_v0_2 = NuMemAllocFn(temp_s0, &D_00614D00[0], 0x324);
+    cvt_numsplines = temp_v0;
+    cvt_splines = temp_v0_2;
+    if (temp_v0 != 0) {
+        NuFileRead(arg0, temp_v0_2, temp_s0);
+        temp_v0_3 = NuFileReadInt(arg0);
+        if (temp_v0_3 != 0) {
+            temp_s0_2 = temp_v0_3 * 0xC;
+            temp_v0_4 = NuMemAllocFn(temp_s0_2, &D_00614D00[0], 0x32C);
+            cvt_spline_cvs = temp_v0_4;
+            NuFileRead(arg0, temp_v0_4, temp_s0_2);
+            var_lo = cvt_spline_cvs;
+            if (temp_v0 > 0) {
+                var_v1 = cvt_splines;
+                var_a0 = temp_v0;
+                do {
+                    temp_v0_5 = (*( s32 *)((s8 *)(var_v1) + ( 0)));
+                    (*( void **)((s8 *)(var_v1) + ( 4))) = var_lo;
+                    var_a0 -= 1;
+                    var_v1 += 0x3C;
+                    var_lo += temp_v0_5 * 0xC;
+                } while (var_a0 != 0);
+            }
+        }
+    }
+}
+
+
+
+s32 (*NuDebugMsgProlog(s32 *, s32))(s32 *);
+s32 NuFileBeginBlkWrite(s32, s32, s32);
+s32 NuFileEndBlkWrite(s32);
+s32 NuFileWrite(s32, s32, s32);
+s32 NuFileWriteInt(s32, s32);
+s32 NuMemFreeFn(s32, s32 *, s32);
+extern s32 D_00614D70[];
+extern s32 D_006330C4;
+
+void CvtNuIFFTexAnimSet(s32 arg0) {
+    s32 temp_s0;
+    s32 temp_s0_2;
+    s32 temp_s1;
+    s32 temp_v0;
+    s32 temp_v0_2;
+    s32 temp_v0_3;
+
+    NuDebugMsgProlog(&D_00614D00[0], 0x234)(&D_00614D70[0]);
+    NuFileBeginBlkWrite(D_006330C4, 0x30534154, 0);
+    temp_s0 = NuFileReadInt(arg0);
+    NuFileReadInt(arg0);
+    temp_s1 = temp_s0 << 5;
+    NuFileWriteInt(D_006330C4, temp_s0);
+    NuFileWriteInt(D_006330C4, 0);
+    temp_v0 = NuMemAllocFn(temp_s1, &D_00614D00[0], 0x23F);
+    NuFileRead(arg0, temp_v0, temp_s1);
+    NuFileWrite(D_006330C4, temp_v0, temp_s1);
+    temp_v0_2 = NuFileReadInt(arg0);
+    NuFileWriteInt(D_006330C4, temp_v0_2);
+    temp_s0_2 = temp_v0_2 * 2;
+    temp_v0_3 = NuMemAllocFn(temp_s0_2, &D_00614D00[0], 0x246);
+    NuFileRead(arg0, temp_v0_3, temp_s0_2);
+    NuFileWrite(D_006330C4, temp_v0_3, temp_s0_2);
+    NuFileEndBlkWrite(D_006330C4);
+    NuMemFreeFn(temp_v0, &D_00614D00[0], 0x24D);
+    NuMemFreeFn(temp_v0_3, &D_00614D00[0], 0x24E);
+}

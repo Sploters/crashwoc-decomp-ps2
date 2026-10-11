@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0236:00277480:_Bfree"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0236:002774b0:_multadd"

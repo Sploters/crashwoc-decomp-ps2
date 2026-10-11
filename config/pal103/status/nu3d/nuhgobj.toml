@@ -89,7 +89,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0048:00150338:NuHGobjReadForCutScene"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0048:001503f0:ReadNuIFFCollideData"

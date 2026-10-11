@@ -33,7 +33,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0039:0011d450:NuTexAccomodateRS"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011d580:NuTexAccomodate"

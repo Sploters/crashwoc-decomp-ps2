@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0259:002809e0:sceSifIsAliveIop"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0259:00280a08:sceSifSyncIop"

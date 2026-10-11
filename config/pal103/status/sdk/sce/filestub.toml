@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0256:0027c3b0:get_iob"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0256:0027c420:_sceFs_Rcv_Intr"
@@ -49,7 +49,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0256:0027caa0:sceFsReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0256:0027cad8:sceOpen"

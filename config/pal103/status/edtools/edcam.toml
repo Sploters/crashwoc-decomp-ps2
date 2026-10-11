@@ -33,15 +33,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0086:001c2198:edcamSetAng"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0086:001c21a8:edcamSetDist"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0086:001c21b8:edcamGetDist"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0086:001c21c8:edcamSetPosAng"
@@ -57,4 +57,4 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0086:001c2288:edcamGetPosPointer"
-state = "asm"
+state = "matching"

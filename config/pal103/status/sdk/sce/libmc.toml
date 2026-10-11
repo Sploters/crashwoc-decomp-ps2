@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0150:00266e20:_lmcGetClientPtr"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0150:00266e50:sceMcChangeThreadPriority"
@@ -61,7 +61,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0150:00267620:mcDelayThread"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0150:00267668:sceMcSync"

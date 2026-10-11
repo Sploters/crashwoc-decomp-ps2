@@ -25,11 +25,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0255:0027b5d8:_sceRpcFreePacket"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0255:0027b5f8:_sceRpcGetFPacket"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0255:0027b628:_sceRpcGetFPacket2"
@@ -73,7 +73,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0255:0027bdd8:sceSifSetRpcQueue"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0255:0027be70:sceSifRegisterRpc"
@@ -81,11 +81,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0255:0027bf40:sceSifRemoveRpc"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0255:0027bfd8:sceSifRemoveRpcQueue"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0255:0027c068:sceSifGetNextRequest"

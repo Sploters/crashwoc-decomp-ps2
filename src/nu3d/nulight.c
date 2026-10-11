@@ -84,3 +84,52 @@ int NuLgtRand(void) {
     NuLgtSeed = seed;
     return seed;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+s32 vpDmaTag_Close(s32);
+s32 vtCloseDirect(s32);
+extern s32 NuLgtBuff;
+
+void NuLightSprDmaClose(void) {
+    s32 temp_v0;
+
+    temp_v0 = vtCloseDirect(NuLgtBuff);
+    NuLgtBuff = temp_v0;
+    NuLgtBuff = vpDmaTag_Close(temp_v0);
+}
+
+
+
+extern s32 NuLightHazePolymtl;
+extern s32 NuLightHazePolyus[];
+extern s32 NuLightHazePolyvs[];
+
+void NuLigthSetPolyHazeMat(struct numtl_s * a_0, struct hazecol_s * a_1, struct hazecol_s * a_2)
+{
+    s32 arg0 = a_0;
+    void *arg1 = a_1;
+    void *arg2 = a_2;
+
+    NuLightHazePolymtl = arg0;
+    (*( f32 *)((s8 *)(&NuLightHazePolyus[0]) + ( 0))) = (f32) (*( f32 *)((s8 *)(arg1) + ( 0)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyus[0]) + ( 4))) = (f32) (*( f32 *)((s8 *)(arg1) + ( 4)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyus[0]) + ( 8))) = (f32) (*( f32 *)((s8 *)(arg1) + ( 0)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyus[0]) + ( 0xC))) = (f32) (*( f32 *)((s8 *)(arg1) + ( 4)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyvs[0]) + ( 0))) = (f32) (*( f32 *)((s8 *)(arg2) + ( 0)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyvs[0]) + ( 4))) = (f32) (*( f32 *)((s8 *)(arg2) + ( 0)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyvs[0]) + ( 8))) = (f32) (*( f32 *)((s8 *)(arg2) + ( 4)));
+    (*( f32 *)((s8 *)(&NuLightHazePolyvs[0]) + ( 0xC))) = (f32) (*( f32 *)((s8 *)(arg2) + ( 4)));
+}

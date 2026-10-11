@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0088:001c5490:SetTexAnimSignals"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0088:001c5620:TextureCreate"
@@ -145,7 +145,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0088:001cb3a8:InitLights"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0088:001cb410:ClosePauseRender"

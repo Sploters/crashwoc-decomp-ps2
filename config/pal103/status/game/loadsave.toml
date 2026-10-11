@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0119:0025b3e0:loadsaveCallEachFrame"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b420:LoadGameSlots"
@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0119:0025b4c8:SaveGameSlots"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b508:DrawGameSlots"

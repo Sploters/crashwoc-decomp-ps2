@@ -259,3 +259,27 @@ void AnimateDIVE(struct creature_s *plr, f32 ratio) {
     }
     plr->obj.anim.newaction = 0x44;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef long long s64;
+typedef double f64;
+
+
+void ResetTub(void *arg0, s32 arg1)
+{
+  s8 *new_var2;
+  s8 *new_var;
+  *((s32 *) (((s8 *) arg0) + (0 * 0))) = arg1;
+  *((s8 *) (((s8 *) arg0) + 4)) = -1;
+  new_var2 = (s8 *) (((s8 *) arg0) + 0x17);
+  new_var = (s8 *) (((s8 *) arg0) + 7);
+  *((s8 *) (((s8 *) arg0) + 5)) = -1;
+  *((s8 *) (((s8 *) arg0) + 6)) = 0;
+  *((s8 *) (((s8 *) arg0) + 0x15)) = 0;
+  *new_var2 = 0;
+  *new_var = -1;
+  *((s8 *) (((s8 *) arg0) + 0x1E)) = 0;
+}

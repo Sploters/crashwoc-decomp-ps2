@@ -774,3 +774,39 @@ void NuRndrAnglesZX(NuVec3 *dir, NuVec3 *angles) {
     NuVecRotateX(&rotated, dir, (int)-angles->x);
     angles->z = -NuAtan2D(rotated.x, rotated.y);
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+s32 NuRndrSetLocalMtx(s32 *, s32);
+void NuRndrStreamFxMPG(int mode);
+s32 NuRndrStreamQuadShad(void *);
+s32 NuRndrStreamSetLocalMtx(void *);
+int NuRndrStreamSetViewMtxScissorClip(struct nurndrstream_s *stream);
+extern s32 numtx_identity[];
+extern void *rndrstream_fx;
+
+void NuRndrShadPolys(s32 arg0) {
+    if (NuRndrShadowCnt != 0) {
+        NuRndrStreamLink(rndrstream_fx);
+        NuRndrStreamSetMisc(rndrstream_fx);
+        NuRndrStreamAddMtl(rndrstream_fx, arg0);
+        NuRndrSetLocalMtx(&numtx_identity[0], 2);
+        NuRndrStreamSetViewMtxScissorClip(rndrstream_fx);
+        NuRndrStreamSetLocalMtx(rndrstream_fx);
+        NuRndrStreamFxMPG(1);
+        NuRndrStreamQuadShad(rndrstream_fx);
+        rndrstream_free = vpDmaTag_Next((*( s32 *)((s8 *)(rndrstream_fx) + ( 4))), 0);
+    }
+    NuRndrShadowCnt = 0;
+}

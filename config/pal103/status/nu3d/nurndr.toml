@@ -405,7 +405,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0040:001301a0:NuRndrShadPolys"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:00130230:NuRndrAddWaterRipple"

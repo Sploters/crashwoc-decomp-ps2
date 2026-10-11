@@ -40,3 +40,92 @@
  *   0x001452f0 buildBitCountTable
  *   0x00145358 NuAnimCurveScale
  */
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+void *NuMemAllocFn(s32, s32 *, s32);
+s32 memset(void *, s32, s32);
+extern s32 D_00614A60[];
+
+void *NuAnimDataCreate(s32 arg0) {
+    s32 temp_s1;
+    void *temp_v0;
+
+    temp_s1 = (arg0 * 4) + 0x10;
+    temp_v0 = NuMemAllocFn(temp_s1, &D_00614A60[0], 0x291);
+    memset(temp_v0, 0, temp_s1);
+    (*( s32 *)((s8 *)(temp_v0) + ( 8))) = arg0;
+    (*( void **)((s8 *)(temp_v0) + ( 0xC))) = (void *) (temp_v0 + 0x10);
+    return temp_v0;
+}
+
+
+
+s32 (*NuErrorProlog(s32 *, s32))(s32 *);
+extern s32 D_0062EE20[];
+
+void *NuAnimCurveCreate(s32 arg0) {
+    s32 temp_s2;
+    void *temp_v0;
+    void *temp_v0_2;
+
+    if (arg0 <= 0) {
+        NuErrorProlog(&D_00614A60, 0x469)(&D_0062EE20[0]);
+    }
+    temp_v0 = NuMemAllocFn(0x10, &D_00614A60, 0x46B);
+    temp_s2 = arg0 * 0x10;
+    memset(temp_v0, 0, 0x10);
+    (*( s32 *)((s8 *)(temp_v0) + ( 8))) = arg0;
+    temp_v0_2 = NuMemAllocFn(temp_s2, &D_00614A60, 0x46F);
+    (*( void **)((s8 *)(temp_v0) + ( 4))) = temp_v0_2;
+    memset(temp_v0_2, 0, temp_s2);
+    return temp_v0;
+}
+
+
+
+s32 NuMemFreeFn(void *, s32 *, s32);
+
+void NuAnimCurveDestroy(void *arg0) {
+    void *temp_a0;
+
+    temp_a0 = (*( void **)((s8 *)(arg0) + ( 4)));
+    if (temp_a0 != ((void *)0)) {
+        NuMemFreeFn(temp_a0, &D_00614A60, 0x479);
+    }
+    NuMemFreeFn(arg0, &D_00614A60, 0x47A);
+}
+
+
+
+s32 (*NuErrorProlog(s32 *, s32))(s32 *);
+
+void *NuAnimDataChunkCreate(s32 arg0) {
+    s32 temp_s2;
+    void *temp_v0;
+    void *temp_v0_2;
+
+    if (arg0 <= 0) {
+        NuErrorProlog(&D_00614A60, 0x27C)(&D_0062EE20);
+    }
+    temp_v0 = NuMemAllocFn(0x14, &D_00614A60, 0x27D);
+    temp_s2 = arg0 * 4;
+    memset(temp_v0, 0, 0x14);
+    (*( s32 *)((s8 *)(temp_v0) + ( 0))) = arg0;
+    temp_v0_2 = NuMemAllocFn(temp_s2, &D_00614A60, 0x281);
+    (*( void **)((s8 *)(temp_v0) + ( 8))) = temp_v0_2;
+    memset(temp_v0_2, 0, temp_s2);
+    return temp_v0;
+}

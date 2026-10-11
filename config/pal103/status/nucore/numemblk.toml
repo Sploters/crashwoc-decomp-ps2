@@ -29,8 +29,8 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0005:001055d8:NuMemBlkFree"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0005:00105630:NuMemBlkCheckFreeList"
-state = "asm"
+state = "matching"

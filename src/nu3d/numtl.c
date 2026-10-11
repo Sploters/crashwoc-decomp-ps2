@@ -109,3 +109,134 @@ NuMtl *NuMtlIterate(int restart) {
 int NuMtlReadEventDefault(NuMtl *mtl) {
     return 0;
 }
+
+
+int NuMtlGetZupd(NuMtl *mtl) {
+    return -(((int)(mtl->flags & 0xFF) << 28) < 0);
+}
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef float f32;
+typedef double f64;
+extern s32 D_0062EBA0;
+extern s32 D_0062EBA8;
+extern s32 D_0062EBB0;
+
+void NuMtlInit(void) {
+    if (D_0062EBA0 != 0) {
+        NuMtlClose();
+    }
+    D_0062EBA4 = 0;
+    D_0062EBA0 = 1;
+    D_0062EBB0 = 0;
+    D_0062EBA8 = 0;
+    NuMtlCreateDefault();
+    NuMtlReadEventSetHandler(0);
+}
+
+
+
+extern s32 D_0062EBAC;
+
+void NuMtlInitEx(s32 *arg0, s32 arg1) {
+    s32 temp_a2;
+    s32 temp_v1;
+    s32 var_a0;
+    s32 var_v1;
+
+    if (D_0062EBA0 != 0) {
+        NuMtlClose();
+    }
+    D_0062EBA4 = 0;
+    D_0062EBA0 = 1;
+    D_0062EBB0 = 0;
+    D_0062EBA8 = 0;
+    NuMtlCreateDefault();
+    NuMtlReadEventSetHandler(0);
+    temp_a2 = arg1 * 0x1D0;
+    temp_v1 = (*arg0 + 0xF) & 0xFFFFFFF0;
+    D_0062EBB0 = arg1;
+    D_0062EBAC = 0;
+    *arg0 = temp_v1;
+    D_0062EBA8 = temp_v1;
+    *arg0 = temp_v1 + temp_a2;
+    memset(temp_v1, 0, temp_a2);
+    var_v1 = D_0062EBA8;
+    if (D_0062EBB0 > 0) {
+        var_a0 = D_0062EBB0;
+        do {
+            var_a0 -= 1;
+            (*( s64 *)((s8 *)(var_v1) + ( 0x120))) = (s64) ((*( s64 *)((s8 *)(var_v1) + ( 0x120))) | 2);
+            var_v1 += 0x1D0;
+        } while (var_a0 != 0);
+    }
+    NuMtlCreateDefault();
+}
+
+
+
+void NuDisableVBlank(void);
+void NuEnableVBlank(void);
+
+void NuMtlRemove(void *arg0) {
+    void *temp_v0;
+    void *temp_v1;
+    void *temp_v1_2;
+
+    NuDisableVBlank();
+    temp_v1 = (*( void **)((s8 *)(arg0) + ( 0x164)));
+    temp_v0 = (*( void **)((s8 *)(arg0) + ( 0x160)));
+    if (temp_v1 != ((void *)0)) {
+        (*( void **)((s8 *)(temp_v1) + ( 0x160))) = temp_v0;
+    } else {
+        D_0062EBA4 = temp_v0;
+    }
+    temp_v1_2 = (*( void **)((s8 *)(arg0) + ( 0x160)));
+    if (temp_v1_2 != ((void *)0)) {
+        (*( void **)((s8 *)(temp_v1_2) + ( 0x164))) = (void *) (*( void **)((s8 *)(arg0) + ( 0x164)));
+    }
+    NuEnableVBlank();
+}
+
+
+
+s32 (*NuDebugMsgProlog(s32 *, s32))(s32 *);
+void NuMemFreeFn(void *ptr, void *src, s32 id);
+short NuTexUnRef(int tex);
+extern s32 D_00614470[];
+extern s32 D_00614508[];
+
+void NuMtlDestroy(void * a_0)
+{
+    void *arg0 = a_0;
+
+    s32 temp_a0;
+    s64 temp_a0_2;
+
+    temp_a0 = (*( s32 *)((s8 *)(arg0) + ( 0x1A4)));
+    if (temp_a0 != 0) {
+        NuTexUnRef(temp_a0);
+    }
+    NuMtlRemove(arg0);
+    temp_a0_2 = (*( s64 *)((s8 *)(arg0) + ( 0x120)));
+    if (temp_a0_2 & 2) {
+        if (!(temp_a0_2 & 1)) {
+            NuDebugMsgProlog(&D_00614470[0], 0x3EC)(&D_00614508[0]);
+        }
+        (*( s64 *)((s8 *)(arg0) + ( 0x120))) = (s64) ((*( s64 *)((s8 *)(arg0) + ( 0x120))) & ~1);
+        return;
+    }
+    (*( s64 *)((s8 *)(arg0) + ( 0x120))) = (s64) (temp_a0_2 & ~1);
+    if (temp_a0_2 & 4) {
+        NuMemFreeFn(arg0, &D_00614470[0], 0x3F2);
+    }
+}

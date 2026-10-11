@@ -33,7 +33,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0149:00265b98:sceCdInitEeCB"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0149:00265c70:_sceCd_cd_read_intr"
@@ -45,11 +45,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0149:00265da8:cdvd_exit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0149:00265e28:sceCdPOffCallback"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0149:00265e98:_sceCd_Poff_Intr"

@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0252:00279df0:QueuePeekReadDone"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0252:00279e30:sceTtyHandler"

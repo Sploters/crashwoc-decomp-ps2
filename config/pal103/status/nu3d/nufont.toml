@@ -65,7 +65,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0041:00131eb0:NuFntMoveAbs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0041:00131ef8:NuFntMoveRel"
@@ -73,7 +73,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0041:00131f18:NuFntPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0041:00131f60:NuFntSetPen"

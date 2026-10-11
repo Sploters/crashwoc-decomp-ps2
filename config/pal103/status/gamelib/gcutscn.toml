@@ -185,7 +185,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001add20:instNuCGutCamSysCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001adde0:instNuGCutCamSysStart"
@@ -249,7 +249,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001ae9e8:NuGCutTriggerSysFixPtrs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aeaa0:NuGCutTriggerSysFixUp"
@@ -257,7 +257,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0078:001aebb0:instNuCGutTriggerSysCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aec50:instNuGCutTriggerSysUpdate"

@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0060:00168db8:NuPs2InitIOP"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:00169160:idmacGs"
@@ -257,11 +257,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b2d0:NuIntAddAllHandlers"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b3a8:NuIntRemoveAllHandlers"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0060:0016b430:ifnVif1"

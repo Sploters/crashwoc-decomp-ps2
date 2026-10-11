@@ -69,7 +69,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:00140030:NuLigthSetPolyHazeMat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:00140088:NuLightAddSpot"
@@ -105,7 +105,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0042:001403d0:NuLightSprDmaClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:00140400:NuLightSprMake"

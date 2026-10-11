@@ -57,7 +57,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0002:00104168:NuFParOpen"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0002:001041e0:NuFParDestroy"

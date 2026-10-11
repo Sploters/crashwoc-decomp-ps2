@@ -41,3 +41,97 @@ void NuCvtGeoFixup(struct nucolourref_s* ref, int offset) {
             ref = (char*)ref + ((ref->count * 8) + 8);
         }
 }
+
+
+extern int D_0062EEDC;
+#define colourref_active D_0062EEDC
+extern int D_0062EEE0;
+#define colourref_offset D_0062EEE0
+extern int D_00633118;
+#define colourref_base D_00633118
+extern int D_0063311C;
+#define colourref_count D_0063311C
+
+void NuCvtGeoSetColourRefOffset(int offset) {
+    colourref_offset = offset;
+}
+
+
+void NuCvtGeoBeginColourRef(int base) {
+    colourref_base = base;
+    colourref_active = 1;
+    colourref_count = 0;
+    colourref_offset = 0;
+}
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+extern f32 NuCvtMaxSpan;
+extern s32 NuCvtPntEna;
+
+void NuCvtSetMaxSpan(f32 arg0) {
+    NuCvtMaxSpan = arg0;
+    if (arg0 <= 0.0f) {
+        NuCvtPntEna = 0;
+        return;
+    }
+    NuCvtPntEna = 1;
+}
+
+
+
+s32 NuMemFreeFn(s32, s32 *, s32);
+extern s32 D_00615538[];
+extern s32 info_pktdata;
+
+void NuCvtDestroyPacketInfo(void) {
+    if (info_pktdata != 0) {
+        NuMemFreeFn(info_pktdata, &D_00615538[0], 0xA9E);
+    }
+}
+
+
+
+
+
+void NuPs2DestroyRenderStream(void *arg0) {
+    s32 temp_a0_2;
+    void *temp_a0;
+
+    temp_a0 = (*( void **)((s8 *)(arg0) + ( 0xC)));
+    if (temp_a0 != ((void *)0)) {
+        temp_a0_2 = (*( s32 *)((s8 *)(temp_a0) + ( 8)));
+        if (temp_a0_2 != 0) {
+            NuMemFreeFn(temp_a0_2, &D_00615538, 0xA98);
+        }
+    }
+}
+
+
+
+
+
+void *NuCvtGeoEndColourRef(void)
+{
+  int new_var3;
+  int new_var;
+  s8 *new_var2;
+  NuCvtGeoAddColourRef(0);
+  new_var = 8;
+  new_var2 = ((s8 *) D_0063311C) - -4;
+  new_var3 = D_0063311C + (((*((s32 *) new_var2)) * new_var) + new_var);
+  D_0062EEDC = 0;
+  return new_var3;
+}

@@ -21,3 +21,38 @@
  *   0x002806d0 sceSifGetIopAddr
  *   0x002807c0 sceSifSetIopAddr
  */
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+
+
+void sceSifLoadStartModuleBuffer(void)
+{
+ do { _sceSifLoadModuleBuffer(); } while (0);
+}
+
+
+
+extern s32 D_00613418[];
+extern s32 D_007068E8[];
+
+s32 sceSifLoadFileReset(void)
+{
+  unsigned int new_var;
+  D_00613418[0] = -1;
+  new_var = 4;
+  memset(&D_007068E8[0], 0, new_var);
+  return 0;
+}

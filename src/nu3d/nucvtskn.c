@@ -26,3 +26,58 @@
  *   0x00158f08 NuCvtSknInstUnFix
  *   0x00158f48 PrevPktIdx
  */
+
+
+extern int D_00633128;
+extern int skinbuffer_free;
+
+void ResetSkinning(void) {
+    skinbuffer_free = D_00633128;
+}
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+extern s32 D_0063312C;
+extern s32 D_00633178;
+extern s32 D_00633180;
+extern s32 D_00633184;
+
+void NuPs2SetTempSkinBuffer(s32 arg0, s32 arg1)
+{
+  if (arg0 != 0)
+  {
+    D_00633178 = D_00633128;
+    D_00633180 = skinbuffer_free;
+    D_00633184 = D_0063312C;
+    skinbuffer_free = (D_00633128 = arg0);
+    D_0063312C = arg1;
+    return;
+  }
+  D_00633128 = D_00633178;
+  skinbuffer_free = D_00633180;
+  D_0063312C = D_00633184;
+}
+
+
+
+s32 NuMemFreeFn(s32, s32 *, s32);
+extern s32 D_006156B0[];
+
+void CloseSkinning(void) {
+    if (D_00633128 != 0) {
+        NuMemFreeFn(D_00633128, &D_006156B0[0], 0x55);
+    }
+    D_00633128 = 0;
+}

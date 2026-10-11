@@ -714,3 +714,118 @@ StateAnim *StateAnimFixPtrs(StateAnim *anim, int base) {
     }
     return anim;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+
+
+s32 instNuCGutTriggerSysCreate(void *arg0, s32 arg1, s32 *arg2) {
+    s32 temp_s0;
+    s32 temp_s1;
+    s32 temp_s1_2;
+
+    temp_s0 = (*arg2 + 0xF) & 0xFFFFFFF0;
+    temp_s1 = *(*( s32 **)((s8 *)(arg0) + ( 0x24)));
+    *arg2 = temp_s0 + 8;
+    memset(temp_s0, 0, 8);
+    (*( s32 *)((s8 *)(temp_s0) + ( 0))) = arg1;
+    temp_s1_2 = temp_s1 * 4;
+    (*( s32 *)((s8 *)(temp_s0) + ( 4))) = (s32) *arg2;
+    *arg2 += temp_s1_2;
+    memset((*( s32 *)((s8 *)(temp_s0) + ( 4))), 0, temp_s1_2);
+    return temp_s0;
+}
+
+
+
+
+
+void NuGCutTriggerSysFixPtrs(void *arg0, s32 arg1)
+{
+  s32 temp_v0_2;
+  s32 temp_v1;
+  s32 temp_v1_2;
+  s32 var_s2;
+  s32 var_s4;
+  void *temp_s0;
+  void *temp_s1;
+  void *temp_v0;
+  temp_v0 = *((void **) (((s8 *) arg0) + 0x24));
+  if (temp_v0 != ((void *) 0))
+  {
+    temp_s1 = temp_v0 + arg1;
+    *((void **) (((s8 *) arg0) + 0x24)) = temp_s1;
+    temp_v1 = *((s32 *) (((s8 *) temp_s1) + 4));
+    temp_v0_2 = (temp_v1 == 0) ? (0) : (temp_v1 + arg1);
+    *((s32 *) (((s8 *) temp_s1) + 4)) = temp_v0_2;
+    if (temp_v0_2 != 0)
+    {
+      temp_v1_2 = 0;
+      var_s2 = temp_v1_2;
+      if ((*((s32 *) (((s8 *) temp_s1) + temp_v1_2))) > temp_v1_2)
+      {
+        var_s4 = temp_v1_2;
+        do
+        {
+          var_s2 += 1;
+          temp_s0 = (*((s32 *) (((s8 *) temp_s1) + 4))) + var_s4;
+          temp_v1_2 = *((s32 *) (((s8 *) temp_s0) + 4));
+          var_s4 += 0xC;
+          *((s32 *) (((s8 *) temp_s0) + 4)) = (s32) ((temp_v1_2 == 0) ? (0) : (temp_v1_2 + arg1));
+          *((s32 *) (((s8 *) temp_s0) + 8)) = StateAnimFixPtrs(*((s32 *) (((s8 *) temp_s0) + 8)), arg1);
+        }
+        while (var_s2 < (*((s32 *) (((s8 *) temp_s1) + 0))));
+      }
+    }
+  }
+}
+
+
+
+
+
+s32 instNuCGutCamSysCreate(s32 *arg0, s32 *arg1)
+{
+  s32 temp_v1;
+  s32 var_s3;
+  s32 var_v0;
+  var_s3 = 0;
+  if (arg0 != ((void *) 0))
+  {
+    var_v0 = 0;
+    if ((*arg0) != 0)
+    {
+      if (arg1 != ((void *) 0))
+      {
+        var_s3 = ((*arg1) + 0xF) & 0xFFFFFFF0;
+        *arg1 = var_s3 + 0x10;
+        memset(var_s3, 0, 0x10);
+        temp_v1 = ((*arg1) + 0xF) & 0xFFFFFFF0;
+        *arg1 = temp_v1;
+        *((s32 *) (((s8 *) var_s3) + 4)) = temp_v1;
+        *arg1 += (*arg0) * 4;
+        memset(*((s32 *) (((s8 *) var_s3) + 4)), 0, (*arg0) * 4);
+        goto block_4;
+      }
+    }
+  }
+  else
+  {
+    block_4:
+    ;
+
+  }
+  return var_s3;
+}

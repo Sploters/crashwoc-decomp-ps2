@@ -24,3 +24,37 @@
  *   0x00110210 NuBez3Subdiv
  *   0x001102b0 NuBez3EvaluateX
  */
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+
+
+void NuCubicToBez3(void *arg0, void *arg1) {
+    (*( f32 *)((s8 *)(arg1) + ( 0))) = (f32) (*( f32 *)((s8 *)(arg0) + ( 0xC)));
+    (*( f32 *)((s8 *)(arg1) + ( 4))) = (f32) ((*( f32 *)((s8 *)(arg0) + ( 8))) / 3.0f);
+    (*( f32 *)((s8 *)(arg1) + ( 8))) = (f32) (((*( f32 *)((s8 *)(arg0) + ( 4))) + (2.0f * (*( f32 *)((s8 *)(arg0) + ( 8))))) / 3.0f);
+    (*( f32 *)((s8 *)(arg1) + ( 0x10))) = (f32) (((*( f32 *)((s8 *)(arg0) + ( 0))) + (*( f32 *)((s8 *)(arg0) + ( 4))) + (*( f32 *)((s8 *)(arg0) + ( 8)))) - (*( f32 *)((s8 *)(arg0) + ( 0xC))));
+}
+
+
+
+
+
+void NuBez3ToCubic(void *arg0, void *arg1) {
+    (*( f32 *)((s8 *)(arg1) + ( 0))) = (f32) ((((*( f32 *)((s8 *)(arg0) + ( 0))) + ((*( f32 *)((s8 *)(arg0) + ( 4))) * 3.0f)) - ((*( f32 *)((s8 *)(arg0) + ( 8))) * 3.0f)) + (*( f32 *)((s8 *)(arg0) + ( 0xC))));
+    (*( f32 *)((s8 *)(arg1) + ( 4))) = (f32) (((*( f32 *)((s8 *)(arg0) + ( 8))) * 3.0f) - ((*( f32 *)((s8 *)(arg0) + ( 4))) * 6.0f));
+    (*( f32 *)((s8 *)(arg1) + ( 0))) = (f32) ((*( f32 *)((s8 *)(arg0) + ( 4))) * 3.0f);
+    (*( f32 *)((s8 *)(arg1) + ( 0))) = (f32) (*( f32 *)((s8 *)(arg0) + ( 0)));
+}

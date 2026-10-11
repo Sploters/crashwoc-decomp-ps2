@@ -843,3 +843,198 @@ int ifnVBlankE(int ca)
     ExitHandler();
     return 1;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef float f32;
+typedef double f64;
+s32 DisableDmac(s32);
+s32 RemoveDmacHandler(s32, s32);
+s32 RemoveIntcHandler(s32, s32);
+s32 sceGsSyncVCallback(s32);
+extern s32 D_0062F084;
+extern s32 D_006331D0;
+extern s32 D_006331D4;
+extern s32 D_006331DC;
+extern s32 D_006331E0;
+
+void NuIntRemoveAllHandlers(void) {
+    if (D_0062F084 != 0) {
+        D_0062F06C = 0;
+        D_0062F078 = 0;
+        DisableDmac(2);
+        RemoveDmacHandler(2, D_006331E0);
+        DisableDmac(1);
+        RemoveDmacHandler(1, D_006331DC);
+        sceGsSyncVCallback(0);
+        DisableIntc(3);
+        RemoveIntcHandler(3, D_006331D4);
+        DisableIntc(5);
+        RemoveIntcHandler(5, D_006331D0);
+        D_0062F070 = 0;
+        D_0062F07C = 0;
+        D_0062F084 = 0;
+    }
+}
+
+
+
+s32 Exit(s32);
+s32 NuFileSifLoadModule(s32 *, s32, s32);
+s32 sceMcInit();
+s32 scePadInit(s32);
+s32 sceSdRemoteInit();
+s32 sceSifInitIopHeap();
+s32 sceSifLoadModule(s32 *, s32, s32);
+extern s32 D_00616508[];
+extern s32 D_00616518[];
+extern s32 D_00616540[];
+extern s32 D_00616570[];
+extern s32 D_00616590[];
+extern s32 D_006165A8[];
+extern s32 D_006165B8[];
+extern s32 D_006165E0[];
+extern s32 D_00616610[];
+extern s32 D_00616630[];
+extern s32 D_00616648[];
+extern s32 D_00616658[];
+extern s32 D_00616680[];
+extern s32 D_006166B0[];
+extern s32 D_006166D0[];
+extern s32 D_006166E8[];
+extern s32 D_006166F8[];
+extern s32 D_00616720[];
+extern s32 D_00616750[];
+extern s32 D_00616770[];
+extern s32 D_00616788[];
+extern s32 D_00616798[];
+extern s32 D_006167C0[];
+extern s32 D_006167F0[];
+extern s32 D_00616810[];
+extern s32 D_00616828[];
+extern s32 D_00616838[];
+extern s32 D_00616860[];
+extern s32 D_00616890[];
+extern s32 D_006168D0[];
+extern s32 D_006168E8[];
+extern s32 D_006168F8[];
+extern s32 D_00616920[];
+extern s32 D_00616950[];
+extern s32 D_00616970[];
+extern s32 D_00616988[];
+extern s32 D_0062F068;
+extern s32 nusound_irx_loaded;
+
+void NuPs2InitIOP(void) {
+    if (D_0062F068 == 0) {
+        D_0062F068 = 1;
+        if (NuFileSifLoadModule(&D_00616508[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_00616508[0], 0, 0) < 0) {
+                if (NuFileSifLoadModule(&D_00616518[0], 0, 0) < 0) {
+                    if (sceSifLoadModule(&D_00616540[0], 0, 0) < 0) {
+                        printf(&D_00616570[0]);
+                        Exit(0);
+                    }
+                }
+            }
+        }
+        printf(&D_00616590[0]);
+        if (NuFileSifLoadModule(&D_006165A8[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_006165B8[0], 0, 0) < 0) {
+                if (sceSifLoadModule(&D_006165E0[0], 0, 0) < 0) {
+                    printf(&D_00616610[0]);
+                    Exit(0);
+                }
+            }
+        }
+        printf(&D_00616630[0]);
+        if (NuFileSifLoadModule(&D_00616648[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_00616658[0], 0, 0) < 0) {
+                if (sceSifLoadModule(&D_00616680[0], 0, 0) < 0) {
+                    printf(&D_006166B0[0]);
+                    Exit(0);
+                }
+            }
+        }
+        printf(&D_006166D0[0]);
+        if (NuFileSifLoadModule(&D_006166E8[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_006166F8[0], 0, 0) < 0) {
+                if (sceSifLoadModule(&D_00616720[0], 0, 0) < 0) {
+                    printf(&D_00616750[0]);
+                    Exit(0);
+                }
+            }
+        }
+        printf(&D_00616770[0]);
+        if (NuFileSifLoadModule(&D_00616788[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_00616798[0], 0, 0) < 0) {
+                if (sceSifLoadModule(&D_006167C0[0], 0, 0) < 0) {
+                    printf(&D_006167F0[0]);
+                    Exit(0);
+                }
+            }
+        }
+        printf(&D_00616810[0]);
+        nusound_irx_loaded = 1;
+        if (NuFileSifLoadModule(&D_00616828[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_00616838[0], 0, 0) < 0) {
+                if (sceSifLoadModule(&D_00616860[0], 0, 0) < 0) {
+                    printf(&D_00616890[0]);
+                    nusound_irx_loaded = 0;
+                }
+            }
+        }
+        printf(&D_006168D0[0]);
+        if (NuFileSifLoadModule(&D_006168E8[0], 0, 0) < 0) {
+            if (NuFileSifLoadModule(&D_006168F8[0], 0, 0) < 0) {
+                if (sceSifLoadModule(&D_00616920[0], 0, 0) < 0) {
+                    printf(&D_00616950[0]);
+                    Exit(0);
+                }
+            }
+        }
+        printf(&D_00616970[0]);
+        printf(&D_00616988[0], sceMcInit());
+        scePadInit(0);
+        sceSifInitIopHeap();
+        sceSdRemoteInit();
+    }
+}
+
+
+
+s32 AddDmacHandler(s32, s32 *, s32);
+s32 AddIntcHandler(s32, s32 *, s32);
+s32 EnableDmac(s32);
+extern s32 D_006331D8;
+extern s32 ifnVBlankS[];
+
+void NuIntAddAllHandlers(void) {
+    if (D_0062F084 == 0) {
+        D_006331D0 = AddIntcHandler(5, &ifnVif1, 0);
+        EnableIntc(5);
+        D_0062F070 = 0;
+        D_006331D4 = AddIntcHandler(3, &ifnVBlankE, -1);
+        EnableIntc(3);
+        D_0062F06C = 1;
+        D_0062F07C = 0;
+        sceGsSyncVCallback(&ifnVBlankS[0]);
+        D_006331D8 = 0;
+        EnableIntc(2);
+        D_0062F078 = 1;
+        D_006331DC = AddDmacHandler(1, &idmacVif1, 0);
+        EnableDmac(1);
+        D_006331E0 = AddDmacHandler(2, &idmacGs, 0);
+        EnableDmac(2);
+        D_0062F084 = 1;
+    }
+}

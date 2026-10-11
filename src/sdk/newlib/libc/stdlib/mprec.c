@@ -20,3 +20,29 @@
  *   0x002782c8 _ratio
  *   0x00278388 _mprec_log10
  */
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+
+
+void _Bfree(void *arg0, void *arg1) {
+    void **temp_v0;
+
+    if (arg1 != ((void *)0)) {
+        temp_v0 = ((*( s32 *)((s8 *)(arg1) + ( 4))) * 4) + (*( s32 *)((s8 *)(arg0) + ( 0x4C)));
+        (*( void **)((s8 *)(arg1) + ( 0))) = (void *) *temp_v0;
+        *temp_v0 = arg1;
+    }
+}

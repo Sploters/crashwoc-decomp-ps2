@@ -25,3 +25,40 @@
  *   0x001503f0 ReadNuIFFCollideData
  *   0x001504c8 NuGHGFixupGobj
  */
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+s32 NuFileBeginBlkRead(s32, s32);
+s32 NuFileEndBlkRead(s32);
+void *NuMemAllocFn(s32, s32 *, s32);
+s32 memset(void *, s32, s32);
+extern s32 D_00615290[];
+
+void *NuHGobjReadForCutScene(s32 arg0, void *arg1) {
+    void *temp_v0;
+
+    temp_v0 = NuMemAllocFn(0x84, &D_00615290[0], 0xE5);
+    memset(temp_v0, 0, 0x84);
+    (*( s32 *)((s8 *)(temp_v0) + ( 0x10))) = 0;
+    (*( f32 *)((s8 *)(temp_v0) + ( 0x38))) = 1.0f;
+    (*( s32 *)((s8 *)(temp_v0) + ( 0xC))) = (s32) (*( s32 *)((s8 *)(arg1) + ( 0xC)));
+    (*( s32 *)((s8 *)(temp_v0) + ( 8))) = (s32) (*( s32 *)((s8 *)(arg1) + ( 8)));
+    (*( s32 *)((s8 *)(temp_v0) + ( 4))) = (s32) (*( s32 *)((s8 *)(arg1) + ( 4)));
+    (*( s32 *)((s8 *)(temp_v0) + ( 0))) = (s32) (*( s32 *)((s8 *)(arg1) + ( 0)));
+    NuFileBeginBlkRead(arg0, 0x304F4748);
+    ReadNuIFFHGobjSet(arg0, temp_v0);
+    NuFileEndBlkRead(arg0);
+    return temp_v0;
+}

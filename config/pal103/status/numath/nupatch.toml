@@ -81,11 +81,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0027:00110150:NuCubicToBez3"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:001101a8:NuBez3ToCubic"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:00110210:NuBez3Subdiv"

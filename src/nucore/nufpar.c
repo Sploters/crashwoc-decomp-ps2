@@ -91,3 +91,40 @@ void NuFParUnGetWord(NuFPar *parser)
 {
     parser->word_offset = D_00633008;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+s32 NuFileOpenSize(s32);
+void *NuMemAllocFn(s32, s32 *, s32);
+s32 memset(void *, s32, s32);
+extern s32 D_00613978[];
+
+void *NuFParOpen(s32 arg0)
+{
+  void *temp_v0;
+  s8 *new_var;
+  temp_v0 = NuMemAllocFn(0x1244, &D_00613978[0], 0x13E);
+  if (temp_v0 != ((void *) 0))
+  {
+    memset(temp_v0, 0, 0x1244);
+    *((s32 *) (((s8 *) temp_v0) + 0)) = arg0;
+    new_var = ((s8 *) temp_v0) + 0x1218;
+    *((s32 *) new_var) = -1;
+    *((s32 *) (((s8 *) temp_v0) + 0x1208)) = -1;
+    *((s32 *) (((s8 *) temp_v0) + 0x123C)) = -1;
+    *((s32 *) (((s8 *) temp_v0) + 0x1240)) = NuFileOpenSize(arg0);
+  }
+  return temp_v0;
+}

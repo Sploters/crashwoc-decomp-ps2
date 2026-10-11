@@ -267,10 +267,76 @@ void NuTexPalChangeStreamTemp(int tex) {
 
 
 int NuTexGetTextAddr(int tex) {
-    NuTex *entry = &TexList[tex - 1];
+    char *t = (char *)(TexList + tex);
+    int addr;
+    int botfree = gs_botfree;
 
-    if (entry->flags & 0x10000) {
-        return entry->texaddr ? entry->texaddr : gs_botfree;
+    if (*(s64 *)(t - 0xC8) & 0x10000) {
+        addr = *(u16 *)(t - 0x58);
+        return addr ? addr : botfree;
     }
     return 0;
+}
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef short s16;
+typedef int s32;
+typedef unsigned int u32;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+void *vpDmaTag_Next(void *, s32);
+extern s32 D_00633060;
+extern s32 nutex_use_path3;
+
+void NuTexAccomodateRS(void *arg0, s32 arg1) {
+    void *temp_s1;
+    void *temp_v0;
+    void *temp_v0_2;
+    void *temp_v0_3;
+    void *temp_v0_4;
+    void *temp_v0_5;
+    void *temp_v0_6;
+    void *temp_v0_7;
+    void *temp_v1;
+
+    D_00633060 = (*( s32 *)((s8 *)(arg0) + ( 0x10)));
+    if (nutex_use_path3 != 0) {
+        temp_s1 = (*( void **)((s8 *)(arg0) + ( 4)));
+        temp_v0 = vpDmaTag_Next(temp_s1, 0);
+        (*( void **)((s8 *)(arg0) + ( 4))) = temp_v0;
+        temp_v0_2 = temp_v0 - 0x8000;
+        (*( u8 *)((s8 *)(temp_v0_2) + ( 0x7FF3))) = (u8) ((*( u8 *)((s8 *)(temp_v0_2) + ( 0x7FF3))) | 0x80);
+        (*( s8 *)((s8 *)((*( void **)((s8 *)(arg0) + ( 4)))) + ( -0xE))) = 0x18;
+        (*( void **)((s8 *)((*( void **)((s8 *)(arg0) + ( 4)))) + ( 0))) = ((void *)0);
+        (*( void **)((s8 *)((*( void **)((s8 *)(arg0) + ( 4)))) + ( 4))) = (void *)0xACEB00B5;
+        temp_v1 = (*( void **)((s8 *)(arg0) + ( 0xC)));
+        temp_v0_3 = (*( void **)((s8 *)(arg0) + ( 4))) + 0x10;
+        (*( void **)((s8 *)(arg0) + ( 4))) = temp_v0_3;
+        if (temp_v1 != ((void *)0)) {
+            (*( void **)((s8 *)(temp_v1) + ( 4))) = temp_v0_3;
+        } else {
+            (*( void **)((s8 *)(arg0) + ( 8))) = temp_v0_3;
+        }
+        temp_v0_4 = NuTexAccomodate((*( void **)((s8 *)(arg0) + ( 4))), arg1);
+        (*( void **)((s8 *)(arg0) + ( 4))) = temp_v0_4;
+        (*( void **)((s8 *)(arg0) + ( 0xC))) = temp_v0_4;
+        temp_v0_5 = vpDmaTag_Next(temp_v0_4, 0);
+        (*( void **)((s8 *)(arg0) + ( 4))) = temp_v0_5;
+        temp_v0_6 = temp_v0_5 - 0x8000;
+        (*( u8 *)((s8 *)(temp_v0_6) + ( 0x7FF3))) = (u8) ((*( u8 *)((s8 *)(temp_v0_6) + ( 0x7FF3))) | 0x80);
+        (*( s8 *)((s8 *)((*( void **)((s8 *)(arg0) + ( 4)))) + ( -0xE))) = 0x19;
+        (*( void **)((s8 *)((*( void **)((s8 *)(arg0) + ( 4)))) + ( 0))) = temp_s1;
+        (*( void **)((s8 *)((*( void **)((s8 *)(arg0) + ( 4)))) + ( 4))) = (void *)0xBABEF00D;
+        temp_v0_7 = (*( void **)((s8 *)(arg0) + ( 4))) + 0x10;
+        (*( void **)((s8 *)(arg0) + ( 4))) = temp_v0_7;
+        (*( void **)((s8 *)(temp_s1) + ( 4))) = temp_v0_7;
+    } else {
+        (*( void **)((s8 *)(arg0) + ( 4))) = NuTexAccomodate((*( void **)((s8 *)(arg0) + ( 4))), arg1);
+    }
+    (*( s32 *)((s8 *)(arg0) + ( 0x10))) = (s32) D_00633060;
 }

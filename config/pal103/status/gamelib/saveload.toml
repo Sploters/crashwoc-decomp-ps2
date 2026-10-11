@@ -53,7 +53,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0077:001aab40:saveloadUnFormatCard"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001aab78:saveloadCheckSlotsUsed"
@@ -65,16 +65,16 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0077:001aacf8:saveloadASFormat"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001aad30:saveloadASLoad"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001aada8:saveloadASSave"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001aae20:saveloadASDelete"
-state = "asm"
+state = "matching"

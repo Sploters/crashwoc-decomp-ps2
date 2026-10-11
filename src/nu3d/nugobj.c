@@ -239,3 +239,84 @@ int NuPrimStride(unsigned int type) {
     }
     return 0;
 }
+
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+typedef signed char s8;
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+typedef unsigned long long u64;
+typedef float f32;
+typedef double f64;
+
+
+s32 NuFaceOnGeomCreate(void) {
+    s32 temp_v0;
+
+    temp_v0 = NuMemAllocFn(0x50, &D_00614198, 0x1E8);
+    memset(temp_v0, 0, 0x50);
+    return temp_v0;
+}
+
+
+
+s32 NuMemFreeFn(void *, s32 *, s32);
+
+void NuPrimDestroy(void *arg0) {
+    void *temp_a0;
+    void *temp_a0_2;
+
+    if (arg0 != ((void *)0)) {
+        temp_a0 = (*( void **)((s8 *)(arg0) + ( 0x10)));
+        if (temp_a0 != ((void *)0)) {
+            NuMemFreeFn(temp_a0, &D_00614198, 0x252);
+        }
+        temp_a0_2 = (*( void **)((s8 *)(arg0) + ( 0x14)));
+        if (temp_a0_2 != ((void *)0)) {
+            NuMemFreeFn(temp_a0_2, &D_00614198, 0x253);
+        }
+        NuMemFreeFn(arg0, &D_00614198, 0x254);
+    }
+}
+
+
+
+
+
+void NuFaceOnGeomDestroy(void *arg0) {
+    void *temp_a0;
+
+    temp_a0 = (*( void **)((s8 *)(arg0) + ( 0x10)));
+    if (temp_a0 != ((void *)0)) {
+        NuMemFreeFn(temp_a0, &D_00614198, 0x1F3);
+    }
+    NuMemFreeFn(arg0, &D_00614198, 0x1F6);
+}
+
+
+
+s32 NuPrimCalcPlanes(s32 *, void *);
+
+void NuGeomCalcPlanes(struct nugeom_s * a_0)
+{
+    void *arg0 = a_0;
+
+    s32 *var_a0;
+    s32 *var_s0;
+
+    var_s0 = (*( s32 **)((s8 *)(arg0) + ( 0x2C)));
+    if (var_s0 != ((void *)0)) {
+        var_a0 = var_s0;
+        do {
+            NuPrimCalcPlanes(var_a0, arg0);
+            var_s0 = *var_s0;
+            var_a0 = var_s0;
+        } while (var_s0 != ((void *)0));
+    }
+}
