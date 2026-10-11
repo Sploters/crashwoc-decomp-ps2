@@ -29,15 +29,15 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0081:001b5028:NuBridgeInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0081:001b5030:NuBridgeOn"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0081:001b5038:NuBridgeRegisterBaseScene"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0081:001b5040:NuBridgeAlloc"

@@ -37,7 +37,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0080:001b2448:NuSceneManagerSysInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0080:001b2450:NuSceneManagerSysUpdate"
@@ -65,7 +65,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0080:001b2778:NuSceneInstanceSetRate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0080:001b2780:SceneInstanceFindCutsceneInst"
@@ -77,4 +77,4 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0080:001b2868:NuSceneManagerSetPtrToPlayerMtx"
-state = "asm"
+state = "matching"

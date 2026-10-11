@@ -429,30 +429,42 @@ void UpdateCutMovieCamera(struct numtx_s *cam) {
     }
 }
 
-void NewGameCutAnim(void) {
-    s32 sfx;
-
-    gamecut_hold = 1;
-    gamecut_sfx = pCutAnim->sfx;
-    if (gamecut_sfx != -1) {
-        NuSoundStopStream(4);
-        gamesfx_channel = 4;
-        if (Level == 0x25) {
-            GameSfx(gamecut_sfx + D_0058B117[0] * 12, 0);
-        } else {
-            GameSfx(gamecut_sfx, 0);
-        }
+void NewGameCutAnim(void)
+{
+  s32 sfx;
+  gamecut_hold = 1;
+  gamecut_sfx = pCutAnim->sfx;
+  if (gamecut_sfx != (-1))
+  {
+    NuSoundStopStream(4);
+    gamesfx_channel = 4;
+    sfx = Level;
+    if (sfx == 0x25)
+    {
+      GameSfx(gamecut_sfx + (D_0058B117[0] * 12), 0);
     }
-    if (pCutAnim->action == 0xc) {
-        sfx = 0x1e;
-    } else if (pCutAnim->action == 0xd) {
-        sfx = 0x21;
-    } else {
-        sfx = -1;
+    else
+    {
+      GameSfx(gamecut_sfx, 0);
     }
-    if (sfx != -1) {
-        GameSfx(sfx, 0);
-    }
+  }
+  if (pCutAnim->action == 0xc)
+  {
+    sfx = 0x1e;
+  }
+  else
+    if (pCutAnim->action == 0xd)
+  {
+    sfx = 0x21;
+  }
+  else
+  {
+    sfx = -1;
+  }
+  if (sfx != (-1))
+  {
+    GameSfx(sfx, 0);
+  }
 }
 
 void MakeDirLightColour(s32 ix, f32 r, f32 g, f32 b) {

@@ -13,3 +13,22 @@
  *   0x001b5078 NuBridgeLookupInstanceIndex
  *   0x001b50c8 NuBrdigeDrawRope
  */
+
+
+extern int BridgeFree;
+extern void *NuBridgeProc;
+extern void *NuBridge_base_scene;
+
+void NuBridgeInit(void) {
+    BridgeFree = 0;
+}
+
+
+void NuBridgeOn(void *proc) {
+    NuBridgeProc = proc;
+}
+
+
+void NuBridgeRegisterBaseScene(void *scene) {
+    NuBridge_base_scene = scene;
+}

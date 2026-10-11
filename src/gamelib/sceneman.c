@@ -20,3 +20,26 @@
  *   0x001b2820 NuSceneManagerSysRender
  *   0x001b2868 NuSceneManagerSetPtrToPlayerMtx
  */
+
+
+extern int D_0062F808;
+extern void *D_0062F80C;
+
+typedef struct NuSceneInstanceRate {
+    char unk000[0x18];
+    float rate;
+} NuSceneInstanceRate;
+
+void NuSceneManagerSysInit(void) {
+    D_0062F808 = 0;
+}
+
+
+void NuSceneInstanceSetRate(NuSceneInstanceRate *inst, float rate) {
+    inst->rate = rate;
+}
+
+
+void NuSceneManagerSetPtrToPlayerMtx(void *mtx) {
+    D_0062F80C = mtx;
+}

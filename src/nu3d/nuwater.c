@@ -13,3 +13,11 @@
  *   0x00165068 NuWaterSpeed
  *   0x00165078 NuWaterLoad
  */
+
+
+extern float D_0062CC18;
+extern float D_0062EFF0;
+
+void NuWaterSpeed(float speed) {
+    D_0062EFF0 = speed * D_0062CC18;
+}

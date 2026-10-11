@@ -33,3 +33,10 @@
  *   0x00162a08 NuFPatchLightPoint
  *   0x00162ae0 testShadowCast
  */
+
+
+extern void *D_0062EFD0;
+
+void *NuFPatchGetStream(void) {
+    return D_0062EFD0;
+}

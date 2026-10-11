@@ -14,3 +14,16 @@
  *   0x0016e830 PadPlayOff
  *   0x0016e838 DeadZoneValue
  */
+
+
+extern int *PadRecInfo;
+extern int PadDemoEnd;
+
+int NuPs2PadDemoEnd(void) {
+    return PadDemoEnd;
+}
+
+
+void PadPlayOff(void) {
+    PadRecInfo = 0;
+}

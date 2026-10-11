@@ -89,11 +89,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0001:001028f8:NuFileInitEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:001029f0:NuFileInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:00102ad8:NuFileGetCurrentPath"

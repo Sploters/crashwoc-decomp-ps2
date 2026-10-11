@@ -89,7 +89,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0054:00162510:NuFPatchGetStream"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0054:00162518:NuRndrFPatchEnd"

@@ -201,33 +201,39 @@ f32 ASin360f(f32 val) {
     return sign * lo_f / 182.0444489f;
 }
 
-s16 ASin(f32 val) {
-    s32 positive;
-    s32 lo, mid, step;
-
-    positive = (val >= 0.0f);
-    if (!positive) {
-        val = -val;
+s16 ASin(f32 val)
+{
+  s32 positive;
+  s32 lo;
+  s32 mid;
+  s32 step;
+  int new_var;
+  positive = val >= 0.0f;
+  if (!positive)
+  {
+    val = -val;
+  }
+  if (val >= 1.0f)
+  {
+    return (positive) ? (0x4000) : (-(new_var = 0x4000));
+  }
+  lo = 0;
+  step = 0x2000;
+  while (step != 0)
+  {
+    mid = lo + step;
+    if (NuTrigTable[mid] < val)
+    {
+      lo = mid;
     }
+    step >>= 1;
+  }
 
-    if (val >= 1.0f) {
-        return positive ? 0x4000 : -0x4000;
-    }
-
-    lo = 0;
-    step = 0x2000;
-    while (step != 0) {
-        mid = lo + step;
-        if (NuTrigTable[mid] < val) {
-            lo = mid;
-        }
-        step >>= 1;
-    }
-
-    if (positive) {
-        return lo;
-    }
-    return -lo;
+  if (positive)
+  {
+    return lo;
+  }
+  return -lo;
 }
 
 s16 ACos(f32 val) {

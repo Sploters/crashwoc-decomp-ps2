@@ -322,42 +322,44 @@ void Reset3DFontObjects(void) {
     }
 }
 
-void Update3DFontObjects(void) {
-    objtemp_s *tab;
-    struct CharacterModel *model;
-    struct nuanimdata_s *ad;
-    struct animlist *al;
-    s32 j;
-    s32 i;
-    f32 rate;
-    f32 one;
-
-    rate = D_0062E354;
-    one = 1.0f;
-    tab = Font3DObjTab;
-    for (i = 0; i < 0x1a; i++, tab++) {
-        if ((tab->flags & 1) != 0) {
-            if ((u8)tab->action < 0x76) {
-                j = CRemap[tab->i];
-                if (j != -1) {
-                    model = &CModel[j];
-                    ad = model->anmdata[tab->action];
-                    if (ad != 0) {
-                        al = model->animlist[tab->action];
-                        tab->anim_time = tab->anim_time + al->speed * rate;
-                        if (ad->time < tab->anim_time) {
-                            if ((al->flags & 1) != 0) {
-                                tab->anim_time =
-                                    tab->anim_time - (ad->time - one);
-                            } else {
-                                tab->anim_time = ad->time;
-                            }
-                        }
-                    }
-                }
+void Update3DFontObjects(void)
+{
+  objtemp_s *tab;
+  struct CharacterModel *model;
+  struct nuanimdata_s *ad;
+  struct animlist *al;
+  s32 j;
+  s32 i;
+  f32 rate;
+  f32 one;
+  rate = D_0062E354;
+  one = 1.0f;
+  tab = Font3DObjTab;
+  for (i = 0; i < 0x1a; i++, tab++)
+  {
+    if ((tab->flags & 1) != 0)
+    {
+      if (((u8) tab->action) < 0x76)
+      {
+        j = CRemap[tab->i];
+        if (j != (-1))
+        {
+          model = &CModel[j];
+          ad = model->anmdata[tab->action];
+          if (ad != 0)
+          {
+            al = model->animlist[tab->action];
+            tab->anim_time = tab->anim_time + (al->speed * rate);
+            if (ad->time < tab->anim_time)
+            {
+ do { if ((al->flags & 1) != 0) { tab->anim_time = tab->anim_time - (ad->time - one); } else { tab->anim_time = ad->time; } } while (0);
             }
+          }
         }
+      }
     }
+  }
+
 }
 
 s32 CombinationCharacterBD(char c0, char c1) {

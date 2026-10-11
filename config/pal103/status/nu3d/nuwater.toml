@@ -45,7 +45,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0056:00165068:NuWaterSpeed"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0056:00165078:NuWaterLoad"

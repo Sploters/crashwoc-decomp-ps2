@@ -940,16 +940,20 @@ extern void KillGameObject(struct obj_s *obj, s32 type);
 
 s32 GetCurrentFireFlyObjectives(void)
 {
-    s32 count = 0;
-    s32 i;
-
-    for (i = 0; i < 6; i++) {
-        struct battleship_s *bs = &BattleShipList[i];
-        if (bs->active != 0) {
-            count += bs->field510 > 0;
-        }
+  s32 count = 0;
+  long long new_var;
+  s32 i;
+  for (i = 0; i < 6; i++)
+  {
+    struct battleship_s *bs = &BattleShipList[i];
+    new_var = 0;
+    if (bs->active != 0)
+    {
+      count += bs->field510 > new_var;
     }
-    return count;
+  }
+
+  return count;
 }
 
 s32 GetCurrentWeatherResearchObjectives(void)

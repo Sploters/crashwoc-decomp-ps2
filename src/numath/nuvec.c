@@ -359,27 +359,28 @@ void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src)
     dst->z = src->z * scale;
 }
 
-void NuVecSurfaceNormal(struct nuvec_s *dst, struct nuvec_s *p0,
-                        struct nuvec_s *p1, struct nuvec_s *p2)
+void NuVecSurfaceNormal(struct nuvec_s *dst, struct nuvec_s *p0, struct nuvec_s *p1, struct nuvec_s *p2)
 {
-    struct nuvec_s u;
-    struct nuvec_s v;
-    f32 scale;
-
-    u.x = p0->x - p1->x;
+  struct nuvec_s u;
+  struct nuvec_s v;
+  f32 scale;
+  u.x = p0->x - p1->x;
+  if (1)
+  {
     u.y = p0->y - p1->y;
     u.z = p0->z - p1->z;
     v.x = p0->x - p2->x;
     v.y = p0->y - p2->y;
     v.z = p0->z - p2->z;
-    dst->x = v.y * u.z - v.z * u.y;
-    dst->y = v.z * u.x - v.x * u.z;
-    dst->z = v.x * u.y - v.y * u.x;
-    scale = NuFsqrt(dst->x * dst->x + dst->y * dst->y + dst->z * dst->z);
-    scale = 1.0f / scale;
-    dst->x *= scale;
-    dst->y *= scale;
-    dst->z *= scale;
+    dst->y = (v.z * u.x) - (v.x * u.z);
+  }
+  dst->x = (v.y * u.z) - (v.z * u.y);
+  dst->z = (v.x * u.y) - (v.y * u.x);
+  scale = NuFsqrt(((dst->x * dst->x) + (dst->y * dst->y)) + (dst->z * dst->z));
+  scale = 1.0f / scale;
+  dst->x *= scale;
+  dst->y *= scale;
+  dst->z *= scale;
 }
 
 f32 NuVecDot(struct nuvec_s *a, struct nuvec_s *b)

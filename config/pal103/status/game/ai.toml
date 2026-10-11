@@ -97,7 +97,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0103:00234ef0:SpaceCrunchFunction_AttackCortex"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0103:00234f20:SpaceCrunchFunction_CheckCortexBack"
@@ -117,7 +117,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0103:00234fd0:SpaceCortexFunction_TakeHit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0103:00235000:RatioDifferenceAlongLine"

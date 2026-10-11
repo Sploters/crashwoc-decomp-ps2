@@ -148,30 +148,35 @@ extern void FaceYDirStream(int angle);
 extern void NuRndrSetViewMtx(NuMtx *vpcs, NuMtx *vpc, NuMtx *scissor);
 
 
-int NuCameraSaveState(void) {
-    int index = -1;
-    NuCameraState *state;
-
-    if (state_buffer_count < 16) {
-        index = state_buffer_count++;
-        state = &state_buffer[index];
-        state->camera = global_camera;
-        state->view = view_mtx;
-        state->projection = projection_mtx;
-        state->scaling = scaling_mtx;
-        state->vport_clip = vport_clip_mtx;
-        state->scissor_clip = scissor_clip_mtx;
-        state->vpc = vpc_mtx;
-        state->pc = pc_mtx;
-        state->vpcs = vpcs_mtx;
-        state->pcs = pcs_mtx;
-        state->reflect = camera_reflect;
-        state->clip_x = clip_ratio_x;
-        state->clip_y = clip_ratio_y;
-        state->clip_z = clip_ratio_z;
-        state->clip_w = clip_ratio_w;
-    }
-    return index + 1;
+int NuCameraSaveState(void)
+{
+  NuCameraState *new_var2;
+  int index = -1;
+  NuCameraState **new_var;
+  NuCameraState *state;
+  if (D_0062EB3C < 16)
+  {
+    index = D_0062EB3C++;
+    state = &D_0067A940[index];
+    state->camera = global_camera;
+    state->view = D_0067A700;
+    state->projection = D_0067A740;
+    state->scaling = D_0067A780;
+    state->vport_clip = D_0067A7C0;
+    state->scissor_clip = D_0067A800;
+    state->vpc = D_0067A840;
+    new_var2 = state;
+    state->pc = D_0067A880;
+    new_var2->vpcs = D_0067A8C0;
+    state->pcs = D_0067A900;
+    new_var2->reflect = D_0062EB38;
+    state->clip_x = D_00633048;
+    new_var = &state;
+    (*new_var)->clip_y = D_0063304C;
+    new_var2->clip_z = D_00633050;
+    new_var2->clip_w = D_00633054;
+  }
+  return index + 1;
 }
 
 

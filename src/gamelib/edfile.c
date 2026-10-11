@@ -43,13 +43,14 @@ int sceMcClose(int fd);
 int sceMcOpen(int port, int slot, const char* name, int mode);
 int sceMcSync(int mode, int* cmd, int* result);
 int sceMcRead(int fd, void* buff, int size);
-char edfile_buffer[4096];
-int edfile_buffer_pointer;
-int edfile_handle;
-int edfile_lock[2];
-int edfile_mcresult;
-int edfile_media;
-int edfile_write_flag;
+extern char edfile_buffer[4096];
+extern int edfile_buffer_pointer;
+extern int edfile_handle;
+extern int edfile_lock[2];
+extern int edfile_mcresult;
+extern int D_0062F748;
+#define edfile_media D_0062F748
+extern int edfile_write_flag;
 
 
 int EdFileOpen(char *name,enum nufilemode_e mode) {

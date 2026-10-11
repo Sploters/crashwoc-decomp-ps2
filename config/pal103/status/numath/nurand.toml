@@ -17,7 +17,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0026:0010e468:NuRand"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0026:0010e548:NuFloatRand"
@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0026:0010e6a8:NuRandInt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0026:0010e6f8:NuRandSeed"

@@ -118,18 +118,15 @@ void AddGameDebrisMtx(s32 i, struct nuvec_s *pos, s32 n, struct numtx_s *m) {
     }
 }
 
-void AddWarpDebris(struct obj_s *obj, struct nuvec_s *pos) {
-    struct nuvec_s v;
-    s32 key;
-
-    /*
-     * Faithful near-match (state=asm): all loads/mults/stores and the
-     * 120-byte extent are exact; residual is a single f3/f4 allocator swap
-     * between obj->SCALE and obj->pos.z (both short-lived FP temps). 83.3%.
-     */
-    key = -1;
-    v.x = obj->pos.x;
-    v.z = obj->pos.z;
-    v.y = obj->pos.y + (obj->bot + obj->top) * obj->SCALE * 0.5f;
-    AddFiniteShotDebrisEffect(&key, GDeb[77].i, &v, 1);
+void AddWarpDebris(struct obj_s *obj, struct nuvec_s *pos)
+{
+  struct nuvec_s v;
+  s32 key;
+  float new_var;
+  key = -1;
+  new_var = obj->pos.y + (((obj->bot + obj->top) * obj->SCALE) * 0.5f);
+  v.x = obj->pos.x;
+  v.z = obj->pos.z;
+  v.y = new_var;
+  AddFiniteShotDebrisEffect(&key, GDeb[77].i, &v, 1);
 }

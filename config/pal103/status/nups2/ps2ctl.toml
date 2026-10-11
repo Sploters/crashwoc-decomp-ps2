@@ -41,7 +41,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0063:0016e7e0:NuPs2PadDemoEnd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0063:0016e7e8:NuPs2PadSetMotors"
@@ -49,7 +49,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0063:0016e830:PadPlayOff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0063:0016e838:DeadZoneValue"
