@@ -36,6 +36,15 @@ things that shouldn't be re-derived. Resolved history lives in git.
   idempotent (the compare no longer sees a hazard, so `as` adds nothing, and the
   dependent case yields exactly one either way). Only the compare class is
   claimed - widen to add.s/swc1 only against retail evidence.
+  **Widened 2026-10-10 (UpdateAnimPacket, `_reads_li_s_dest`):** retail
+  pads an inline `li.s` too when the very next instruction *reads the
+  loaded register* via `sub.s`/`add.s`/`s.s` (`mtc1 $at,$f0` / nop /
+  `sub.s $f0,$f12,$f0`, and `swc1 $f0,8($s1)`; CrateOff's `add.s` is the
+  same class). The register dependency is required: an unconditional
+  rule inserted nops retail lacks in game/vehicle (`li.s $f14` then
+  `s.s $f20`) and broke its layout (`attempt to move .org backwards`).
+  The compare class above stays unconditional; explicit `mtc1` followed
+  by `add.s` is still unclaimed.
   **ee-gcc's `#nop` comment lines are NOT this marker** and must not be
   materialized: retail ApplyFriction has no nop at one of them. They are
   annotations, not instructions - an earlier note claimed otherwise and was wrong.

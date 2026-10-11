@@ -61,8 +61,8 @@ class TestHazardNop(unittest.TestCase):
         self.assertEqual(got, ["mtc1\t$1,$f0", "nop", "c.le.s\t$f1,$f12"])
 
     def test_non_compare_fp_use_is_not_claimed(self):
-        # Only the compare class is evidenced against retail; add.s/swc1 stay
-        # untouched until a retail function proves them.
+        # Only the compare class is claimed for an explicit mtc1; add.s/swc1 stay
+        # untouched there (the li.s forms are covered below).
         got = _insns(["\tmtc1\t$1,$f0", "\tadd.s\t$f4,$f1,$f12"])
         self.assertEqual(got, ["mtc1\t$1,$f0", "add.s\t$f4,$f1,$f12"])
 
@@ -97,6 +97,37 @@ class TestHazardNop(unittest.TestCase):
     def test_compare_after_unrelated_instruction_is_untouched(self):
         got = _insns(["\tlw\t$2,0($4)", "\tc.le.s\t$f1,$f12"])
         self.assertEqual(got, ["lw\t$2,0($4)", "c.le.s\t$f1,$f12"])
+
+    def test_inline_lis_before_dependent_sub_gets_a_nop(self):
+        # retail UpdateAnimPacket: lui $at / mtc1 $at,$f0 / nop / sub.s $f0,$f12,$f0
+        got = _insns(["\tli.s\t$f0,1.00000000000000000000e0",
+                      "\t#nop", "\tsub.s\t$f0,$f12,$f0"])
+        self.assertEqual(got, ["li.s\t$f0,1.00000000000000000000e0", "nop",
+                               "sub.s\t$f0,$f12,$f0"])
+
+    def test_inline_lis_before_dependent_add_gets_a_nop(self):
+        # retail CrateOff: mtc1 $at,$f1 / nop / add.s $f0,$f0,$f1
+        got = _insns(["\tli.s\t$f1,1.0", "\tadd.s\t$f0,$f0,$f1"])
+        self.assertEqual(got, ["li.s\t$f1,1.0", "nop", "add.s\t$f0,$f0,$f1"])
+
+    def test_inline_lis_before_store_of_it_gets_a_nop(self):
+        # retail UpdateAnimPacket: mtc1 $at,$f0 / nop / swc1 $f0,8($s1)
+        got = _insns(["\tli.s\t$f0,1.0", "\ts.s\t$f0,8($17)"])
+        self.assertEqual(got, ["li.s\t$f0,1.0", "nop", "s.s\t$f0,8($17)"])
+
+    def test_inline_lis_before_unrelated_fp_use_is_untouched(self):
+        # Dependency is required: game/vehicle has li.s followed by an add.s /
+        # s.s that never read the loaded register, and retail has no nop there
+        # (a blanket rule broke its .org layout). $f2 must not match $f20.
+        for use in ("\ts.s\t$f20,16($29)", "\tadd.s\t$f0,$f0,$f1",
+                    "\tsub.s\t$f4,$f20,$f21"):
+            seg = ["\tli.s\t$f2,0.5", use]
+            self.assertEqual(_insns(seg), [l.strip() for l in seg], use)
+
+    def test_arithmetic_destination_register_is_not_a_read(self):
+        # add.s/sub.s write their first operand; only the sources count.
+        seg = ["\tli.s\t$f0,1.0", "\tadd.s\t$f0,$f1,$f2"]
+        self.assertEqual(_insns(seg), [l.strip() for l in seg])
 
     def test_sonyize_rewrites_still_apply(self):
         # _sonyize_seg must remain a superset of _sonyize. (The trailing jump

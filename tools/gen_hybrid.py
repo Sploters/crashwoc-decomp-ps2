@@ -178,6 +178,9 @@ _CVTWS_RE = re.compile(r"^(\s*)cvt\.w\.s(?:\s+)\$f(\d+)\s*,\s*\$f(\d+)\s*$")
 _MTC1_RE = re.compile(r"^\s*mtc1\s+\$\w+\s*,\s*\$f\d+\s*$")
 _LIS_INLINE_RE = re.compile(r"^\s*li\.s\s+\$f\d+\s*,")
 _CCOND_RE = re.compile(r"^\s*c\.(?:eq|lt|le|ueq|ult|ule|f|un|olt|ole)\.s\s+\$f")
+# add.s/sub.s/swc1 directly after an inline `li.s` (lui+mtc1): Sony's `as` pads
+# these too. Retail: UpdateAnimPacket (sub.s, s.s) and CrateOff (add.s).
+_LIS_USE_RE = re.compile(r"^\s*(?:add\.s|sub\.s|s\.s)\s+\$f")
 
 # Unfilled branch delay slots. ee-gcc fills a delay slot itself only inside an
 # explicit `.set noreorder` / `.set nomacro` block; every branch it emits
@@ -722,6 +725,18 @@ def _sonyize(line):
     return line
 
 
+def _reads_li_s_dest(line, prev_insn):
+    """Is `line` an add.s/sub.s/s.s reading the FPR an inline `li.s` just
+    loaded (`prev_insn`)? Unrelated neighbours get no nop (vehicle.c)."""
+    if not (_LIS_USE_RE.match(line) and _LIS_INLINE_RE.match(prev_insn)):
+        return False
+    dest = re.match(r"^\s*li\.s\s+(\$f\d+)\s*,", prev_insn).group(1)
+    mnemonic, operands = line.split(None, 1)
+    if mnemonic != "s.s":
+        operands = operands.split(",", 1)[1]  # first operand is the dest
+    return re.search(re.escape(dest) + r"(?!\d)", operands) is not None
+
+
 def _writes_fpr_via_mtc1(line):
     """Does this line assemble to an mtc1 as its last instruction? (_MTC1_RE)"""
     return bool(_MTC1_RE.match(line) or _LIS_INLINE_RE.match(line))
@@ -756,8 +771,9 @@ def _sonyize_seg(seg):
             reorder = m.group(1) is None
             out.append(line)
             continue
-        if (_CCOND_RE.match(line) and prev_insn is not None
-                and _writes_fpr_via_mtc1(prev_insn)):
+        if prev_insn is not None and (
+                (_CCOND_RE.match(line) and _writes_fpr_via_mtc1(prev_insn))
+                or _reads_li_s_dest(line, prev_insn)):
             out.append("\tnop")
         if reorder and _is_branch(line):
             out.append("\t.set\tnoreorder")
