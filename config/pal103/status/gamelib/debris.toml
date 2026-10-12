@@ -17,11 +17,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:00183418:GenDebIndex"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00183660:GenDebIndexRadial"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001838d0:GenDebIndexRadialRotor"
@@ -41,11 +41,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:00184790:GenDebIndexPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00184948:GenDebIndexPosRandTime"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00184b20:GenDebIndexWaterFall"
@@ -77,11 +77,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:001864b8:DebFree"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001867d8:DebFreeInstantly"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00186960:DebrisStartOffset"
@@ -109,7 +109,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0069:00188e08:AddDebEff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00188eb0:DebrisOff"
@@ -149,7 +149,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001894a0:DebrisEmitterOrientation"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189598:DebrisEmiterPos"
@@ -205,7 +205,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001898d0:SolveQuadratic"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:001899b8:GenDebIndexSort"
@@ -233,7 +233,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189ad8:GenDebMomAdjFromPosRevTree"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189bc0:CreateCopyMat"
@@ -261,4 +261,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0069:00189f60:DebrisDoSounds"
-state = "asm"
+state = "matching"
