@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0084:001b7840:edmainCreateMainMenu"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b79f8:edmainSetReturn"
@@ -29,19 +29,19 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7ac0:edmainRender"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7b10:edmainSetCamera"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7bb0:edmainInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7c78:edmainClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7cf8:edmainRegisterLocVec"
@@ -61,7 +61,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7d58:edmainReadLevelFile"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7e08:cbMMRegSel"

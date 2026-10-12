@@ -81,6 +81,7 @@ extern s32 jonglowsize;
 extern s32 temp_cuboid_side;
 extern f32 temp_cuboid_bounce_angle;
 extern s32 VEHICLECONTROL;
+extern CharacterData CData[191];
 extern s32 gamesfx_effect_volume;
 extern f32 NuTrigTable[];
 extern struct nuvec_s v010;
@@ -94,10 +95,13 @@ extern f32 D_0062D7D4;
 extern f32 D_0062D7D8;
 
 void NewTopBot(struct obj_s *obj);
+s32 GameObjectOverlap(struct obj_s *a, struct obj_s *b, s32 find_angle);
+void PickupItem(struct obj_s *obj);
 s32 CylinderCuboidOverlapXZ(struct nuvec_s *pos, struct obj_s *obj,
                             struct nuvec_s *p2, f32 radius);
 void AddGameDebris(s32 type, struct nuvec_s *pos);
 void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 s);
+void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 void GameSfx(s32 sfx, struct nuvec_s *pos);
 s32 NuAtan2D(f32 x, f32 z);
 f32 NuFsqrt(f32 x);
@@ -108,23 +112,20 @@ s32 GetDieAnim(struct obj_s *obj, s32 anim);
 void ObjectToAtlas(struct obj_s *obj, struct creature_s *player);
 
 struct plr_lives_s {
-    short count; /* 0x0 */
-    short draw;  /* 0x2 */
+    short count;   /* 0x0 */
+    short draw;    /* 0x2 */
+    u8 frame;      /* 0x4 */
+    u8 unk_0x5[2]; /* 0x5 */
+    u8 type;       /* 0x7 */
 };
 
 extern u16 plr_items;
 extern struct plr_lives_s plr_crystal;
 extern struct plr_lives_s plr_crategem;
 extern struct plr_lives_s plr_bonusgem;
-extern u8 D_00632044;
-extern u8 D_0063204C;
-extern u8 D_00632054;
-extern u8 D_00632057;
 extern f32 D_0062D904;
 extern f32 D_0062D908;
 extern f32 D_0062D90C;
-extern f32 D_0062D910;
-extern f32 D_0062D914;
 
 void AddPanelDebris(f32 x, f32 y, s32 obj, f32 z, s32 flag);
 
@@ -132,7 +133,295 @@ extern s32 new_power;
 extern u8 Game[];
 extern u8 Cursor[];
 extern s32 Level;
+extern u16 temp_xrot;
+extern u16 temp_zrot;
+extern u16 temp_yrot;
+s32 qrand(void);
+extern s32 new_mode;
+extern s32 new_level;
+extern u64 LBIT;
+extern s32 boss_dead;
+void ClockOff(void);
+void StartTimeTrial(struct nuvec_s *pos, s32 clock);
 void NewMenu(void *cursor, s32 menu, s32 mode, s32 item);
+
+
+s32 CylinderCuboidOverlapXZ(struct nuvec_s *pos, struct obj_s *obj,
+                            struct nuvec_s *p2, f32 radius) {
+    struct nuvec_s v;
+    f32 minx;
+    f32 maxx;
+    f32 minz;
+    f32 maxz;
+    f32 x0;
+    f32 x1;
+    f32 z0;
+    f32 z1;
+    f32 cx;
+    f32 cz;
+    f32 dx;
+    f32 dz;
+    s32 corner;
+    s32 ang;
+
+    NuVecSub(&v, pos, p2);
+    NuVecRotateY(&v, &v, -obj->hdg);
+    minx = obj->min.x * obj->SCALE;
+    x0 = minx - radius;
+    if (v.x < x0) {
+        return 0;
+    }
+    maxx = obj->max.x * obj->SCALE;
+    x1 = maxx + radius;
+    if (v.x > x1) {
+        return 0;
+    }
+    minz = obj->min.z * obj->SCALE;
+    z0 = minz - radius;
+    if (v.z < z0) {
+        return 0;
+    }
+    maxz = obj->max.z * obj->SCALE;
+    z1 = maxz + radius;
+    if (v.z > z1) {
+        return 0;
+    }
+
+    corner = 0;
+    if (v.x < minx) {
+        if (v.z < minz) {
+            corner = 10;
+            cx = minx;
+            cz = minz;
+            temp_cuboid_side = (minz - v.z < minx - v.x) ? 0x20 : 0x40;
+        } else if (v.z > maxz) {
+            corner = 9;
+            cx = minx;
+            cz = maxz;
+            temp_cuboid_side = (v.z - maxz < minx - v.x) ? 0x10 : 0x40;
+        }
+    } else if (v.x > maxx) {
+        if (v.z < minz) {
+            corner = 6;
+            cx = maxx;
+            cz = minz;
+            temp_cuboid_side = (minz - v.z < v.x - maxx) ? 0x20 : 0x80;
+        } else if (v.z > maxz) {
+            corner = 5;
+            cx = maxx;
+            cz = maxz;
+            temp_cuboid_side = (v.z - maxz < v.x - maxx) ? 0x10 : 0x80;
+        }
+    }
+
+    if (corner != 0) {
+        dx = v.x - cx;
+        dz = v.z - cz;
+        if (dx * dx + dz * dz > radius * radius) {
+            return 0;
+        }
+        temp_cuboid_bounce_angle = NuAtan2D(dx, dz) + obj->hdg;
+        return 1;
+    }
+
+    dx = v.x - x0;
+    if (x1 - v.x > dx) {
+        if (v.z - z0 < z1 - v.z) {
+            ang = (v.z - z0 < dx) ? 0x8000 : 0xC000;
+        } else {
+            ang = (z1 - v.z < dx) ? 0 : 0xC000;
+        }
+    } else {
+        if (v.z - z0 < z1 - v.z) {
+            ang = (v.z - z0 < x1 - v.x) ? 0x8000 : 0x4000;
+        } else {
+            ang = (z1 - v.z < x1 - v.x) ? 0 : 0x4000;
+        }
+    }
+    temp_cuboid_bounce_angle = ang + obj->hdg;
+    if (ang == 0) {
+        temp_cuboid_side = 0x10;
+    } else if (ang == 0x4000) {
+        temp_cuboid_side = 0x80;
+    } else if (ang == 0x8000) {
+        temp_cuboid_side = 0x20;
+    } else {
+        temp_cuboid_side = 0x40;
+    }
+    return 1;
+}
+
+
+s32 ObjectCylinderCollision(struct obj_s *obj, struct obj_s *cyl, f32 scale,
+                            s32 flag) {
+    f32 dx;
+    f32 dz;
+    f32 r;
+    f32 dist;
+    s32 side;
+    s32 result;
+    u16 a;
+    f32 obj_top;
+    f32 obj_bot;
+    f32 cyl_top;
+    f32 cyl_bot;
+
+    dx = obj->pos.x - cyl->pos.x;
+    dz = obj->pos.z - cyl->pos.z;
+    r = obj->RADIUS + cyl->RADIUS;
+    dist = dx * dx + dz * dz;
+    if (flag != 0) {
+        r *= scale;
+    }
+    if (dist > r * r) {
+        if (flag == 0) {
+            return 0;
+        }
+        a = NuAtan2D(dx, dz);
+        obj->pos.x = cyl->pos.x + NuTrigTable[a] * r;
+        obj->pos.z = cyl->pos.z + NuTrigTable[(u16)(a + 0x4000)] * r;
+    }
+
+    side = 0;
+    obj_top = obj->top * obj->SCALE;
+    if (obj->pos.y + obj_top < cyl->pos.y + cyl->bot * cyl->SCALE) {
+        side = 1;
+    } else {
+        obj_bot = obj->bot * obj->SCALE;
+        cyl_top = cyl->pos.y + cyl->top * cyl->SCALE;
+        cyl_bot = cyl->pos.y + cyl->bot * cyl->SCALE;
+        if (obj->pos.y + obj_bot > cyl_top) {
+            side = 1;
+        } else if (obj->oldpos.y + obj->bot * obj->old_SCALE >=
+                   cyl->oldpos.y + cyl->top * cyl->old_SCALE - 0.012f) {
+            obj->pos.y = cyl_top - obj_bot;
+            obj->ground = 3;
+            result = 2;
+            obj->shadow = cyl->pos.y + cyl->top * cyl->SCALE;
+            obj->got_shadow = 1;
+            obj->surface_type = 0;
+            obj->vSN = v010;
+            obj->mom.y = cyl->mom.y;
+            goto apply;
+        } else if (obj->oldpos.y + obj->top * obj->old_SCALE <=
+                   cyl->oldpos.y + cyl->bot * cyl->old_SCALE + 0.012f) {
+            result = 4;
+            obj->pos.y = cyl_bot - obj_top;
+            obj->mom.y = cyl->mom.y - 0.012f;
+            goto apply;
+        }
+    }
+
+    if (side != 0) {
+        f32 mid;
+        f32 top;
+
+        top = cyl->pos.y + cyl->top * cyl->SCALE;
+        mid = obj->pos.y + (obj->bot + obj->top) * obj->SCALE * 0.5f;
+        result = 0;
+        if (top < mid) {
+            if (obj->got_shadow == 0 || top > obj->shadow) {
+                obj->shadow = top;
+                obj->got_shadow = 1;
+                obj->surface_type = 0;
+                obj->vSN = v010;
+            }
+            result = 0;
+        }
+    } else {
+        result = 1;
+        a = NuAtan2D(obj->pos.x - cyl->pos.x, obj->pos.z - cyl->pos.z);
+        obj->mom.x = NuTrigTable[a] * 0.06f;
+        obj->mom.z = NuTrigTable[(u16)(a + 0x4000)] * 0.06f;
+    }
+
+apply:
+    if (result & 6) {
+        f32 new_x;
+        f32 new_z;
+
+        obj->vSN = v010;
+        new_x = obj->pos.x + cyl->mom.x;
+        obj->pos.x = new_x;
+        new_z = obj->pos.z + cyl->mom.z;
+        obj->pos.z = new_z;
+        if (cyl->dyrot != 0) {
+            if ((result & 2) || ((result & 4) && (cyl->flags & 0x200))) {
+                f32 ox;
+                f32 oz;
+                f32 xoff;
+                f32 zoff;
+
+                obj->hdg += cyl->dyrot;
+                dx = new_x - cyl->pos.x;
+                dz = new_z - cyl->pos.z;
+                a = NuAtan2D(dx, dz);
+                dist = NuFsqrt(dx * dx + dz * dz);
+                ox = NuTrigTable[a] * dist;
+                oz = NuTrigTable[(u16)(a + 0x4000)] * dist;
+                a += cyl->dyrot;
+                xoff = NuTrigTable[a] * dist - ox;
+                zoff = NuTrigTable[(u16)(a + 0x4000)] * dist - oz;
+                obj->pos.x += xoff;
+                obj->pos.z += zoff;
+            }
+        }
+    }
+    return result;
+}
+
+
+s32 GameObjectOverlap(struct obj_s *a, struct obj_s *b, s32 find_angle) {
+    struct nuvec_s pa;
+    struct nuvec_s pb;
+    f32 dx;
+    f32 dz;
+    f32 r;
+
+    if (a->flags & 0x2000) {
+        if (a->draw_frame == 0 || a->pLOCATOR == 0 ||
+            (a->model != 0 && a->model->pLOCATOR[0] == 0)) {
+            return 0;
+        }
+    }
+    if (b->flags & 0x2000) {
+        if (b->draw_frame == 0 || b->pLOCATOR == 0 ||
+            (b->model != 0 && b->model->pLOCATOR[0] == 0)) {
+            return 0;
+        }
+    }
+    if (a->flags & 0x2000) {
+        pa.x = a->pLOCATOR->_30;
+        pa.y = a->pLOCATOR->_31;
+        pa.z = a->pLOCATOR->_32;
+    } else {
+        pa = a->pos;
+    }
+    if (b->flags & 0x2000) {
+        pb.x = b->pLOCATOR->_30;
+        pb.y = b->pLOCATOR->_31;
+        pb.z = b->pLOCATOR->_32;
+    } else {
+        pb = b->pos;
+    }
+    if (pa.y + a->bot * a->SCALE > pb.y + b->top * b->SCALE) {
+        return 0;
+    }
+    if (pb.y + b->bot * b->SCALE > pa.y + a->top * a->SCALE) {
+        return 0;
+    }
+    dx = pb.x - pa.x;
+    dz = pb.z - pa.z;
+    r = a->RADIUS + b->RADIUS;
+    if (dx * dx + dz * dz <= r * r) {
+        if (find_angle) {
+            temp_yrot = NuAtan2D(dx, dz);
+        }
+        return 1;
+    }
+    return 0;
+}
+
 
 void PlayerCreatureCollisions(struct obj_s *obj)
 {
@@ -594,6 +883,158 @@ after_death:
     }
 }
 
+
+void GetTopBot(struct creature_s *c) {
+    if (c == player && VEHICLECONTROL == 1 && c->obj.vehicle != -1) {
+        c->obj.bot = CData[c->obj.vehicle].min.y;
+        c->obj.top = CData[c->obj.vehicle].max.y;
+    } else if (c == player && VEHICLECONTROL == 2) {
+        c->obj.bot = CData[115].min.y;
+        c->obj.top = CData[115].max.y;
+    } else if (c->obj.flags & 0x10000) {
+        c->obj.bot = -c->obj.max.y;
+        c->obj.top = -c->obj.min.y;
+    } else if (c->obj.dangle != 0) {
+        c->obj.top = c->obj.max.y;
+        if (c->obj.dangle == 2) {
+            c->obj.bot = (c->obj.min.y + c->obj.top) * 0.5f;
+        } else {
+            c->obj.bot = c->obj.min.y;
+        }
+    } else {
+        c->obj.bot = c->obj.min.y;
+        if (((c->obj.ground != 0 || c->obj.old_ground != 0) &&
+             (c->crawl != 0 || (c->slide != 0 && c->obj.character != 1) ||
+              c->slam_wait != 0)) ||
+            (c->obj.ground == 0 && c->slam != 0 && c->slam < 3)) {
+            c->obj.top = (c->obj.min.y + c->obj.max.y) * 0.5f;
+        } else {
+            c->obj.top = c->obj.max.y;
+        }
+    }
+}
+
+void PickupItem(struct obj_s *obj) {
+    struct creature_s *c;
+    s32 mask;
+    s32 power;
+
+    if (new_mode == -1 && new_level == -1) {
+        switch (obj->character) {
+        case 0x75:
+            plr_crystal.count = 1;
+            plr_crystal.frame = 0x19;
+            plr_items |= 1;
+            GameSfx(0x26, 0);
+            AddPanelDebris(0.0f, -0.7f, 6, 0.125f, 0x10);
+            ClockOff();
+            GameSfx(0x26, 0);
+            break;
+        case 0x76:
+            StartTimeTrial(&obj->pos, 0);
+            break;
+        case 0x77:
+            plr_crategem.count = 1;
+            plr_crategem.frame = 0x19;
+            plr_items |= 2;
+            GameSfx(0x26, 0);
+            AddPanelDebris(-0.2f, -0.7f, 6, 0.125f, 0x10);
+            ClockOff();
+            GameSfx(0x26, 0);
+            break;
+        case 0x78:
+        case 0x79:
+        case 0x7A:
+        case 0x7B:
+        case 0x7C:
+        case 0x7D:
+            if (obj->character == 0x79) {
+                mask = 0x8;
+            } else if (obj->character == 0x7A) {
+                mask = 0x20;
+            } else if (obj->character == 0x7B) {
+                mask = 0x10;
+            } else if (obj->character == 0x7C) {
+                mask = 0x40;
+            } else {
+                mask = (obj->character == 0x7D) ? 0x80 : 0x4;
+            }
+            plr_items |= mask;
+            plr_bonusgem.type = mask;
+            plr_bonusgem.count = 1;
+            plr_bonusgem.frame = 0x19;
+            GameSfx(0x26, 0);
+            AddPanelDebris(0.2f, -0.7f, 6, 0.125f, 0x10);
+            GameSfx(0x26, 0);
+            break;
+        case 0xA2:
+        case 0xA3:
+        case 0xA4:
+        case 0xA5:
+        case 0xA6:
+        case 0xA7:
+            if (LBIT & 0x3E00000) {
+                boss_dead = 2;
+            }
+            power = obj->character;
+            switch (power) {
+            case 0xA7:
+                new_power = 0;
+                break;
+            case 0xA5:
+                new_power = 1;
+                break;
+            case 0xA6:
+                new_power = 2;
+                break;
+            case 0xA2:
+                new_power = 3;
+                break;
+            case 0xA4:
+                new_power = 4;
+                break;
+            case 0xA3:
+                new_power = 5;
+                break;
+            }
+            Game[0x406] |= 1 << new_power;
+            NewMenu(Cursor, 0x1F, -1, -1);
+            GameSfx(0x26, 0);
+            if (Level != 0x15 && Level != 0x18) {
+                player->obj.mom.x = 0.0f;
+                player->obj.mom.z = 0.0f;
+                player->slide = 0;
+            }
+            break;
+        }
+    }
+    c = (struct creature_s *)obj->parent;
+    obj->dead = 1;
+    c->on = 0;
+    c->off_wait = 2;
+}
+
+
+s32 GetDieAnim(struct obj_s *obj, s32 anim) {
+    if (VEHICLECONTROL == 1 && obj->vehicle != -1) {
+        if (anim == 6 && obj->vehicle == 0x99) {
+            return 0xC;
+        }
+        return 0xB;
+    }
+    if (VEHICLECONTROL == 2) {
+        return 0xE;
+    }
+    if (anim == -1) {
+        if (Level == 0x17 || qrand() <= 0x7FFF) {
+            return 2;
+        }
+        return 3;
+    }
+    return anim;
+}
+
+
 s32 KillPlayer(struct obj_s *obj, s32 anim)
 {
     struct mask_s *mask;
@@ -622,7 +1063,7 @@ s32 KillPlayer(struct obj_s *obj, s32 anim)
 
 void PickupCrystal(void) {
     plr_crystal.count = 1;
-    D_00632044 = 0x19;
+    plr_crystal.frame = 0x19;
     plr_items |= 1;
     GameSfx(0x26, 0);
     AddPanelDebris(0.0f, D_0062D904, 6, 0.125f, 0x10);
@@ -630,7 +1071,7 @@ void PickupCrystal(void) {
 
 void PickupCrateGem(void) {
     plr_crategem.count = 1;
-    D_0063204C = 0x19;
+    plr_crategem.frame = 0x19;
     plr_items |= 2;
     GameSfx(0x26, 0);
     AddPanelDebris(D_0062D908, D_0062D90C, 6, 0.125f, 0x10);
@@ -638,11 +1079,11 @@ void PickupCrateGem(void) {
 
 void PickupBonusGem(s32 mask) {
     plr_items |= mask;
-    D_00632057 = mask;
+    plr_bonusgem.type = mask;
     plr_bonusgem.count = 1;
-    D_00632054 = 0x19;
+    plr_bonusgem.frame = 0x19;
     GameSfx(0x26, 0);
-    AddPanelDebris(D_0062D910, D_0062D914, 6, 0.125f, 0x10);
+    AddPanelDebris(0.2f, -0.7f, 6, 0.125f, 0x10);
 }
 
 void PickupPower(s32 type) {
@@ -674,6 +1115,25 @@ void PickupPower(s32 type) {
         player->obj.mom.z = 0.0f;
         player->slide = 0;
     }
+}
+
+
+s32 HitItems(struct obj_s *obj) {
+    s32 i;
+    struct obj_s *item;
+
+    if (level_part_2 != 0) {
+        return 0;
+    }
+    for (i = 0; i < 64; i++) {
+        item = pObj[i];
+        if (item != 0 && item->dead == 0 && item->invisible == 0 &&
+            (item->flags & 0x10) && GameObjectOverlap(obj, item, 0)) {
+            PickupItem(item);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void ClearGameObjects(void) {
@@ -716,6 +1176,33 @@ void NewTopBot(struct obj_s *obj) {
 void OldTopBot(struct obj_s *obj) {
     obj->oldobjbot = obj->objbot;
     obj->oldobjtop = obj->objtop;
+}
+
+
+void FindAnglesZX(struct nuvec_s *v) {
+    struct nuvec_s rotated;
+    u16 xrot;
+
+    xrot = NuAtan2D(v->z, v->y);
+    temp_xrot = xrot;
+    NuVecRotateX(&rotated, v, -xrot);
+    temp_zrot = -NuAtan2D(rotated.x, rotated.y);
+}
+
+
+void ScaleFlatShadow(struct nuvec_s *s, f32 y, f32 shadow, f32 scale) {
+    f32 dy;
+
+    dy = y - shadow;
+    if (dy <= 0.0f) {
+        s->x = scale;
+    } else if (dy >= 2.0f) {
+        s->x = scale * 0.5f;
+    } else {
+        s->x = scale - scale * 0.5f * dy * 0.5f;
+    }
+    s->y = 0.0f;
+    s->z = s->x;
 }
 
 void KillItem(struct obj_s *obj) {
@@ -831,4 +1318,12 @@ void FlyGameObject(struct obj_s *obj, u16 yrot) {
     NuVecRotateX(&obj->mom, &obj->mom, -0x400);
     NuVecRotateY(&obj->mom, &obj->mom, yrot);
     GameSfx(0x37, &obj->pos);
+}
+
+
+void PickupRelic(s32 relic) {
+    plr_crystal.type = relic;
+    plr_crystal.count = 1;
+    plr_crystal.frame = 0x19;
+    GameSfx(0x26, 0);
 }

@@ -117,6 +117,10 @@ extern void *app_fnt;
 extern void NuFntSet(void *fnt);
 extern void NuFntSetPen(u32 colour);
 extern f32 NuFsqrt(f32 x);
+extern double fabs(double x);
+extern f32 NuTrigTable[];
+extern int abs(int value);
+extern void SeekHalfLife(f32 *dest, f32 target, f32 halflife, f32 dt);
 extern f32 fsign(f32 x);
 extern double pow(double, double);
 extern f32 NewShadowMaskPlat(struct nuvec_s *pos, f32 y0, s32 flag);
@@ -152,6 +156,11 @@ extern void FindSplineTargetPoint(struct SPLINEFOLLOW *Spline, s32 Control,
                                   struct nuvec_s *Point,
                                   struct nuvec_s *Direction, s32 Wrap,
                                   s32 BigLook);
+extern f32 FindSplineClosestPointAndDist(struct SPLINEFOLLOW *Spline,
+                                         s32 Control, struct nuvec_s *Pos,
+                                         struct nuvec_s *Closest, s32 Wrap,
+                                         s32 BigLook);
+extern f32 NuVecMag(struct nuvec_s *v);
 
 /* One simulated wheel of the vehicle trail system. */
 struct SIMWHEEL {
@@ -289,6 +298,9 @@ struct jeeptrail_s {
 extern struct jeeptrail_s JeepTrail[][0x20];
 extern s32 TrailPntr[];
 extern s32 TrailAir[];
+extern void NuRndrTrail(s32 pntr, struct jeeptrail_s *trail, s32 count);
+extern s32 NewIntoTrail[];
+extern f32 NewCurrentIntensity[];
 
 struct JEEPBALLOON {
     struct nuvec_s Pos;             /* 0x00 */
@@ -305,9 +317,51 @@ extern struct JEEPBALLOON JeepBalloon[];
 extern void ProcessJeepBalloon(struct JEEPBALLOON *b);
 extern void DrawJeepBalloon(struct JEEPBALLOON *b);
 
+struct nuinstance_s {
+    struct numtx_s matrix;          /* 0x00 */
+    s32 objid;                      /* 0x40 */
+};
+struct nuspecial_s {
+    struct numtx_s mtx;             /* 0x00 */
+    struct nuinstance_s *instance;  /* 0x40 */
+};
+struct nugscn_s {
+    u8 pad[0x14];
+    void **gobjs;                   /* 0x14 */
+};
+struct objtab_s {
+    struct nugscn_s *scene;         /* 0x00 */
+    struct nuspecial_s *special;    /* 0x04 */
+    u8 pad_08[0x18];
+}; /* 0x20 */
+extern struct objtab_s ObjTab[];
+extern struct numtx_s mTEMP;
+extern s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
+
+struct MYDRAW {
+    struct anim_s Anim;             /* 0x00 */
+    struct CharacterModel *model;   /* 0x1C */
+    s32 index;                      /* 0x20 */
+    s32 numjoints;                  /* 0x24 */
+    void *jointlist;                /* 0x28 */
+    s32 field2C;                    /* 0x2C */
+    struct Nearest_Light_s lights;  /* 0x30 */
+}; /* 0xE0 */
+
+struct jointctrl_s {
+    u8 pad[0x30];
+    s8 joint;                       /* 0x30 */
+    s8 mode;                        /* 0x31 */
+    u8 pad_32[2];
+}; /* 0x34 */
+
 struct enemyjeep_s {
     struct nuvec_s Position;        /* 0x000 */
-    u8 Draw[0x730];                 /* 0x00C */
+    struct MYDRAW Draw;             /* 0x00C */
+    u8 pad_EC[0x8];                 /* 0x0EC */
+    struct jointctrl_s Joints[4];   /* 0x0F4 */
+    u8 pad_1C4[0x574];              /* 0x1C4 */
+    f32 Scale;                      /* 0x738 */
     s8 Active;                      /* 0x73C */
     s8 DrawOn;                      /* 0x73D */
     s8 TrailOn;                     /* 0x73E */
@@ -317,9 +371,13 @@ extern struct enemyjeep_s EnemyJeep[];
 extern void DrawEnemyJeep(struct enemyjeep_s *j);
 extern void ProcessEnemyJeep(struct enemyjeep_s *j);
 extern void MyAnimateModelNew(void *draw, f32 dt);
+extern s32 MyInitModelNew(struct MYDRAW *draw, s32 index, s32 action,
+                          s32 numjoints, void *jointlist,
+                          struct nuvec_s *pos);
 
 extern void InitEnemyJeeps(void);
 extern s32 D_005BBCC4[];              /* PlayerJeep.Finished (far .data -> absolute) */
+#define PlayerJeepFinished D_005BBCC4
 extern struct spline_s *D_00586394[]; /* Rail[0].pCAM (far .data -> absolute) */
 extern f32 WesternCountdown;
 extern s32 SmokeyFinished;
@@ -328,11 +386,22 @@ extern s32 SmokeyCountDownValue;
 extern struct spline_s *JeepIntroLookSpline;
 extern struct spline_s *JeepIntroCamSpline;
 extern s32 SmokeyCam;
+extern s32 SmokeyPosition;
+extern s32 CurrentWesternPosition(void);
+extern void ProcessJeepTrails(void);
 
 extern void NuVecSub(struct nuvec_s *dest, struct nuvec_s *a, struct nuvec_s *b);
 extern s32 NuAtan2D(f32 x, f32 z);
 extern void *memset(void *s, s32 c, s32 n);
 
+extern char LevelFileName[];
+extern s32 BuggyDataMax[];
+extern void NuStrCpy(char *dst, char *src);
+extern void NuStrCat(char *dst, char *src);
+extern s32 NuFileSize(char *name);
+extern s32 NuFileOpen(char *name, s32 mode);
+extern s32 NuFileRead(s32 fh, void *buf, s32 size);
+extern void NuFileClose(s32 fh);
 extern s32 FireBossFinished;
 extern s32 FireBossWon;
 extern s32 ChrisBigBossDead;
@@ -427,6 +496,109 @@ inline void NewGenerateJeepMatrix(struct numtx_s *Mat, short YAng,
         NuMtxTranslate(Mat, Pos);
     }
 }
+
+void SpinWheelsJeep(struct JEEPSTRUCT *Jeep, f32 DeltaTime) {
+    s32 i;
+    f32 Turn;
+    short aSteer;
+    short aRoll;
+    short aBigSpin;
+    f32 Spin;
+
+    aSteer = Jeep->aChassisAngleY - Jeep->aOldChassisAngleY +
+             (((short)Jeep->aFrontWheelAng - (short)Jeep->aOldFrontWheelAng) >> 2);
+    Turn = (short)Jeep->aChassisAngleY - (short)Jeep->aOldChassisAngleY;
+    aRoll = Jeep->Move.Resolved.z * DeltaTime * 65536.0f * 2.0f / 10.0f;
+    Spin = Jeep->Accelerator * 2.0f * 2.0f * 65536.0f * DeltaTime /
+           (Jeep->Traction + 1.0f);
+    if (Spin < aRoll) {
+        Spin = aRoll;
+    }
+    Jeep->aWRot[0] -= aRoll + aSteer;
+    Jeep->aWRot[1] -= aRoll - aSteer;
+    Jeep->aWRot[2] = Jeep->aWRot[2] - (Spin + Turn);
+    Jeep->aWRot[3] = Jeep->aWRot[3] - (Spin - Turn);
+    aBigSpin = DeltaTime * 393216.0f;
+    for (i = 0; i < 4; i++) {
+        if (Jeep->Move.BigSpin[i] != 0) {
+            Jeep->aWRot[i] += aBigSpin;
+        }
+    }
+}
+
+
+void GenerateJeepTargets(struct JEEPSTRUCT *Jeep, f32 DeltaTime) {
+    f32 Temp;
+    short aDelta;
+    f32 TurnSin;
+
+    aDelta = Jeep->aInputAng - Jeep->aChassisAngleY;
+    Temp = (Jeep->MySpeed * 4.0f - Jeep->Move.Resolved.z) /
+           (Jeep->MySpeed * 8.0f) * aDelta;
+    aDelta = Temp;
+    TurnSin = NuTrigTable[(u16)aDelta];
+    if (aDelta > 0x4000) {
+        TurnSin = 1.0f;
+    } else if (aDelta < -0x4000) {
+        TurnSin = -1.0f;
+    }
+    Jeep->TurnSin = TurnSin;
+    Jeep->aChassisAngMom += (s32)(TurnSin * 4369.066895f);
+    Temp = Jeep->aChassisAngMom;
+    Jeep->aChassisTargetAngleY =
+        Temp * DeltaTime + (short)Jeep->aChassisAngleY;
+    if (abs(Jeep->aChassisAngMom) < 0x1C73 && abs(aDelta) < 0x38F) {
+        SeekHalfLife(&Temp, 0.0f, 0.05f, DeltaTime);
+    } else {
+        SeekHalfLife(&Temp, 0.0f, 0.25f, DeltaTime);
+    }
+    Jeep->aChassisAngMom = Temp;
+}
+
+
+inline void TiltSeek(struct JEEPSTRUCT *Jeep, f32 DeltaTime) {
+    f32 rate;
+    f32 TempX;
+    f32 TempZ;
+
+    if (Jeep->TiltSeekTime == 0.0f) {
+        rate = 1.0f;
+    } else {
+        rate = (f32)(1.0 - 1.0 / pow(2.0, DeltaTime / Jeep->TiltSeekTime));
+    }
+    TempX = (f32)(s16)(Jeep->aDestTiltX - Jeep->aTiltX) * rate;
+    TempZ = (f32)(s16)(Jeep->aDestTiltZ - Jeep->aTiltZ) * rate;
+    Jeep->aTiltX += (short)TempX;
+    Jeep->aTiltZ += (short)TempZ;
+}
+
+void TiltJeep(struct JEEPSTRUCT *Jeep) {
+    f32 Tilt;
+    short aTilt;
+
+    Tilt = (f32)fabs(Jeep->CentrefugalForce) * 2.0f;
+    if (Tilt >= 1.0f) {
+        Tilt = 1.0f;
+    }
+    Tilt = 1.0f - Tilt;
+    Tilt *= Jeep->AccelerationForce;
+    Tilt *= 3641.0f;
+    aTilt = Tilt;
+    if (aTilt > 0x1555) {
+        aTilt = 0x1555;
+    } else if (aTilt < -0x1555) {
+        aTilt = -0x1555;
+    }
+    Jeep->aDestTiltX = aTilt;
+    if (Level == 0x16) {
+        Jeep->aDestTiltZ = Jeep->CentrefugalForce * 5461.0f;
+    } else {
+        Jeep->aDestTiltZ = Jeep->CentrefugalForce * 5461.0f;
+    }
+    Jeep->TiltSeekTime = 0.1f;
+    TiltSeek(Jeep, 0.02f);
+}
+
 
 void MovePlayerJeep(struct creature_s *Cre, struct pad_s *Pad) {
     struct JEEPSTRUCT *Jeep = &PlayerJeep;
@@ -652,8 +824,91 @@ void MovePlayerJeep(struct creature_s *Cre, struct pad_s *Pad) {
 }
 
 
+void NewSetTrailPos(struct jeeptrail_s *Trail, s32 TrailId, s32 Pntr,
+                    struct SIMWHEEL *Wheel, struct nuvec_s *Pos, s32 Air,
+                    s32 Flags, s32 SurfaceType, f32 Scale) {
+    s32 i;
+    f32 fade;
+    f32 target;
+    f32 cur;
+
+    fade = 0.0f;
+    for (i = 0; i < 8; i++) {
+        s32 idx = (Pntr + 1 + i) & 0x1F;
+
+        Trail[idx].intensity = Trail[idx].RealIntensity * fade;
+        fade += 0.125f;
+    }
+    Trail[Pntr].pos1 = Pos[0];
+    Trail[Pntr].pos2 = Pos[1];
+    if (Air != 0) {
+        NewIntoTrail[TrailId] = 0;
+    } else {
+        NewIntoTrail[TrailId]++;
+        if (NewIntoTrail[TrailId] > 8) {
+            NewIntoTrail[TrailId] = 8;
+        }
+    }
+    if (Flags & 0x8000) {
+        target = NewIntoTrail[TrailId] * -31.9999f / 8.0f;
+    } else {
+        target = NewIntoTrail[TrailId] * 31.9999f / 8.0f;
+    }
+    if (Air != 0) {
+        NewCurrentIntensity[TrailId] = target;
+    } else {
+        cur = NewCurrentIntensity[TrailId];
+        if (cur < target) {
+            NewCurrentIntensity[TrailId] = cur + 12.8f;
+            if (target < NewCurrentIntensity[TrailId]) {
+                NewCurrentIntensity[TrailId] = target;
+            }
+        } else if (target < cur) {
+            NewCurrentIntensity[TrailId] = cur - 12.8f;
+            if (NewCurrentIntensity[TrailId] < target) {
+                NewCurrentIntensity[TrailId] = target;
+            }
+        }
+    }
+    Trail[Pntr].intensity = (s32)NewCurrentIntensity[TrailId] << 24;
+    Trail[Pntr].RealIntensity = Trail[Pntr].intensity;
+}
+
+
+void DrawJeepBalloon(struct JEEPBALLOON *Balloon) {
+    f32 speed;
+    short pitch;
+
+    speed = NuFsqrt(Balloon->Vel.x * Balloon->Vel.x +
+                    Balloon->Vel.z * Balloon->Vel.z);
+    pitch = NuAtan2D(Balloon->Vel.y * 100.0f, speed * 100.0f);
+    NuMtxSetRotationX(&mTEMP, pitch);
+    NuMtxRotateY(&mTEMP, Balloon->AngY);
+    NuMtxTranslate(&mTEMP, &Balloon->Pos);
+    Balloon->Seen = 0;
+    if (ObjTab[89].special != 0) {
+        struct nuspecial_s *special = ObjTab[89].special;
+
+        Balloon->Seen = NuRndrGScnObj(
+            ObjTab[89].scene->gobjs[special->instance->objid], &mTEMP);
+    }
+}
+
+
 struct nuvec_s GenerateJeepWheelPoint(s32 WheelId) {
     return BaseWheelPosition[WheelId];
+}
+
+void DrawJeepTrails(void) {
+    s32 i;
+
+    if (Level == 3 || Level == 0x16 || Level == 9 || Level == 5) {
+        for (i = 0; i < 20; i++) {
+            if (TrailActive[i] != 0) {
+                NuRndrTrail(TrailPntr[i], JeepTrail[i], 0x20);
+            }
+        }
+    }
 }
 
 void WesternArenaReset(s32 PlayerDead) {
@@ -692,6 +947,32 @@ void DrawWesternArenaLevelExtra(void) {
             DrawEnemyJeep(&EnemyJeep[i]);
         }
     }
+}
+
+
+void ProcessWesternArenaLevel(void) {
+    s32 i;
+
+    if (WesternCountdown == 0.0f) {
+        if (PlayerJeepFinished[0] == 0) {
+            WesternTime += 0.02f;
+        }
+        for (i = 0; i < 4; i++) {
+            if (EnemyJeep[i].Active != 0) {
+                ProcessEnemyJeep(&EnemyJeep[i]);
+            }
+        }
+    } else {
+        for (i = 0; i < 4; i++) {
+            if (EnemyJeep[i].Active != 0) {
+                struct enemyjeep_s *jeep = &EnemyJeep[i];
+
+                MyAnimateModelNew(&jeep->Draw, 0.5999999642f);
+            }
+        }
+    }
+    ProcessJeepTrails();
+    SmokeyPosition = CurrentWesternPosition();
 }
 
 
@@ -780,36 +1061,21 @@ void FindTerrainType(struct JEEPSTRUCT *Jeep) {
 }
 
 void SteeringUpdate(f32 *val, f32 target) {
+    f32 rate = 0.025f;
     f32 step;
 
-    step = fsign(target - *val) * 0.025f;
+    step = fsign(target - *val) * rate;
     if (target < *val) {
-        *val = *val + step;
+        *val += step;
         if (*val < target) {
             *val = target;
         }
     } else if (*val < target) {
-        *val = *val + step;
+        *val += step;
         if (target < *val) {
             *val = target;
         }
     }
-}
-
-void TiltSeek(struct JEEPSTRUCT *Jeep, f32 DeltaTime) {
-    f32 rate;
-    f32 TempX;
-    f32 TempZ;
-
-    if (Jeep->TiltSeekTime == 0.0f) {
-        rate = 1.0f;
-    } else {
-        rate = (f32)(1.0 - 1.0 / pow(2.0, DeltaTime / Jeep->TiltSeekTime));
-    }
-    TempX = (f32)(s16)(Jeep->aDestTiltX - Jeep->aTiltX) * rate;
-    TempZ = (f32)(s16)(Jeep->aDestTiltZ - Jeep->aTiltZ) * rate;
-    Jeep->aTiltX += (short)TempX;
-    Jeep->aTiltZ += (short)TempZ;
 }
 
 void LimitSpeedZbyXZ(struct nuvec_s *Vec, f32 LimitSpeed) {
@@ -825,6 +1091,26 @@ void LimitSpeedZbyXZ(struct nuvec_s *Vec, f32 LimitSpeed) {
     MaxZ = NuFsqrt(LimitSpeed * LimitSpeed - Vec->x * Vec->x) * 1.1f;
     if (Vec->z > MaxZ) {
         Vec->z = MaxZ;
+    }
+}
+
+void LimitCam(struct SPLINEFOLLOW *Spline, struct nuvec_s *Pos, f32 MaxDist,
+              f32 Height) {
+    struct nuvec_s Closest;
+    struct nuvec_s Dir;
+    f32 Dist;
+    f32 MinY;
+
+    Dist = FindSplineClosestPointAndDist(Spline, 0x303, Pos, &Closest, 0, 0);
+    MinY = Closest.y + Height;
+    if (Pos->y < MinY) {
+        Pos->y = MinY;
+    }
+    if (MaxDist < Dist) {
+        Closest.y = Pos->y;
+        NuVecSub(&Dir, Pos, &Closest);
+        NuVecScaleAccum(&Closest, &Dir, MaxDist / NuVecMag(&Dir));
+        *Pos = Closest;
     }
 }
 
@@ -1019,6 +1305,42 @@ s32 AddBalloon(struct nuvec_s *Pos, struct nuvec_s *Vel) {
     return i;
 }
 
+void InitEnemyJeep(struct enemyjeep_s *Jeep, s32 Character) {
+    s32 index = Jeep - EnemyJeep;
+    s32 active = 0;
+    struct jointctrl_s *joint;
+    s32 i;
+
+    memset(Jeep, 0, sizeof(struct enemyjeep_s));
+    switch (index) {
+    case 0:
+        active = 0;
+        Jeep->Scale = 1.0f;
+        break;
+    case 1:
+        active = 1;
+        Jeep->Scale = 1.0f;
+        break;
+    case 2:
+        active = 2;
+        Jeep->Scale = 1.0f;
+        break;
+    default:
+        Jeep->Scale = 1.0f;
+        break;
+    }
+    Jeep->Active = active;
+    Jeep->Active = 1;
+    joint = Jeep->Joints;
+    MyInitModelNew(&Jeep->Draw, Character, 0x1D, 4, joint, &Jeep->Position);
+    for (i = 0; i < Jeep->Draw.numjoints; i++) {
+        joint->joint = i;
+        joint->mode = 3;
+        joint++;
+    }
+}
+
+
 void DrawEnemyJeeps(void) {
     s32 i;
 
@@ -1051,4 +1373,28 @@ void AnimateForLightsEnemyJeeps(void) {
             AnimateForLightsEnemyJeep(&EnemyJeep[i]);
         }
     }
+}
+
+
+u8 *LoadBuggyData(u8 *Dest, s32 Index) {
+    char Name[256];
+    char Ext[5] = ".Ai0";
+    s32 Size;
+    s32 fh;
+
+    Ext[3] += Index;
+    BuggyDataMax[Index] = 0;
+    NuStrCpy(Name, LevelFileName);
+    NuStrCat(Name, Ext);
+    Size = NuFileSize(Name);
+    if (Size > 0) {
+        fh = NuFileOpen(Name, 0);
+        if (fh != 0) {
+            NuFileRead(fh, Dest, Size);
+            Dest += Size;
+            NuFileClose(fh);
+            BuggyDataMax[Index] = (u32)Size / 0x1C;
+        }
+    }
+    return Dest;
 }

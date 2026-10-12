@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0087:001c2290:SOUND_CopyIOPBuffer"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c23f8:SOUND_CancelCheckStereo"
@@ -29,19 +29,19 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c29c0:SOUND_StoreLocalStart"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c2ab8:SOUND_RestoreLocalStart"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c2bb0:SOUND_InitAdpcmLocal"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c2ca8:NuSoundInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c2da8:NuSoundApply3d"
@@ -57,11 +57,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0087:001c32d8:NuSoundPlay"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c3498:NuSoundPlayChan"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c35f0:NuSoundPlay3d"
@@ -141,7 +141,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4760:FlushIOPCommand"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4808:SOUND_AllChannelEffectsOff"
@@ -165,11 +165,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4bd0:SOUND_DisableEffects"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4c90:SOUND_EnableEffects"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4d68:SOUND_FindFreeSPUChannel"
@@ -185,7 +185,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4e60:SOUND_PlayStream"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c4ef0:SOUND_PlaySFX"
@@ -233,7 +233,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5258:SOUND_CheckAndStartStereo"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0087:001c5320:SOUND_SetChannelPitchStereo"

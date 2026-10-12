@@ -1007,6 +1007,9 @@ def _compile_and_split(data, out_o, link_set, version):
     cc.compile_s(src, cs, profile=data.get("profile", "default"),
                  version=version)
     prologue, segments, local_data = parse_s(cs.read_text())
+    rename = _duplicate_static_labels(functions, version)
+    prologue = _relabel(prologue, rename)
+    segments = [(name, _relabel(seg, rename)) for name, seg in segments]
     seg_by_name = dict(segments)
     if len(seg_by_name) != len(segments):
         raise HybridError("duplicate function names in compiler output")
@@ -1122,6 +1125,33 @@ def build_report_object(manifest_path, out_o, version="pal103"):
                              link_set, version, report_base=True,
                              unit_end=_unit_end(unit_dir), local_data=local_data)
     return _assemble_unit(out_o, out_lines)
+
+
+def _duplicate_static_labels(functions, version):
+    """{NAME: NAME__<VRAM>} for this unit's copies of statics that several
+    units define.
+
+    The retail per-TU objects label every copy NAME__<VRAM>
+    (declib.asmtext.disambiguate), so the slices define and call that label.
+    The compiled C is relabelled to match: a C caller then reaches the slice
+    while the static is still asm, a slice caller reaches the C definition
+    once it is promoted, and objdiff pairs the report base with the target by
+    name. Symbol names only -- no instruction bytes change.
+    """
+    text = (ROOT / "config" / version / "functions.toml").read_text()
+    names = re.findall(r"^name = '([^']*)'", text, re.M)
+    dups = {n for n in set(names) if names.count(n) > 1}
+    return {name: f"{name}__{addr:08X}" for addr, name, _s in functions
+            if name in dups}
+
+
+def _relabel(lines, rename):
+    """Rewrite every whole-symbol occurrence of a key of `rename`."""
+    if not rename:
+        return lines
+    pattern = re.compile(r"(?<![\w.$])(" + "|".join(map(re.escape, rename))
+                         + r")(?![\w$])")
+    return [pattern.sub(lambda m: rename[m.group(1)], l) for l in lines]
 
 
 _DATA_SECTIONS = {".lit4", ".lit8", ".data", ".sdata", ".rdata", ".rodata",

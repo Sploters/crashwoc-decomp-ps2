@@ -53,7 +53,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0037:00119b10:NuGSceneDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:00119d30:NuSceneDestroy"
@@ -61,27 +61,27 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0037:00119ed8:NuSceneFindNodeByName"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:00119f90:ReadNuIFFMaterialSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a070:ReadNuIFFUnknown"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a0c8:NuSceneMtlUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a198:ReadNuIFFNameTable"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a210:ReadNuIFFGobjSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a2f0:ReadNuIFFInstSet"
@@ -89,7 +89,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0037:0011a478:ReadNuIFFGeomDef"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a4c0:ReadNuIFFGeomVtx"
@@ -97,7 +97,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0037:0011a5f8:ReadNuIFFGeomCntrl"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a668:ReadNuIFFGeomPrim"
@@ -105,12 +105,12 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0037:0011a788:ReadNuIFFGeomTri"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a800:ReadNuIFFGeomBezTri"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0037:0011a878:ReadNuIFFFaceOnGeom"
-state = "asm"
+state = "matching"
