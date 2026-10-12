@@ -41,9 +41,7 @@ def defined_function_offsets(nm_bin, obj):
     symbol's section, so this locates each function inside the object's
     .text regardless of source order or address gaps between functions.
 
-    A static that several units define is labelled NAME__<VRAM> (retail
-    slices, and gen_hybrid relabels the C copy to match); it is also reported
-    under its registry NAME so callers can look it up by function name.
+    Duplicated statics (NAME__<VRAM>) are also listed under NAME.
     """
     out = subprocess.run([nm_bin, str(obj)], check=True,
                          capture_output=True, text=True).stdout

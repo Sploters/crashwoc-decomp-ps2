@@ -1,10 +1,4 @@
-"""Statics that several units define (registry duplicates, e.g. the two
-libgcc `_fpadd_parts`) carry NAME__<VRAM> labels in the retail objects.
-
-gen_hybrid relabels the compiled C copy to match, and the byte verifiers look
-the function up under either name. Pure Python: the committed registry plus a
-stubbed `nm`, no toolchain or game files.
-"""
+"""Duplicated statics: NAME__<VRAM> relabelling and lookup by name."""
 import subprocess
 import sys
 import unittest

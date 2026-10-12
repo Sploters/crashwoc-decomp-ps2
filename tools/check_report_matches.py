@@ -45,8 +45,7 @@ def check(verify, report, unit_name):
     problems = []
     matched = 0
     for unit_index, fname, addr in verified_matching(verify):
-        # A static several units define is labelled NAME__<VRAM> in the
-        # retail objects (and so in the report); see gen_hybrid.
+        # Duplicated statics appear as NAME__<VRAM>.
         names = (fname, f"{fname}__{addr:08X}")
         uname = unit_name.get(unit_index)
         runit = units_by_name.get(uname)

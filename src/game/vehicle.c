@@ -270,8 +270,8 @@ void NuHGobjRndr(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
 /* Faithful full-C near-match (state=asm): structure/frame/reg-mask exact, but
  * ee-gcc rematerializes %hi(mTEMP) in each of the Level==0x1A/else blocks and
  * fills the `bne` delay slot with a speculative scale load, where retail shares
- * one `lui $s1,%hi(mTEMP)` in that delay slot (+4 bytes). See docs/notes.md
- * ("DrawGlider") and the recorded no_progress blocker. */
+ * one `lui $s1,%hi(mTEMP)` in that delay slot (+4 bytes). See the recorded
+ * no_progress blocker. */
 void DrawGlider(struct creature_s *c)
 {
     struct NEWBUGGY *b;
