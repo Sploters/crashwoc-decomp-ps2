@@ -57,7 +57,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001b9f20:eduicbProcessGradPick"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001ba090:eduicbRenderGradPick"
@@ -113,7 +113,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001bdba8:eduiMenuProcess"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001bde10:CreateTestMenu"
@@ -149,7 +149,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001bff60:eduiGradStageAdd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0050:eduiGradStageDelete"
@@ -213,7 +213,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0de8:eduiMenuCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0ed0:eduiMenuAttach"
@@ -245,7 +245,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1238:eduicbProcessSel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c12f0:eduicbRenderSel"
@@ -265,11 +265,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1638:eduicbItemGradPickDestroy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c16d8:tpentOnEnter"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1780:cbgpcfgAdd"
@@ -277,7 +277,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0085:001c1888:cbgpcfgDel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1930:cbgpcfgCopy"
@@ -285,11 +285,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1970:cbgpcfgPaste"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1a48:cbgpcfgCPPress"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1b00:eduicbPickCFGCancel"
@@ -301,7 +301,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1bd8:eduiItemRender"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c1c70:cbSel"

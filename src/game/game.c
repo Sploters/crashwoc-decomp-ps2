@@ -2701,10 +2701,13 @@ extern s32 sw_hack;
 extern s32 Bonus;
 
 void AddScreenWumpa(float x, float y, float z, s32 n) {
+    if (n < 1) {
+        n = 1;
+    }
     NewWumpa[i_newwumpa].x = x;
     NewWumpa[i_newwumpa].y = y;
     NewWumpa[i_newwumpa].z = z;
-    NewWumpa[i_newwumpa].count = (n > 0) ? n : 1;
+    NewWumpa[i_newwumpa].count = n;
     NewWumpa[i_newwumpa].b1d = 0;
     NewWumpa[i_newwumpa].b1e = 0;
     NewWumpa[i_newwumpa].b1f = (Bonus == 2 || sw_hack != 0);
@@ -2844,6 +2847,19 @@ s32 StartHGobjAnim(struct objinfo_s *obj) {
     return 0;
 }
 
+s32 StopHGobjAnim(struct objinfo_s *obj) {
+    struct nuinstance_s *instance;
+
+    if (obj->special != NULL) {
+        instance = obj->special->instance;
+        if (instance != NULL && instance->anim != NULL) {
+            instance->anim->playing &= ~1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 s32 ResetHGobjAnim(struct objinfo_s *obj) {
     if (obj->special != NULL && obj->special->instance != NULL &&
         obj->special->instance->anim != NULL) {
@@ -2973,6 +2989,11 @@ void MakeLevelTimeString(struct time_s *time, char *txt) {
         fmt = D_00630D08;
     }
     sprintf(txt, fmt, time, time_string);
+}
+
+
+void MakeTimeF(float time, s32 hours, char *txt) {
+    MakeTimeI(time * 300.0f, hours, txt);
 }
 
 /* transporter object: offsets verified in FinishTransporter / StartTransporter */
@@ -3216,26 +3237,36 @@ u16 SplinePointAngle(struct nugspline_s *spl, s32 i) {
 
 s32 LineCrossed(float xold, float zold, float xnew, float znew, float x0,
                 float z0, float x1, float z1) {
-    /* Faithful near-match (71.7%), kept as state=asm -- see recorded blocker.
-     * Structure/extent are right: all four c.le.s tests, both CSEs (z1-z0,
-     * x0-x1), the reuse of (xold-x0), and expressions 2-4 are byte-exact.
-     * Residual: an f0/f1 rename inside expression 1, and gcc collapsing the
-     * `rv = 2` tail into a bc1tl where retail duplicates the return. */
-    s32 rv = 0;
+    s32 crossed;
 
-    if (!(0.0f <= (xnew - x0) * (z1 - z0) + (znew - z0) * (x0 - x1)) &&
-        (0.0f <= (xold - x0) * (z1 - z0) + (zold - z0) * (x0 - x1))) {
-        rv = 1;
-        if ((0.0f <=
-             (xnew - xold) * (z0 - zold) + (znew - zold) * (xold - x0)) &&
-            (0.0f <= (xnew - x1) * (zold - z1) + (znew - z1) * (x1 - xold))) {
-            rv = 2;
+    if (!((xnew - x0) * (z1 - z0) + (znew - z0) * (x0 - x1) >= 0.0f) &&
+        (xold - x0) * (z1 - z0) + (zold - z0) * (x0 - x1) >= 0.0f) {
+        crossed = 1;
+        if ((xnew - xold) * (z0 - zold) + (znew - zold) * (xold - x0) >= 0.0f &&
+            (xnew - x1) * (zold - z1) + (znew - z1) * (x1 - xold) >= 0.0f) {
+            crossed = 2;
         }
+    } else {
+        crossed = 0;
     }
-    return rv;
+    return crossed;
 }
 
 extern float NuFsqrt(float x);
+
+void AnglesBetweenPoints(struct nuvec_s *from, struct nuvec_s *to, u16 *xrot,
+                         u16 *yrot) {
+    float dx;
+    float dy;
+    float dz;
+
+    dx = to->x - from->x;
+    dy = to->y - from->y;
+    dz = to->z - from->z;
+    *xrot = NuAtan2D(dy, NuFsqrt(dx * dx + dz * dz));
+    *yrot = NuAtan2D(dx, dz);
+}
+
 
 u16 SplinePointTilt(struct nugspline_s *spl, s32 i) {
     struct nuvec_s *p0;
@@ -3314,7 +3345,8 @@ void NewMask(struct mask_s *mask, struct nuvec_s *pos) {
     }
 }
 
-extern char D_00630BE8[]; /* "%s.wmp" */
+extern char D_00630BE8[];
+#define wumpa_file_fmt D_00630BE8
 extern char LevelFileName[];
 extern u8 Chase[];
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
@@ -3329,7 +3361,7 @@ void LoadWumpa(void) {
     void *fbuff;
     s32 fsize;
 
-    sprintf(tbuf, D_00630BE8, LevelFileName);
+    sprintf(tbuf, wumpa_file_fmt, LevelFileName);
     /* PS2 drops GC's `if (NuFileExists(tbuf))` guard */
     fbuff = Chase;
     fsize = NuFileLoadBuffer(tbuf, fbuff, 0x7FFFFFFF);
@@ -3343,6 +3375,27 @@ void LoadWumpa(void) {
             Wumpa[i].pos0.x = NuFileReadFloat(fh);
             Wumpa[i].pos0.y = NuFileReadFloat(fh);
             Wumpa[i].pos0.z = NuFileReadFloat(fh);
+        }
+        NuFileClose(fh);
+    }
+}
+
+extern s32 NuFileOpen(char *name, s32 mode);
+extern s32 NuFileWriteInt(s32 fh, s32 v);
+extern s32 NuFileWriteFloat(s32 fh, float v);
+
+void SaveWumpa(void) {
+    s32 fh;
+    s32 i;
+
+    sprintf(tbuf, wumpa_file_fmt, LevelFileName);
+    fh = NuFileOpen(tbuf, 1);
+    if (fh != 0) {
+        NuFileWriteInt(fh, WUMPACOUNT);
+        for (i = 0; i < WUMPACOUNT; i++) {
+            NuFileWriteFloat(fh, Wumpa[i].pos0.x);
+            NuFileWriteFloat(fh, Wumpa[i].pos0.y);
+            NuFileWriteFloat(fh, Wumpa[i].pos0.z);
         }
         NuFileClose(fh);
     }
@@ -3840,8 +3893,8 @@ void GetMenuInfo(struct cursor_s *cur) {
     case 20:
     case 23:
     case 26:
-        cur->y_max = 2;
         cur->x_max = 1;
+        cur->y_max = 2;
         return;
     case 21:
     case 24:
@@ -4267,9 +4320,17 @@ void UpdateTempCharacter(void) {
                 Game.lives = 4;
                 if (cortex_gameover_i >= 0) {
                     if (cortex_gameover_i < 2) {
-                        new_level = TESTCORTEXVOICES ? Level : 0x25;
+                        if (TESTCORTEXVOICES != 0) {
+                            new_level = Level;
+                        } else {
+                            new_level = 0x25;
+                        }
                     } else if (cortex_gameover_i < 7) {
-                        new_level = TESTCORTEXVOICES ? Level : 0x23;
+                        if (TESTCORTEXVOICES != 0) {
+                            new_level = Level;
+                        } else {
+                            new_level = 0x23;
+                        }
                     }
                 }
             }
