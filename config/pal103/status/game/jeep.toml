@@ -89,7 +89,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0101:002281c8:NewSetTrailPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:00228370:ProcessJeepTrail"
@@ -117,7 +117,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0101:0022a8e0:DrawJeepBalloon"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022a9a8:ProcessJeepBalloon"
@@ -141,7 +141,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022af30:DrawJeepTrails"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022afd8:WesternArenaReset"
@@ -153,7 +153,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022b108:ProcessWesternArenaLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022b1f0:FireBossReset"
@@ -193,7 +193,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022b508:SteeringUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022b598:TiltSeek"
@@ -217,7 +217,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0101:0022ba80:LimitCam"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022bb50:DoCamMtx"
@@ -249,7 +249,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022bf10:LoadBuggyData"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022c008:WesternRaceManager"
