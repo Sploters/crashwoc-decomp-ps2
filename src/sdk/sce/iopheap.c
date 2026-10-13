@@ -9,3 +9,10 @@
  *   0x0027fa30 sceSifFreeIopHeap
  *   0x0027fa50 sceSifLoadIopHeap
  */
+
+extern int sceSifFreeSysMemory(void *addr);
+
+int sceSifFreeIopHeap(void *addr)
+{
+    return sceSifFreeSysMemory(addr);
+}

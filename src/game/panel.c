@@ -578,10 +578,7 @@ void MaxVP(void) {
 
 void GameVP(void) {
     s32 paused;
-    s32 maxx;
-    s32 maxy;
-    s32 x;
-    s32 y;
+    s32 x, y;
 
     if (screendump != 0) {
         paused = save_paused;
@@ -593,10 +590,8 @@ void GameVP(void) {
         ((paused != 0) && ((u32)(D_00591FDE[0] - 3) >= 6))) {
         NuVpSetSize((float)(MAXVPSIZEX << 4), (float)(MAXVPSIZEY << 3));
     } else {
-        maxx = MAXVPSIZEX << 4;
-        maxy = MAXVPSIZEY << 3;
-        x = maxx + (((MINVPSIZEX << 4) - maxx) * paused) / 0x19;
-        y = maxy + (((MINVPSIZEY << 3) - maxy) * paused) / 0x19;
+        x = (MAXVPSIZEX << 4) + (((MINVPSIZEX << 4) - (MAXVPSIZEX << 4)) * paused) / 0x19;
+        y = (MAXVPSIZEY << 3) + (((MINVPSIZEY << 3) - (MAXVPSIZEY << 3)) * paused) / 0x19;
         NuVpSetSize((float)x, (float)y);
     }
 }

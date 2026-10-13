@@ -292,6 +292,23 @@ extern char D_00615130[];
 #define nugscn_srcfile D_00614D00
 #define removed_mtls_msg D_00615130
 
+/* Spline set as read from the IFF: a 0x3C-byte record per spline, with all
+ * the control points stored after them in one block. */
+struct nucvtspline_s {
+    int ncvs;                       /* 0x00 */
+    struct nuvec_s *cvs;            /* 0x04 */
+    char pad08[0x3C - 0x08];
+}; /* 0x3C */
+
+extern struct nucvtspline_s *cvt_splines;
+extern int cvt_numsplines;
+extern struct nuvec_s *cvt_spline_cvs;
+
+extern char D_00614D70[];
+extern char D_00614E08[];
+#define texanimset_msg D_00614D70
+#define splineset_msg D_00614E08
+
 extern struct nuvec_s nugscn_gobj_min;
 extern struct nuvec_s nugscn_gobj_max;
 
@@ -728,6 +745,67 @@ void NuSceneReAssignTexAnims(struct nutexanim_s *texanims, int count)
             texanims->env->prog = NuTexAnimProgFind(texanims->scriptname);
             NuTexAnimEnvReset(texanims->env);
             texanims++;
+        }
+    }
+}
+
+
+void CvtNuIFFTexAnimSet(int fh)
+{
+    int ntexanims;
+    int nscript;
+    int size;
+    void *texanims;
+    short *script;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0x234)(texanimset_msg);
+    NuFileBeginBlkWrite(cvt_fh, 0x30534154, 0);
+    ntexanims = NuFileReadInt(fh);
+    NuFileReadInt(fh);
+    size = ntexanims * 0x20;
+    NuFileWriteInt(cvt_fh, ntexanims);
+    NuFileWriteInt(cvt_fh, 0);
+    texanims = NuMemAllocFn(size, nugscn_srcfile, 0x23F);
+    NuFileRead(fh, texanims, size);
+    NuFileWrite(cvt_fh, texanims, size);
+
+    nscript = NuFileReadInt(fh);
+    NuFileWriteInt(cvt_fh, nscript);
+    size = nscript * sizeof(short);
+    script = NuMemAllocFn(size, nugscn_srcfile, 0x246);
+    NuFileRead(fh, script, size);
+    NuFileWrite(cvt_fh, script, size);
+    NuFileEndBlkWrite(cvt_fh);
+
+    NuMemFreeFn(texanims, nugscn_srcfile, 0x24D);
+    NuMemFreeFn(script, nugscn_srcfile, 0x24E);
+}
+
+
+void CvtNuIFFSplineSet(int fh)
+{
+    int nsplines;
+    int ncvs;
+    int i;
+    struct nuvec_s *cvs;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0x31E)(splineset_msg);
+    nsplines = NuFileReadInt(fh);
+    cvt_splines = NuMemAllocFn(nsplines * sizeof(struct nucvtspline_s), nugscn_srcfile, 0x324);
+    cvt_numsplines = nsplines;
+    if (nsplines != 0) {
+        NuFileRead(fh, cvt_splines, nsplines * sizeof(struct nucvtspline_s));
+        ncvs = NuFileReadInt(fh);
+        if (ncvs != 0) {
+            cvt_spline_cvs = NuMemAllocFn(ncvs * sizeof(struct nuvec_s), nugscn_srcfile, 0x32C);
+            NuFileRead(fh, cvt_spline_cvs, ncvs * sizeof(struct nuvec_s));
+
+            /* Point each spline at its control points. */
+            cvs = cvt_spline_cvs;
+            for (i = 0; i < nsplines; i++) {
+                cvt_splines[i].cvs = cvs;
+                cvs += cvt_splines[i].ncvs;
+            }
         }
     }
 }
