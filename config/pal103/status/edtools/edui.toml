@@ -169,7 +169,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c03d0:eduiItemColourPickSetRGB"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0085:001c0560:eduiItemColourPickCreate"

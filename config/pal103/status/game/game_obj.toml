@@ -161,7 +161,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0096:002012a0:ScaleFlatShadow"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0096:00201320:ResetProjectiles"
