@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0110:00240d28:InsideLight"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0110:002411a8:edlightDrawInfo"

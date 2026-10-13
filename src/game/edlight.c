@@ -322,8 +322,8 @@ inline void edlightMakeNUCOLOUR3(s32 r, s32 g, s32 b, struct nucolour3_s *col)
 
 s32 InsideLight(struct nuvec_s *pos, s32 idx)
 {
+    s32 i = 0;
     s32 inside = 0;
-    s32 i;
     f32 dist;
 
     if (idx != -1) {
