@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0121:0025b850:AppCutSceneCharacterRender"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025ba88:LoadCutComponents"
@@ -33,7 +33,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025c210:StartCutMovie"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025c368:PlayCutMovie"
@@ -53,7 +53,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0121:0025d0d0:GetSpaceCut"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025d4e0:SetCutSceneLights"
@@ -109,7 +109,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025ecd0:NewGameCutAnim"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025ed88:MakeDirLightColour"
