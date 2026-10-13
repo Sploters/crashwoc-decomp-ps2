@@ -337,6 +337,22 @@ void NuTexDestroy(int tex) {
 }
 
 
+
+void NuTexClose(void) {
+    int i;
+
+    for (i = 0; i < nutex_max; i++) {
+        if (TexList[i].bits != 0) {
+            NuMemFreeFn(TexList[i].bits, nutex_srcfile, 0x1B0);
+            TexList[i].bits = 0;
+        }
+        if (TexList[i].flags & NUTEX_VALID) {
+            NuTexDestroy(i + 1);
+        }
+    }
+    nutex_initialised = nutex_alloc_cnt = nutex_cnt = 0;
+}
+
 short NuTexRef(int tex) {
     tex--;
     if (tex >= 0) {
