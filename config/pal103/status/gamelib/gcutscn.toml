@@ -193,11 +193,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ade40:NuGCutLocatorSysFixPtrs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001adf50:NuGCutLocatorSysFixUp"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae098:NuCGutLocatorSysCreateInst"
@@ -217,7 +217,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae290:NuGCutRigidSysFixUp"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae3b0:instNuGCutRigidSysEnd"
@@ -233,7 +233,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae668:NuGCutCharSysFixPtrs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae770:NuGCutCharSysFixUp"
@@ -253,7 +253,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aeaa0:NuGCutTriggerSysFixUp"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aebb0:instNuCGutTriggerSysCreate"
