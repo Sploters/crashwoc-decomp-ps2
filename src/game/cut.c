@@ -84,6 +84,8 @@ struct cutinst_s {
     u32 flags;            /* 0x6C (4 = loop) */
     f32 cframe;           /* 0x70 */
     f32 rate;             /* 0x74 */
+    u8 unk_0x78[0x8C - 0x78];
+    struct cutinst_s *next; /* 0x8C next to play */
 };
 extern struct nugcutscene_s *D_006FF680[]; /* CutScene */
 extern struct cutinst_s *D_006FF700[];  /* CutInst */
@@ -209,15 +211,22 @@ extern s32 NuGCutLocatorIsVisble(void *locator, f32 currf, struct nuanimtime_s *
                                  void *null);
 
 
+struct cutscenedesc_s {
+    char *gscname;        /* 0x0 scene (.gsc) */
+    char *cutname;        /* 0x4 cutscene (.cut) */
+    s32 sfxid;            /* 0x8 audio stream */
+    s32 debgroup;         /* 0xC */
+};                        /* 0x10 */
+
 /* Cutscene tables (scenes/cuts, characters); unnamed in the symbol map, named
  * here after the files they load. */
-extern u8 D_0060AFE0[];                  /* levels\\b\\logos\\logos.gsc, ... */
+extern struct cutscenedesc_s D_0060AFE0[]; /* levels\\b\\logos\\logos.gsc, ... */
 extern struct csc_s D_0060AFB8[];        /* levels\\b\\logos\\ttchar.ghg, ... */
-extern u8 D_0060B160[];                  /* levels\\b\\intro\\space.gsc, ... */
+extern struct cutscenedesc_s D_0060B160[]; /* levels\\b\\intro\\space.gsc, ... */
 extern struct csc_s D_0060B010[];        /* levels\\b\\intro\\cortex.ghg, ... */
-extern u8 D_0060B280[];                  /* levels\\b\\outro\\station.gsc, ... */
+extern struct cutscenedesc_s D_0060B280[]; /* levels\\b\\outro\\station.gsc, ... */
 extern struct csc_s D_0060B220[];        /* levels\\b\\outro\\crunch.ghg, ... */
-extern u8 D_0060B358[];                  /* levels\\b\\outro\\station.gsc, outro2 */
+extern struct cutscenedesc_s D_0060B358[]; /* levels\\b\\outro\\station.gsc, outro2 */
 extern struct csc_s D_0060B2A0[];        /* levels\\b\\outro\\Crunch.ghg, ... */
 #define csd_logos D_0060AFE0
 #define csc_logos D_0060AFB8
@@ -242,9 +251,116 @@ extern s32 D_00633390;                   /* scene instance count */
 extern u8 texanimbuff[];
 extern void LoadFont3D(void);
 extern void *NuDatOpen(char *name, char **mem, s32 *used);
-extern s32 LoadCutComponents(u8 *csd, struct csc_s *csc);
 extern void instNuGCutSceneSetEndCallback(struct cutinst_s *inst, void *fn);
 void CutSceneNextLogoFunction(void *icutscene);
+
+struct scenecache_s {
+    char *path;           /* 0x0 */
+    void *scene;          /* 0x4 */
+};
+extern struct scenecache_s D_006FF980[];   /* loaded scenes, by path */
+extern s32 D_006FF800[];                   /* cutdebgroups */
+extern void *superbuffer_end;
+extern void InitSpecular(void);
+extern void InitEnviro(void);
+extern void *NuGScnRead(void **buf, void *end, char *path);
+extern struct nugcutscene_s *NuGCutSceneLoad(char *path, void **buf, void **end);
+extern void NuGCutSceneFixUp(struct nugcutscene_s *cutscene, void *scene, void *triggers);
+extern struct cutinst_s *instNuGCutSceneCreate(struct nugcutscene_s *cutscene,
+                                               void *a, void *b, char *name,
+                                               void **buf);
+extern u32 strlen(char *s);
+void CutSceneEndFunction(void *icutscene);
+void CutSceneNextFunction(void *icutscene);
+
+/* Load each character model once, sharing already-loaded ones by path.
+ * Inline: LoadCutComponents carries a copy of it in retail. */
+inline void LoadCutSceneCharacters(struct csc_s *name) {
+    s32 i;
+    void *obj;
+    void *tmp;
+    char *path;
+
+    while (name->path != 0) {
+        path = name->path;
+        for (i = 0; i < D_0063338C; i++) {
+            if (strcasecmp(path, D_006FF880[i].path) == 0) {
+                obj = D_006FF880[i].obj;
+                goto found;
+            }
+        }
+        D_006FF880[i].path = path;
+        tmp = NuGHGRead(&superbuffer_ptr, path);
+        D_006FF880[i].obj = tmp;
+        obj = tmp;
+        D_0063338C++;
+    found:
+        name->obj = obj;
+        name++;
+    }
+}
+
+/* Load the characters and every scene/cutscene of a movie, sharing models and
+ * scenes already loaded, and chain the cutscenes so each plays the next.
+ * Returns the number of cutscenes. */
+/* Near-match (state=asm): control flow, frame size (0xB0) and the inlined
+ * character cache match retail; the remaining diff is how gcc keeps the two
+ * counters (retail: one in $fp plus `ix + 1` spilled at 0($sp)). Tried: for
+ * with/without init, while, a single counter, ret/ix declaration order. */
+s32 LoadCutComponents(struct cutscenedesc_s *csd, struct csc_s *chars) {
+    s32 ret = 0;
+    s32 ix = 0;
+    s32 i;
+    char *path;
+    void *scene;
+    void *end;
+
+    InitSpecular();
+    InitEnviro();
+    CutChar = chars;
+    LoadCutSceneCharacters(chars);
+
+    for (; csd[ix].gscname != 0; ix++, ret++) {
+        D_006FF800[ix] = csd[ix].debgroup;
+
+        path = csd[ix].gscname;
+        end = superbuffer_end;
+        for (i = 0; i < D_00633390; i++) {
+            if (strcasecmp(path, D_006FF980[i].path) == 0) {
+                scene = D_006FF980[i].scene;
+                goto found;
+            }
+        }
+        D_006FF980[i].path = path;
+        scene = NuGScnRead(&superbuffer_ptr, end, path);
+        D_006FF980[i].scene = scene;
+        D_00633390++;
+    found:
+        world_scene[ix] = scene;
+
+        CutScene[ix] = NuGCutSceneLoad(csd[ix].cutname, &superbuffer_ptr, &superbuffer_end);
+        if (CutScene[ix] != 0) {
+            NuGCutSceneFixUp(CutScene[ix], world_scene[ix], 0);
+            /* The instance is named after the last 16 characters of the path. */
+            path = csd[ix].cutname;
+            if (strlen(path) != 0x10) {
+                path -= 0x10;
+                path += strlen(csd[ix].cutname);
+            }
+            CutInst[ix] = instNuGCutSceneCreate(CutScene[ix], 0, 0, path, &superbuffer_ptr);
+            if (CutInst[ix] != 0) {
+                CutInst[ix]->rate = 0.6f;
+                CutAudio[ix] = csd[ix].sfxid;
+                instNuGCutSceneSetEndCallback(CutInst[ix], CutSceneEndFunction);
+                if (ret != 0 && CutInst[ix - 1] != 0) {
+                    CutInst[ix - 1]->next = CutInst[ix];
+                    instNuGCutSceneSetEndCallback(CutInst[ix - 1], CutSceneNextFunction);
+                }
+            }
+        }
+    }
+    return ret;
+}
 
 /* Reset the cutscene state and load movie `movie`: 0 = logos/title,
  * 1 = intro, 3 = outro, 4 = outro2. Returns whether a cutscene was loaded. */
@@ -580,30 +696,6 @@ void CutSceneNextLogoFunction(void *icutscene) {
     }
 }
 
-void LoadCutSceneCharacters(struct csc_s *name) {
-    s32 i;
-    void *obj;
-    void *tmp;
-    char *path;
-
-    while (name->path != 0) {
-        path = name->path;
-        for (i = 0; i < D_0063338C; i++) {
-            if (strcasecmp(path, D_006FF880[i].path) == 0) {
-                obj = D_006FF880[i].obj;
-                goto found;
-            }
-        }
-        D_006FF880[i].path = path;
-        tmp = NuGHGRead(&superbuffer_ptr, path);
-        D_006FF880[i].obj = tmp;
-        obj = tmp;
-        D_0063338C++;
-    found:
-        name->obj = obj;
-        name++;
-    }
-}
 
 inline void *FindCutChar(char *name) {
     struct csc_s *chr;
