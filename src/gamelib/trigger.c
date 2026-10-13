@@ -205,9 +205,6 @@ extern int D_0062F7FC;
 extern int D_0062F800;
 #define g_DbgTriggerOff D_0062F800
 
-extern NuTriggerSys* D_00649fb0;
-#define active_triggersys_instances D_00649fb0
-
 
 enum NUTRIGGERPRIMTYPES_e {
     NUTRIGGERPRIMTYPE_CYLINDER = 3,
@@ -885,12 +882,12 @@ NuTriggerSys *instNuTriggerSysCreate(NuTriggerDefHdr *triggersys,void *gscene,un
         memset(itriggersys, 0, 0x18);
 
         itriggersys->prev = 0;
-        itriggersys->next = active_triggersys_instances;
+        itriggersys->next = g_NuTriggerSysList;
 
-        if (active_triggersys_instances)
-            active_triggersys_instances->prev = itriggersys;
+        if (g_NuTriggerSysList)
+            g_NuTriggerSysList->prev = itriggersys;
 
-        active_triggersys_instances = itriggersys;
+        g_NuTriggerSysList = itriggersys;
 
         itriggersys->data = gscene;
         itriggersys->def = triggersys;
@@ -1118,7 +1115,7 @@ int WeaponCheckTriggers(struct nuvec_s* pos, float r, int hitpoints) {
     char script[32];
     int check;
 
-    for(itriggersys = active_triggersys_instances; itriggersys != 0; itriggersys = itriggersys->next) {
+    for(itriggersys = g_NuTriggerSysList; itriggersys != 0; itriggersys = itriggersys->next) {
         gscene = *(struct nugscn_s**)(itriggersys->gscene + 0x10);
         triggersys = itriggersys->triggersys;
         if ((itriggersys->is_disabled & 1) == 0) {
