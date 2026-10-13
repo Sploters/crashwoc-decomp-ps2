@@ -1200,12 +1200,50 @@ extern f32 D_0062DF04;
 extern s32 TryUnembeddPointDirSimple(struct nuvec_s *pos, struct nuvec_s *dir,
                                      s16 *handle, s32 n, f32 x, f32 y);
 
+extern struct nuvec_s ShadNorm;
+extern s32 TryUnembeddPointDir(struct nuvec_s *pos, struct nuvec_s *norm, struct nuvec_s *dir,
+                               s16 *handle, f32 radius);
+extern s32 TryUnembeddPointSafe(struct nuvec_s *pos, struct nuvec_s *safe, s16 *handle,
+                                f32 radius);
+
+/* Push the atlasphere out of the terrain along the ground normal, or back to
+ * its last safe position if that fails. */
+void UnembedRayCastAtlas(struct NEWBUGGY *b, s16 *handle)
+{
+    struct nuvec_s up = D_0061F750[0];
+
+    if (!TryUnembeddPointDir(&b->ball_pos, &ShadNorm, &up, handle, b->atlas_rotparam)) {
+        TryUnembeddPointSafe(&b->ball_pos, &b->ball_oldpos, handle, b->atlas_rotparam);
+    }
+}
+
 void UnembedRayCastAtlasSimple(struct NEWBUGGY *b, s16 *handle)
 {
     struct nuvec_s dir = D_0061F750[0];
 
     TryUnembeddPointDirSimple(&b->ball_pos, &dir, handle, 5, b->atlas_rotparam,
                               D_0062DF04);
+}
+
+extern struct nuvec_s D_0061F8D0[];     /* vortex centre {0, -3.3, 0} */
+extern f32 NuVecMag(struct nuvec_s *v);
+
+/* Pull the atlasphere towards the vortex when it is close to it. */
+void CheckAtlasVortex(struct NEWBUGGY *b)
+{
+    struct nuvec_s vortex = D_0061F8D0[0];
+    struct nuvec_s rel;
+    f32 dist;
+
+    if (b->ball_pos.y < -3.0f) {
+        vortex.y = b->ball_pos.y - 0.3f;
+    }
+    NuVecSub(&rel, &vortex, &b->ball_pos);
+    dist = NuVecMag(&rel);
+    if (dist < 1.0f) {
+        /* Retail constant: one ulp below 0.1f. */
+        NuVecScaleAccum(&b->ball_vel, &rel, 0.099999994f / dist);
+    }
 }
 
 void ProcessAtlasAtlasCollisions(void)
