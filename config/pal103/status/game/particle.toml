@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0089:001cb798:InitParticles"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0089:001cb7b8:CloseParticles"

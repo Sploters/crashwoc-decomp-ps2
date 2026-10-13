@@ -44,8 +44,24 @@ typedef struct __sFILE {
 
 #define SEEK_END 2
 
+extern long _read_r(struct _reent *ptr, int fd, void *buf, int cnt);
 extern long _lseek_r(struct _reent *ptr, int fd, long pos, int whence);
 extern long _write_r(struct _reent *ptr, int fd, const void *buf, int cnt);
+extern int _close_r(struct _reent *ptr, int fd);
+
+int __sread(void *cookie, char *buf, int n)
+{
+    FILE *fp = (FILE *)cookie;
+    int ret;
+
+    ret = _read_r(fp->_data, fp->_file, buf, n);
+    /* If the read succeeded, update the current offset. */
+    if (ret >= 0)
+        fp->_offset += ret;
+    else
+        fp->_flags &= ~__SOFF; /* paranoia */
+    return ret;
+}
 
 int __swrite(void *cookie, const char *buf, int n)
 {
@@ -55,4 +71,26 @@ int __swrite(void *cookie, const char *buf, int n)
         (void)_lseek_r(fp->_data, fp->_file, 0, SEEK_END);
     fp->_flags &= ~__SOFF; /* in case FAPPEND mode is set */
     return _write_r(fp->_data, fp->_file, buf, n);
+}
+
+long __sseek(void *cookie, long offset, int whence)
+{
+    FILE *fp = (FILE *)cookie;
+    long ret;
+
+    ret = _lseek_r(fp->_data, fp->_file, offset, whence);
+    if (ret == -1L)
+        fp->_flags &= ~__SOFF;
+    else {
+        fp->_flags |= __SOFF;
+        fp->_offset = ret;
+    }
+    return ret;
+}
+
+int __sclose(void *cookie)
+{
+    FILE *fp = (FILE *)cookie;
+
+    return _close_r(fp->_data, fp->_file);
 }
