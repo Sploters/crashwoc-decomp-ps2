@@ -1133,9 +1133,8 @@ s32 GetCurrentFireFlyObjectives(void)
     s32 i;
 
     for (i = 0; i < 6; i++) {
-        struct battleship_s *bs = &BattleShipList[i];
-        if (bs->active != 0) {
-            count += bs->field510 > 0;
+        if (BattleShipList[i].active != 0 && BattleShipList[i].field510 > 0) {
+            count++;
         }
     }
     return count;
