@@ -53,7 +53,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0112:0024c5b0:DrawDeb3"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0112:0024c778:CoalSpark"

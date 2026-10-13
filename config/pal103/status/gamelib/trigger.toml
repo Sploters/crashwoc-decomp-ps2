@@ -45,7 +45,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0079:001b0c48:instNuTriggerSysCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0079:001b0d70:instNuTriggerSysDestroy"
