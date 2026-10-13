@@ -193,7 +193,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0040:00128f40:NuRndrGradRect2di"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001293c0:NuRndrRectUV2di"

@@ -217,7 +217,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001eacf0:NewGame"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0094:001eadd8:CalculateGamePercentage"

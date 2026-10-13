@@ -713,7 +713,7 @@ extern struct numtl_s *NuMtlCreate(int count);
 extern char *strncpy(char *dst, const char *src, unsigned int n);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);
-extern void EdFileClose(void);
+extern int EdFileClose(void);
 extern void EdFileWrite(void *data, int size);
 extern void EdFileWriteInt(int data);
 extern void EdFileWriteFloat(float data);
