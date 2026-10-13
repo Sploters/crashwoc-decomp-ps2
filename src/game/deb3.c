@@ -278,7 +278,7 @@ extern void NuBridgeOn(s32 on);
 extern void FireBossWaterFire(s32 on);
 extern s32 NuSpecialFind(struct nugscn_s *scene, struct nuhspecial_s *sp,
                          char *name);
-extern void StartHGobjAnim(struct nuhspecial_s *sp);
+extern s32 StartHGobjAnim(struct nuhspecial_s *sp);
 extern void DebrisEmitterOrientation(s32 key, s32 a, s32 hdg);
 extern void NewRumble(struct rumble_s *rumble, s32 power);
 extern void NewBuzz(struct rumble_s *rumble, s32 frames);

@@ -813,11 +813,11 @@ s32 GotoCheckpoint(struct nuvec_s *pos, s32 dir);
 void loadsaveCallEachFrame(void);
 s32 strcmp(const char *a, const char *b);
 void UpdateSaveSlots(struct cursor_s *cur);
-void NuSoundStopStream(s32 ch);
+int NuSoundStopStream(s32 ch);
 void ResetMaskFeathers(void);
 
 void *memset(void *s, s32 c, u32 n);
-s32 NuStrCpy(char *dst, const char *src);
+void NuStrCpy(char *dst, const char *src);
 void NewLanguage(s32 lang);
 void DefaultTimeTrialNames(s32 which);
 void ResetTimer(void *timer);
