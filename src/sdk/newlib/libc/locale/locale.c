@@ -31,3 +31,8 @@ char *setlocale(int category, const char *locale)
 {
     return _setlocale_r(_REENT, category, locale);
 }
+
+struct lconv *localeconv(void)
+{
+    return _localeconv_r(_REENT);
+}

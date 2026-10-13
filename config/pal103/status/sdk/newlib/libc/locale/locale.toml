@@ -25,4 +25,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0231:00277040:localeconv"
-state = "asm"
+state = "matching"

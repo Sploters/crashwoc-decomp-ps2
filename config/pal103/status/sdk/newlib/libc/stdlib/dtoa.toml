@@ -17,4 +17,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0225:00275148:_dtoa_r"
-state = "asm"
+state = "matching"

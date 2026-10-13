@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0238:00278440:__sread"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0238:002784a8:__swrite"
@@ -21,8 +21,8 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0238:00278528:__sseek"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0238:00278590:__sclose"
-state = "asm"
+state = "matching"
