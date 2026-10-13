@@ -33,7 +33,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0123:00260cd8:AddWarpDebris"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0123:00260d50:AddMechanicalDebris"

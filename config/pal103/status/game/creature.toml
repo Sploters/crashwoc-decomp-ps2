@@ -65,7 +65,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0091:001d4fc0:UpdateAnimPacket"
-state = "equivalent"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0091:001d5528:ModelAnimDuration"

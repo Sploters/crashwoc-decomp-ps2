@@ -137,7 +137,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0013:00107210:NuVecSurfaceNormal"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0013:00107300:NuVecDist"

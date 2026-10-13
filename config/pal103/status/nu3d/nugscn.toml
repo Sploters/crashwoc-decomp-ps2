@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0044:001453b8:CvtNuIFFTexAnimSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00145508:CvtNuIFFTextureSet"
@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00145890:CvtNuIFFSplineSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00145998:CalcDimsAddFaceOn"
