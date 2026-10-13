@@ -29,7 +29,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0116:0024fa90:GameSfx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0116:0024fd30:GameSfxLoop"

@@ -85,4 +85,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0084:001b7eb8:cbmcfgCameraSpeed"
-state = "asm"
+state = "matching"
