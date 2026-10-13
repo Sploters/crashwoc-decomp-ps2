@@ -135,8 +135,8 @@ extern u8 *rndrstream_free;
 
 extern void NuRndrStreamLink(struct rndrstream_s *rs);
 extern void NuRndrStreamSetMisc(struct rndrstream_s *rs);
-extern void NuRndrStreamAddMtl(struct rndrstream_s *rs, struct cloudmtl_s *mtl);
-extern void NuRndrStreamSetViewMtx(struct rndrstream_s *rs);
+extern int NuRndrStreamAddMtl(struct rndrstream_s *rs, struct cloudmtl_s *mtl);
+extern int NuRndrStreamSetViewMtx(struct rndrstream_s *rs);
 extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern u8 *vpDmaTag_CntEx(u8 *cur, s32 qwc, u32 tag);
 extern u8 *vpDmaTag_Close(u8 *cur);

@@ -187,7 +187,7 @@ extern float NuVecDistSqr(NuVec3 *a, NuVec3 *b, NuVec3 *diff);
 extern int NuVecClipTestPointVU0(NuVec3 *pos, NuMtx *clipmtx);
 extern int NuAtan2D(float x, float z);
 extern void FaceYDirStream(int angle);
-extern void NuRndrSetViewMtx(NuMtx *vpcs, NuMtx *vpc, NuMtx *scissor);
+extern int NuRndrSetViewMtx(NuMtx *vpcs, NuMtx *vpc, NuMtx *scissor);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMtxSetIdentity(NuMtx *m);
 extern float NuVecDist(NuVec3 *a, NuVec3 *b, NuVec3 *diff);

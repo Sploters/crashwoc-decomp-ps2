@@ -781,8 +781,8 @@ void *NuDatOpen(char *name, s32 mode, s32 arg);
 void NuDatSet(void *dat);
 void NuDatClose(void *dat);
 void LoadScreen(char *name);
-char *NuStrCpy(char *dst, char *src);
-char *NuStrCat(char *dst, char *src);
+void NuStrCpy(char *dst, char *src);
+void NuStrCat(char *dst, char *src);
 struct NUHGOBJ_s* NuGHGRead(void* buff, char* name);
 void *InstShadDataLoad(char *name);
 struct NUSHADOWDATA_s *ShadFindData(int *hdr, char *name);
@@ -1471,12 +1471,12 @@ void NewTerrainScaleY(struct nuvec_s *pos, struct nuvec_s *mom, u8 *chrs,
                       s32 index, f32 adjust, f32 radius, f32 ratio);
 s32 PlatformCrush(void);
 s32 GetDieAnim(struct obj_s *obj, s32 anim);
-void KillPlayer(struct obj_s *obj, s32 anim);
+s32 KillPlayer(struct obj_s *obj, s32 anim);
 void BonusTransporter(struct creature_s *c);
 void DeathTransporter(struct creature_s *c);
 void GemPathTransporter(struct creature_s *c);
 void PlayerCreatureCollisions(struct obj_s *obj);
-void HitItems(struct obj_s *obj);
+s32 HitItems(struct obj_s *obj);
 s32 PlayerObjectAnimCollision(struct obj_s *obj, struct nuspecial_s *special,
                               f32 range);
 void CrateCollisions(struct obj_s *obj);
@@ -1487,7 +1487,7 @@ void AddVariableShotDebrisEffect(s32 type, struct nuvec_s *pos, s32 count,
 void LoseMask(struct obj_s *obj);
 void KillGameObject(struct obj_s *obj, s32 anim);
 void AddMaskFeathers(struct mask_s *mask);
-void WumpaCollisions(struct obj_s *obj);
+s32 WumpaCollisions(struct obj_s *obj);
 void BonusTiming(struct creature_s *c);
 void NewMenu(struct cursor_s *cursor, s32 menu, s32 mode, s32 item);
 void MoveSUBMARINE(struct creature_s *c, struct pad_s *pad);
@@ -3485,7 +3485,7 @@ void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 void NuMtxPreScale(struct numtx_s *m, struct nuvec_s *s);
 s32 NuAtan2D(f32 x, f32 z);
 s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
-void NuHGobjRndrMtx(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
+int NuHGobjRndrMtx(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                     short *layer, struct numtx_s *tmtx);
 void NuHGobjRndr(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                  short *layer);

@@ -511,7 +511,7 @@ extern void ProcessJeepRocks(void);
 extern void ProcessVehMasks(void);
 extern void ProcessRockRockCollisions(void);
 extern s32 CheckAgainstRocks(struct nuvec_s *pos, struct nuvec_s *vel);
-extern void KillPlayer(struct obj_s *obj, s32 type);
+extern s32 KillPlayer(struct obj_s *obj, s32 type);
 
 
 
@@ -556,9 +556,9 @@ extern short D_005865C0[];
 #define FireBossRailAng D_005865C0
 extern s32 RotDiff(u16 a, u16 b);
 extern void PlayerCreatureCollisions(struct obj_s *obj);
-extern void HitItems(struct obj_s *obj);
+extern s32 HitItems(struct obj_s *obj);
 extern s32 HitCrates(struct obj_s *obj, s32 destroy);
-extern void WumpaCollisions(struct obj_s *obj);
+extern s32 WumpaCollisions(struct obj_s *obj);
 extern void AddGameDebrisRot(s32 i, struct nuvec_s *pos, s32 n, u16 xrot,
                              u16 yrot);
 struct cammtx_s {

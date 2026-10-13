@@ -351,7 +351,7 @@ extern int NuCameraClipTestPoints(NuVec3 *pos, int count, int mode);
 
 
 extern void NuRndrStreamSetMisc(struct RndrPacketStream *stream);
-extern void NuRndrStreamAddMtl(struct RndrPacketStream *stream, struct numtl_s *mtl);
+extern int NuRndrStreamAddMtl(struct RndrPacketStream *stream, struct numtl_s *mtl);
 extern u32 *vpDmaTag_CntEx(u32 *packet, u32 vif0, u32 vif1);
 extern u32 *vpDmaTag_Next(u32 *packet, u32 address);
 extern u32 *vtBeginDirect(u32 *packet, u32 irq);

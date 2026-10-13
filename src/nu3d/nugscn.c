@@ -207,7 +207,7 @@ extern int NuFileReadInt(int fh);
 extern float NuFileReadFloat(int fh);
 extern void NuFileBeginBlkWrite(int fh, int blk, int flags);
 extern void NuFileEndBlkWrite(int fh);
-extern void NuFileWrite(int fh, void *buf, int size);
+extern int NuFileWrite(int fh, void *buf, int size);
 extern void NuFileWriteInt(int fh, int value);
 extern void NuFileWriteFloat(int fh, float value);
 extern struct nunode_s *NuNodeRead(int fh, int depth);
