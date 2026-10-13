@@ -80,7 +80,8 @@ extern s32 Paused;
 extern u8 D_0060B398[];                 /* cutscene_locatorfns */
 
 struct cutinst_s {
-    u8 unk_0x00[0x70];
+    u8 unk_0x00[0x6C];
+    u32 flags;            /* 0x6C (4 = loop) */
     f32 cframe;           /* 0x70 */
     f32 rate;             /* 0x74 */
 };
@@ -208,6 +209,118 @@ extern s32 NuGCutLocatorIsVisble(void *locator, f32 currf, struct nuanimtime_s *
                                  void *null);
 
 
+/* Cutscene tables (scenes/cuts, characters); unnamed in the symbol map, named
+ * here after the files they load. */
+extern u8 D_0060AFE0[];                  /* levels\\b\\logos\\logos.gsc, ... */
+extern struct csc_s D_0060AFB8[];        /* levels\\b\\logos\\ttchar.ghg, ... */
+extern u8 D_0060B160[];                  /* levels\\b\\intro\\space.gsc, ... */
+extern struct csc_s D_0060B010[];        /* levels\\b\\intro\\cortex.ghg, ... */
+extern u8 D_0060B280[];                  /* levels\\b\\outro\\station.gsc, ... */
+extern struct csc_s D_0060B220[];        /* levels\\b\\outro\\crunch.ghg, ... */
+extern u8 D_0060B358[];                  /* levels\\b\\outro\\station.gsc, outro2 */
+extern struct csc_s D_0060B2A0[];        /* levels\\b\\outro\\Crunch.ghg, ... */
+#define csd_logos D_0060AFE0
+#define csc_logos D_0060AFB8
+#define csd_intro D_0060B160
+#define csc_intro D_0060B010
+#define csd_outro D_0060B280
+#define csc_outro D_0060B220
+#define csd_outro2 D_0060B358
+#define csc_outro2 D_0060B2A0
+
+/* Retail-owned strings (no Data-from-C yet). */
+extern char D_00632BD0[];                /* "ats.dat" */
+extern char D_006293A0[];                /* "ats\\levels\\pal\\title.ats" */
+extern char D_006293C0[];                /* "ats\\splash\\ripples.ats" */
+extern char D_006293D8[];                /* "ats\\elecy\\elecy2.ats" */
+#define ats_dat D_00632BD0
+#define title_ats D_006293A0
+#define ripples_ats D_006293C0
+#define elecy2_ats D_006293D8
+
+extern s32 D_00633390;                   /* scene instance count */
+extern u8 texanimbuff[];
+extern void LoadFont3D(void);
+extern void *NuDatOpen(char *name, char **mem, s32 *used);
+extern s32 LoadCutComponents(u8 *csd, struct csc_s *csc);
+extern void instNuGCutSceneSetEndCallback(struct cutinst_s *inst, void *fn);
+void CutSceneNextLogoFunction(void *icutscene);
+
+/* Reset the cutscene state and load movie `movie`: 0 = logos/title,
+ * 1 = intro, 3 = outro, 4 = outro2. Returns whether a cutscene was loaded. */
+/* Near-match (state=asm), 652/696 bytes: same instructions; retail allocates
+ * $v0 where this build picks $v1 for the switch's `1` and for &texanimbuff in
+ * every case. No `case 2` (adding one emits a jump table retail lacks). */
+s32 LoadCutMovie(s32 movie) {
+    void *buf;
+    void *dat;
+    s32 count;
+    s32 i;
+
+    LoadFont3D();
+    D_00633390 = 0;
+    for (i = 0x1F; i >= 0; i--) {
+        world_scene[i] = 0;
+    }
+    D_0063338C = 0;
+    for (i = 0; i < 0x20; i++) {
+        CutScene[i] = 0;
+        CutInst[i] = 0;
+        CutAudio[i] = -1;
+    }
+    CutChar = 0;
+    cutworldix = 0;
+    NuTexAnimProgSysInit();
+
+    switch (movie) {
+    case 0:
+        dat = NuDatOpen(ats_dat, 0, 0);
+        NuDatSet(dat);
+        buf = texanimbuff;
+        NuTexAnimProgReadScript(&buf, title_ats);
+        NuDatSet(0);
+        if (dat != 0) {
+            NuDatClose(dat);
+        }
+        count = LoadCutComponents(csd_logos, csc_logos);
+        instNuGCutSceneSetEndCallback(CutInst[0], CutSceneNextLogoFunction);
+        CutInst[count - 1]->flags |= 4;
+        instNuGCutSceneSetEndCallback(CutInst[count - 1], 0);
+        break;
+    case 1:
+        dat = NuDatOpen(ats_dat, 0, 0);
+        NuDatSet(dat);
+        buf = texanimbuff;
+        NuTexAnimProgReadScript(&buf, ripples_ats);
+        NuDatSet(0);
+        if (dat != 0) {
+            NuDatClose(dat);
+        }
+        LoadCutComponents(csd_intro, csc_intro);
+        break;
+    case 3:
+    case 4:
+        dat = NuDatOpen(ats_dat, 0, 0);
+        NuDatSet(dat);
+        buf = texanimbuff;
+        NuTexAnimProgReadScript(&buf, elecy2_ats);
+        if (movie == 4) {
+            NuTexAnimProgReadScript(&buf, ripples_ats);
+        }
+        NuDatSet(0);
+        if (dat != 0) {
+            NuDatClose(dat);
+        }
+        if (movie == 3) {
+            LoadCutComponents(csd_outro, csc_outro);
+        } else {
+            LoadCutComponents(csd_outro2, csc_outro2);
+        }
+        break;
+    }
+    return CutInst[0] != 0;
+}
+
 void SetCutMovieRate(void) {
     CutInst[cutworldix]->rate = 0.5f;
     if (cutmovie == 3 || cutmovie == 4) {
@@ -307,6 +420,85 @@ void InitGameCut(void) {
     gamecut_sfx = -1;
     gamecut_finished = 0;
     ResetAnimPacket(CutVortexAnim, 0x22);
+}
+
+extern s32 GameMode;
+extern f32 HUBHOLOSCALE;
+extern f32 SPACEMASKADJUSTY;
+extern f32 FRONTENDCORTEXADJUSTY;
+extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
+extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *v);
+extern void NuMtxRotateY(struct numtx_s *m, s32 a);
+extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
+extern s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hobj, struct numtx_s *m,
+                             s32 nlayers, short *layer, struct numtx_s *tmtx,
+                             float **dwa);
+
+/* Draw the character of the current hub/space cutscene, plus the vortex in
+ * space (Level 0x28). Unlike the GameCube build, the bone matrices live in a
+ * stack array here rather than in a global. */
+/* Near-match (state=asm): instruction-for-instruction except register choice
+ * inside the Level 0x28 / frontend branches (retail reloads pCutAnim per arm,
+ * into $a1/$a0; here gcc loads it once). Tried: statement order in both arms,
+ * direct pCutAnim->i indexing, single-expression yrot, local decl order. */
+void DrawGameCut(void) {
+    struct numtx_s m;
+    struct numtx_s tmtx[256];
+    struct nuvec_s scale;
+    struct nuvec_s pos;
+    float **dwa;
+    struct CharacterModel *model;
+    u16 yrot;
+    s32 i;
+
+    if (Level == 0x28 && CRemap[183] != -1) {
+        model = &CModel[CRemap[183]];
+        NuMtxSetTranslation(&m, &campos_SPACE);
+        EvalModelAnim(model, (struct anim_s *)CutVortexAnim, &m, tmtx, &dwa, 0);
+        NuHGobjRndrMtxDwa(model->hobj, &m, 1, 0, tmtx, dwa);
+    }
+    if (GameMode != 1 || gamecut_finished != 0) {
+        return;
+    }
+    if (CRemap[pCutAnim->character] != -1) {
+        model = &CModel[CRemap[pCutAnim->character]];
+    } else {
+        model = 0;
+    }
+    if (model == 0) {
+        return;
+    }
+
+    scale.x = (model->character == 0xB3 || model->character == 0xB4) ? 0.77f : 1.0f;
+    if (Level == 0x25) {
+        scale.x *= HUBHOLOSCALE;
+    }
+    scale.y = scale.z = scale.x;
+    NuMtxSetScale(&m, &scale);
+
+    if (Level == 0x28) {
+        i = pCutAnim->i;
+        pos = cutpos_SPACE[i];
+        yrot = cutang_SPACE[i];
+        yrot -= 0x8000;
+        if (model->character == 0x55 || model->character == 0x57 ||
+            model->character == 0x56 || model->character == 0x58 ||
+            model->character == 2) {
+            pos.y += SPACEMASKADJUSTY * scale.y;
+        }
+    } else {
+        i = pCutAnim->i;
+        yrot = cutang_FRONTEND[i];
+        yrot -= 0x8000;
+        pos = cutpos_FRONTEND[i];
+        if (model->character == 0xB5) {
+            pos.y += FRONTENDCORTEXADJUSTY * scale.y;
+        }
+    }
+    NuMtxRotateY(&m, yrot);
+    NuMtxTranslate(&m, &pos);
+    EvalModelAnim(model, (struct anim_s *)CutAnim, &m, tmtx, &dwa, 0);
+    NuHGobjRndrMtxDwa(model->hobj, &m, 1, 0, tmtx, dwa);
 }
 
 void InitCutScenes(void) {
