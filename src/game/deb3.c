@@ -1612,7 +1612,7 @@ void ProcDeb3(void) {
   }
 }
 
-static void DrawDeb3() {
+void DrawDeb3(void) {
   struct nuvec_s pos;
   struct deb3_s *deb;
   float r;
