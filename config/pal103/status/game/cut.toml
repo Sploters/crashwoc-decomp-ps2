@@ -41,7 +41,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0121:0025c8c0:InitGameCut"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025ca10:UpdateGameCut"
@@ -89,7 +89,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025e948:locatorfn_fadeout"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025ea08:CutSceneEndFunction"

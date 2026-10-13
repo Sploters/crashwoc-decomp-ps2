@@ -545,7 +545,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c5f0:SetNewMaskStuff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c718:CollideWithBattleShips"

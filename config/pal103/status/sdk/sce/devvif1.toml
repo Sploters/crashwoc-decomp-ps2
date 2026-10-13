@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0147:002641c0:sceDevVif1Reset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0147:002641e8:sceDevVif1Pause"
@@ -25,11 +25,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0147:00264290:sceDevVif1PutErr"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0147:002642b0:sceDevVif1GetErr"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0147:002642c0:sceDevVif1Sync"
@@ -37,7 +37,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0147:00264310:sceDevVif1GetCnd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0147:002644e8:sceDevVif1PutFifo"

@@ -73,7 +73,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:001095e0:NuMtxSetRotationY"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109668:NuMtxSetRotationZ"
