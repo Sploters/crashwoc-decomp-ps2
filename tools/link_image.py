@@ -71,6 +71,20 @@ _TILING_NAMES = {"text", "vutext", "orphan", "data", "rodata", "lit4",
 _HYBRID_STATES = {"matching": {"matching"},
                   "equivalent": {"matching", "equivalent"}}
 
+# GNU ld/as put context first ("x.o: in function `main':") and the actual
+# reason on the following line(s), so reporting only the first line hides it.
+_TOOL_ERROR_LINES = 4
+
+
+def tool_error(exc, default):
+    """The first few non-empty stderr lines of a failed tool, joined."""
+    lines = [l.strip() for l in (exc.stderr or "").splitlines() if l.strip()]
+    if not lines:
+        return default
+    shown = " | ".join(lines[:_TOOL_ERROR_LINES])
+    more = len(lines) - _TOOL_ERROR_LINES
+    return shown + (f" | (+{more} more lines)" if more > 0 else "")
+
 
 def manifest_units(version, link_set):
     """{unit_index: object rel path} for units that build a hybrid in this set.
@@ -213,7 +227,7 @@ def link_image(reporter, version, link_set):
             undefined |= u
     except subprocess.CalledProcessError as exc:
         reporter.result("Assemble vutext incbin", False,
-                        (exc.stderr or "as failed").strip().splitlines()[0])
+                        tool_error(exc, "as failed"))
         return None, None
 
     external = (undefined - defined) - {"_gp"}
@@ -244,7 +258,7 @@ def link_image(reporter, version, link_set):
                        check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as exc:
         reporter.result(f"Link {link_set} image", False,
-                        (exc.stderr or "ld failed").strip().splitlines()[0])
+                        tool_error(exc, "ld failed"))
         return None, None
     reporter.result(f"Link {link_set} image", True)
 
