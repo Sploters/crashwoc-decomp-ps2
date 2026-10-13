@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0006:00105688:NuAllocHighInit"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0006:00105708:NuAllocHigh"

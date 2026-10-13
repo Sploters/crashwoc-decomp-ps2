@@ -73,7 +73,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0108:00240858:GameVP"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0108:00240958:ResetPanelDebris"

@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0257:0027fa30:sceSifFreeIopHeap"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0257:0027fa50:sceSifLoadIopHeap"

@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0180:0026d138:sceSdCallBack"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0180:0026d148:sceSdRemote"

@@ -17,11 +17,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0231:00277000:_localeconv_r"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0231:00277010:setlocale"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0231:00277040:localeconv"

@@ -165,7 +165,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0099:002218a8:ASin"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0099:00221950:ACos"

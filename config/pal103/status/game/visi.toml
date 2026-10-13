@@ -25,4 +25,4 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0097:00201a00:ReleaseVisiTable"
-state = "asm"
+state = "matching"
