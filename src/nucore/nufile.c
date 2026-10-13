@@ -132,8 +132,8 @@ struct nudatfile_s {
     int start;                /* 0x04 */
     int len;	              /* 0x08 */
     int fix;                  /* 0x0c */
-    int used;                 /* 0x10 */
-    int pos;                  /* 0x14 */
+    int pos;                  /* 0x10 */
+    int used;                 /* 0x14 cleared on close, tested by NuDatFileOpen */
     int ppack;                /* 0x18 */
 }; /* 0x1c */
 
@@ -606,7 +606,7 @@ void NuDatFileClose(int fh)
     int ix = fh - 0x800;
 
     datfiles[ix].ndh->dfhandle = 0;
-    datfiles[ix].pos = 0;
+    datfiles[ix].used = 0;
 }
 
 
@@ -883,6 +883,47 @@ extern char RO_62BAB0[];
 extern char RO_62BC50[];
 extern char RO_62BC68[];
 extern char RO_62BC90[];
+
+extern char D_00613650[];
+extern char D_00613668[];
+#define msg_closing_file        D_00613650
+#define msg_close_failed        D_00613668
+
+
+/* Inline: retail carries a copy of it in every function that closes a file. */
+inline void NuFileClose(int fh)
+{
+    struct fileinfo_s *info;
+    struct filebuff_s *buff;
+
+    NuDebugMsgProlog(nufile_file, 0x24D)(msg_closing_file, fh);
+    if (fh >= 0x400) {
+        NuMemFileClose(fh);
+        return;
+    }
+    fh--;
+    while (sceClose(fh) < 0) {
+        NuDebugMsgProlog(nufile_file, 0x254)(msg_close_failed);
+    }
+    info = &file_info[fh];
+    buff = (struct filebuff_s *)info->start_lsn;
+    if (buff != 0) {
+        buff->info = 0;
+    }
+    memset(info, 0, sizeof(*info));
+}
+
+
+void NuDatClose(struct nudathdr_s *ndh)
+{
+    NuFileClose(ndh->fh);
+    if (ndh->dfhandle != 0) {
+        datfiles[ndh->dfhandle - 0x800].used = 0;
+    }
+    if (ndh->intalloc) {
+        NuMemFreeFn(ndh, nufile_file, 0x6AD);
+    }
+}
 
 int NuFileSize(char *fname) {
   int iVar1;
@@ -1303,33 +1344,6 @@ int NuFileOpenSize(int fh)
 }
 
 
-extern char D_00613650[];
-extern char D_00613668[];
-#define msg_closing_file        D_00613650
-#define msg_close_failed        D_00613668
-
-
-void NuFileClose(int fh)
-{
-    struct fileinfo_s *info;
-    struct filebuff_s *buff;
-
-    NuDebugMsgProlog(nufile_file, 0x24D)(msg_closing_file, fh);
-    if (fh >= 0x400) {
-        NuMemFileClose(fh);
-        return;
-    }
-    fh--;
-    while (sceClose(fh) < 0) {
-        NuDebugMsgProlog(nufile_file, 0x254)(msg_close_failed);
-    }
-    info = &file_info[fh];
-    buff = (struct filebuff_s *)info->start_lsn;
-    if (buff != 0) {
-        buff->info = 0;
-    }
-    memset(info, 0, sizeof(*info));
-}
 
 
 extern char D_0062E9C0[];

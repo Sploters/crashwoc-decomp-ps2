@@ -73,7 +73,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011e5d0:NuTexClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011e690:NuTexReserve"

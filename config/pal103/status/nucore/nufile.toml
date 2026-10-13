@@ -81,7 +81,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0001:00102370:NuDatClose"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:00102478:NuDatOpenEx"

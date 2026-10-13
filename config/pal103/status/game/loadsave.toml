@@ -25,7 +25,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b420:LoadGameSlots"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b4c8:SaveGameSlots"
