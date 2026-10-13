@@ -25,6 +25,21 @@
  *   0x00266ba0 sceCdMmode
  */
 
+typedef struct ThreadParam {
+    int status;
+    void (*entry)(void *);
+    void *stack;
+    int stackSize;
+    void *gpReg;
+    int initPriority;
+    int currentPriority;
+    unsigned int attr;
+    unsigned int option;
+    int waitType;
+    int waitId;
+    int wakeupCount;
+} ThreadParam;
+
 typedef struct SemaParam {
     int currentCount;
     int maxCount;
@@ -79,6 +94,9 @@ extern int D_006109BC[];
 extern void (*D_006FFE80[])(int);
 extern void (*D_006FFE84[])(void *);
 extern void *D_006FFE88[];
+extern int D_006FFE90[];
+extern ThreadParam D_006FFE98[];
+extern ThreadParam D_006FFEC8[];
 extern char D_0062B138[];
 extern char D_0062B148[];
 
@@ -95,6 +113,9 @@ extern char D_0062B148[];
 #define cb_func         (D_006FFE80[0])
 #define poff_func       (D_006FFE84[0])
 #define poff_arg        (D_006FFE88[0])
+#define init_th_id      (D_006FFE90[0])
+#define init_th_param   (D_006FFE98[0])
+#define cb_th_param     (D_006FFEC8[0])
 #define ncmd_wait_msg   D_0062B138
 #define scmd_wait_msg   D_0062B148
 
@@ -113,6 +134,13 @@ extern int sceSifCallRpc(sceSifClientData *client, unsigned int fno, unsigned in
                          void *send, int ssize, void *receive, int rsize,
                          void (*end_func)(void *), void *end_param);
 extern int sceSifCheckStatRpc(sceSifClientData *client);
+extern int GetThreadId(void);
+extern int ReferThreadStatus(int thread, ThreadParam *info);
+extern int CreateThread(ThreadParam *param);
+extern int StartThread(int thread, void *arg);
+extern int ChangeThreadPriority(int thread, int priority);
+extern char _gp[];
+static void _Cdvd_cbLoop(void *arg);
 void CB_DelayTh(int id, unsigned short time, void *arg);
 int sceCdSync(int mode);
 static int PowerOffCB(void);
@@ -167,6 +195,29 @@ static void _sceCd_cd_callback(int *data)
     cbfunc_num = 0;
 }
 
+
+/* Start the callback thread at priority `prio` on the given stack; if it is
+ * already running, only change its priority. Returns 1 if it was created. */
+int sceCdInitEeCB(int prio, void *stack, int stack_size)
+{
+    int created = 1;
+
+    if (cb_thread_id == 0) {
+        init_th_id = GetThreadId();
+        ReferThreadStatus(init_th_id, &init_th_param);
+        cb_th_param.stackSize = stack_size;
+        cb_th_param.gpReg = _gp;
+        cb_th_param.entry = _Cdvd_cbLoop;
+        cb_th_param.stack = stack;
+        cb_th_param.initPriority = prio;
+        cb_thread_id = CreateThread(&cb_th_param);
+        StartThread(cb_thread_id, 0);
+    } else {
+        ChangeThreadPriority(cb_thread_id, prio);
+        created = 0;
+    }
+    return created;
+}
 
 static void _sceCd_cd_read_intr(void *addr)
 {

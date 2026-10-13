@@ -122,14 +122,9 @@ void AddWarpDebris(struct obj_s *obj, struct nuvec_s *pos) {
     struct nuvec_s v;
     s32 key;
 
-    /*
-     * Faithful near-match (state=asm): all loads/mults/stores and the
-     * 120-byte extent are exact; residual is a single f3/f4 allocator swap
-     * between obj->SCALE and obj->pos.z (both short-lived FP temps). 83.3%.
-     */
     key = -1;
     v.x = obj->pos.x;
-    v.z = obj->pos.z;
     v.y = obj->pos.y + (obj->bot + obj->top) * obj->SCALE * 0.5f;
+    v.z = obj->pos.z;
     AddFiniteShotDebrisEffect(&key, GDeb[77].i, &v, 1);
 }

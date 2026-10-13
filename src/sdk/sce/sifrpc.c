@@ -137,8 +137,10 @@ typedef struct SifRpcData {
 } SifRpcData;
 
 extern int D_00613378[];
+extern SifRpcData D_00705140;
 
 #define sif_rpc_initialized D_00613378
+#define _sif_rpc_data D_00705140
 
 #define SIF_CMD_RPC_END   0x80000008
 #define SIF_CMD_RPC_BIND  0x80000009
@@ -269,6 +271,64 @@ sceSifServeData *_search_svdata(unsigned int command, SifRpcData *rpc_data) {
     return 0;
 }
 
+
+void sceSifSetRpcQueue(sceSifQueueData *qd, int key) {
+    sceSifQueueData *queue;
+
+    DIntr();
+    qd->key = key;
+    qd->active = 0;
+    qd->link = 0;
+    qd->start = 0;
+    qd->end = 0;
+    qd->next = 0;
+    if (_sif_rpc_data.active_queue == 0) {
+        _sif_rpc_data.active_queue = qd;
+    } else {
+        for (queue = _sif_rpc_data.active_queue; queue->next; queue = queue->next) {
+        }
+        queue->next = qd;
+    }
+    EIntr();
+}
+
+
+sceSifServeData *sceSifRemoveRpc(sceSifServeData *sd, sceSifQueueData *qd) {
+    sceSifServeData *server;
+
+    DIntr();
+    if ((server = qd->link) == sd) {
+        qd->link = server->link;
+    } else {
+        for (; server; server = server->link) {
+            if (server->link == sd) {
+                server->link = sd->link;
+                break;
+            }
+        }
+    }
+    EIntr();
+    return server;
+}
+
+
+sceSifQueueData *sceSifRemoveRpcQueue(sceSifQueueData *qd) {
+    sceSifQueueData *queue;
+
+    DIntr();
+    if ((queue = _sif_rpc_data.active_queue) == qd) {
+        _sif_rpc_data.active_queue = queue->next;
+    } else {
+        for (; queue; queue = queue->next) {
+            if (queue->next == qd) {
+                queue->next = qd->next;
+                break;
+            }
+        }
+    }
+    EIntr();
+    return queue;
+}
 
 sceSifServeData *sceSifGetNextRequest(sceSifQueueData *queue) {
     sceSifServeData *serve;

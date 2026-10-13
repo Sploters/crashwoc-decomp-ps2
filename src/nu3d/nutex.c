@@ -99,6 +99,39 @@ typedef struct NuMtl {
 #define NUTEX_NATIVE 0x20000
 #define NUTEX_MAX 0x400
 
+typedef struct {
+    u16 qwc;
+    u8 mark;
+    u8 id;
+    void *addr;
+    unsigned int vif0;
+    unsigned int vif1;
+} NuDmaTag;
+
+/* Render stream (see nu3d/nustream); only the fields used here. */
+struct nurndrstream_s {
+    void *start;                    /* 0x00 */
+    u8 *cur;                        /* 0x04 */
+    NuDmaTag *txtr_start;           /* 0x08 first texture upload */
+    NuDmaTag *txtr_end;             /* 0x0C last texture upload's closing tag */
+    int topfree;                    /* 0x10 GS VRAM free pointer */
+};
+
+#define DMATAG_IRQ 0x80
+
+/* Quadword written after each tag that brackets a PATH3 texture upload. */
+struct nutexmark_s {
+    NuDmaTag *tag;
+    unsigned int magic;
+};
+
+#define TAG_BEFORE(p) (&((NuDmaTag *)(p))[-1])
+#define MARK_AT(p) ((struct nutexmark_s *)(p))
+
+extern int nutex_use_path3;
+extern u8 *vpDmaTag_Next(u8 *cur, void *addr);
+extern u8 *NuTexAccomodate(u8 *dma, int tid);
+
 extern NuTex *D_0062EBEC;
 #define TexList D_0062EBEC
 
@@ -553,4 +586,44 @@ int NuTexGetTextAddr(int tex) {
         return entry->ps2tex.texaddr ? entry->ps2tex.texaddr : gs_botfree;
     }
     return 0;
+}
+
+/* Upload texture `tid` from inside a render stream. With PATH3 the upload is
+ * bracketed by two interrupting tags and chained onto the stream's list of
+ * texture uploads. */
+void NuTexAccomodateRS(struct nurndrstream_s *stream, int tid)
+{
+    NuDmaTag *open;
+
+    gs_topfree = stream->topfree;
+    if (nutex_use_path3) {
+        /* Opening tag: interrupts, and is later pointed past the upload. */
+        open = (NuDmaTag *)stream->cur;
+        stream->cur = vpDmaTag_Next(stream->cur, 0);
+        TAG_BEFORE(stream->cur)->id |= DMATAG_IRQ;
+        TAG_BEFORE(stream->cur)->mark = 0x18;
+        MARK_AT(stream->cur)->tag = 0;
+        MARK_AT(stream->cur)->magic = 0xACEB00B5;
+        stream->cur += sizeof(NuDmaTag);
+        if (stream->txtr_end != 0) {
+            stream->txtr_end->addr = stream->cur;
+        } else {
+            stream->txtr_start = (NuDmaTag *)stream->cur;
+        }
+
+        stream->cur = NuTexAccomodate(stream->cur, tid);
+
+        /* Closing tag: interrupts, and points back at the opening one. */
+        stream->txtr_end = (NuDmaTag *)stream->cur;
+        stream->cur = vpDmaTag_Next(stream->cur, 0);
+        TAG_BEFORE(stream->cur)->id |= DMATAG_IRQ;
+        TAG_BEFORE(stream->cur)->mark = 0x19;
+        MARK_AT(stream->cur)->tag = open;
+        MARK_AT(stream->cur)->magic = 0xBABEF00D;
+        stream->cur += sizeof(NuDmaTag);
+        open->addr = stream->cur;
+    } else {
+        stream->cur = NuTexAccomodate(stream->cur, tid);
+    }
+    stream->topfree = gs_topfree;
 }

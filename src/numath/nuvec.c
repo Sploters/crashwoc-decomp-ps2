@@ -372,8 +372,8 @@ void NuVecSurfaceNormal(struct nuvec_s *dst, struct nuvec_s *p0,
     v.x = p0->x - p2->x;
     v.y = p0->y - p2->y;
     v.z = p0->z - p2->z;
-    dst->x = v.y * u.z - v.z * u.y;
     dst->y = v.z * u.x - v.x * u.z;
+    dst->x = v.y * u.z - v.z * u.y;
     dst->z = v.x * u.y - v.y * u.x;
     scale = NuFsqrt(dst->x * dst->x + dst->y * dst->y + dst->z * dst->z);
     scale = 1.0f / scale;
