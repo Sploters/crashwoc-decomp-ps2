@@ -53,7 +53,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:001724f8:RotateVec"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00172608:RotateTerrain"
@@ -81,7 +81,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:00174e60:NewCast"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00175b10:CheckCylinder"
@@ -109,7 +109,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0068:00177780:HitTerrPoly"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0068:00177a38:ScanTerrain"

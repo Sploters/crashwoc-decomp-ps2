@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0079:001af5f8:CheckUnparentedTriggerWithPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0079:001af8a8:NuTriggerSysUpdate"

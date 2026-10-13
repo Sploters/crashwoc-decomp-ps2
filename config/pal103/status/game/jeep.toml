@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0101:00223ae0:SpinWheelsJeep"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:00223c68:GenerateJeepTargets"
@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0101:00223de8:TiltJeep"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:00223f90:MovePlayerJeep"
@@ -197,7 +197,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022b598:TiltSeek"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022b698:LimitSpeedZbyXZ"
@@ -229,7 +229,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022bd00:InitEnemyJeep"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0101:0022bdd8:AnimateForLightsEnemyJeep"

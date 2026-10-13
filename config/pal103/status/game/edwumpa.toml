@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0104:00235f70:edwmpADD"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0104:00235fd0:edwmpDELETE"

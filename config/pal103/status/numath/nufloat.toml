@@ -29,7 +29,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0017:0010b3d0:NuFres"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0017:0010b418:NuEquiv"

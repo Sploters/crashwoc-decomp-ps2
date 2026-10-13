@@ -141,7 +141,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0013:00107300:NuVecDist"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0013:001073a8:NuVecDistSqr"
@@ -149,7 +149,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0013:00107440:NuVecXZDist"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0013:001074d0:NuVecXZDistSqr"
