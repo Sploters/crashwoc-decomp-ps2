@@ -34,7 +34,9 @@
 #include "creature.h"
 
 struct game_s {
-    u8 unk_0x00[0x408];
+    u8 unk_0x00[0xF];
+    u8 language;          /* 0xF */
+    u8 unk_0x10[0x408 - 0x10];
     s32 cutbits;          /* 0x408 */
 };
 
@@ -78,14 +80,22 @@ extern s32 Paused;
 extern u8 D_0060B398[];                 /* cutscene_locatorfns */
 
 struct cutinst_s {
-    u8 unk_0x00[0x74];
+    u8 unk_0x00[0x70];
+    f32 cframe;           /* 0x70 */
     f32 rate;             /* 0x74 */
 };
+extern struct nugcutscene_s *D_006FF680[]; /* CutScene */
 extern struct cutinst_s *D_006FF700[];  /* CutInst */
 extern s32 D_006FF780[];                /* CutAudio */
+#define CutScene D_006FF680
 #define CutInst D_006FF700
 #define CutAudio D_006FF780
 #define cutworldix D_00633388
+
+extern u32 texanimbits;
+extern f32 TITLESTARTTIME;
+extern f32 TITLEFPS;
+extern void instNuGCutSceneStart(struct cutinst_s *inst);
 
 static void AppCutSceneFindCharacters();
 extern void AppCutSceneCharacterRender(void);
@@ -242,6 +252,41 @@ void CloseCutMovie(s32 all) {
         NuTexInit();
         NuMtlRelease();
         NuGobjInit();
+    }
+}
+
+/* Start the loaded cutscene. On the title screen (logos already played) it
+ * loops from TITLESTARTTIME seconds before the end with title music; otherwise
+ * its audio stream is started, offset by the selected language for movies. */
+/* Near-match (state=asm), 336/344 bytes: the only difference is the register
+ * the post-NuSoundStopStream reload of `cutmovie` lands in ($v0 vs retail
+ * $v1). Tried: operand order, ternary, local, statement order, condition
+ * forms, Game.language vs D_0058B117[0] -- all identical output. */
+void StartCutMovie(void) {
+    s32 sfx;
+
+    cutmovie_hold = 0;
+    if (CutScene[0] != 0 && CutInst[0] != 0) {
+        instNuGCutSceneStart(CutInst[0]);
+        if (cutmovie == 0 && logos_played != 0) {
+            GameMusic(0xaa, 0);
+            sfx = -1;
+            CutInst[cutworldix]->cframe =
+                (CutScene[cutworldix]->nframes - TITLESTARTTIME * TITLEFPS) + 0.0f;
+            texanimbits = (texanimbits & ~2) | 4;
+        } else {
+            sfx = CutAudio[cutworldix];
+            texanimbits = (texanimbits | 2) & ~4;
+        }
+        if (sfx != -1 && (cutmovie != 0 || logos_played == 0)) {
+            NuSoundStopStream(4);
+            if (cutmovie != 0) {
+                sfx += Game.language * 4;
+            }
+            gamesfx_channel = 4;
+            GameSfx(sfx, 0);
+            cutmovie_hold = 1;
+        }
     }
 }
 
