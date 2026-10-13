@@ -101,7 +101,6 @@ extern f32 TITLEFPS;
 extern void instNuGCutSceneStart(struct cutinst_s *inst);
 
 static void AppCutSceneFindCharacters();
-extern void AppCutSceneCharacterRender(void);
 extern void NuGCutSceneSysInit(void *fns);
 extern void NuSetCutSceneFindCharactersFn(void *fn);
 extern void NuSetCutSceneCharacterRenderFn(void *fn);
@@ -132,7 +131,9 @@ extern void GameSfx(s32 sfx, s32 a);
 struct nugcutlocator_s {
     u8 pad0[0x50];
     void *anim;                      /* 0x50 */
-    u8 pad1[0x64 - 0x54];
+    u8 pad1[0x5A - 0x54];
+    u8 joint_ix;                     /* 0x5A (0xFF = not on a joint) */
+    u8 pad2[0x64 - 0x5B];
 };                                   /* 0x64 */
 struct nugcutlocatorsys_s {
     struct nugcutlocator_s *locators; /* 0x0 */
@@ -140,7 +141,9 @@ struct nugcutlocatorsys_s {
 struct nugcutchar_s {
     u8 mtx[0x40];                    /* 0x0 */
     char *name;                      /* 0x40 */
-    u8 pad1[0x50 - 0x44];
+    u8 pad1[0x48 - 0x44];
+    void *joint_anim;                /* 0x48 */
+    void *face_anim;                 /* 0x4C */
     void *character;                 /* 0x50 */
     struct nugcutlocator_s *locators; /* 0x54 */
     u8 pad2[0x5E - 0x58];
@@ -161,10 +164,14 @@ struct nugcutscene_s {
     struct nugcutlocatorsys_s *locators; /* 0x1C */
 };
 struct instnugcutscene_s {
-    u8 pad0[0x58];
+    u8 pad0[0x18];
+    struct numtx_s mtx;              /* 0x18 */
     struct nugcutscene_s *cutscene;  /* 0x58 */
-    u8 pad1[0x70 - 0x5C];
+    u8 pad1[0x6C - 0x5C];
+    u32 flags;                       /* 0x6C (0x10 = has mtx) */
     f32 cframe;                      /* 0x70 */
+    u8 pad2[0x84 - 0x74];
+    struct instnugcutlocatorsys_s *ilocators; /* 0x84 */
 };
 struct instnugcutlocator_s {
     f32 timer;                       /* 0x0 */
@@ -210,6 +217,97 @@ extern void NuAnimData2CalcTime(void *anim, f32 currf, struct nuanimtime_s *atim
 extern s32 NuGCutLocatorIsVisble(void *locator, f32 currf, struct nuanimtime_s *atime,
                                  void *null);
 
+
+struct instnugcutlocator_s;
+struct instnugcutlocatorsys_s {
+    struct instnugcutlocator_s *ilocators; /* 0x0 */
+};
+struct instnugcutchar_s {
+    struct NUHGOBJ_s *character; /* 0x0 */
+};
+struct NUHGOBJ_s {
+    u8 pad0[0x7E];
+    u8 num_layers;                   /* 0x7E */
+};
+
+extern s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hobj, struct numtx_s *m,
+                             s32 nlayers, short *layer, struct numtx_s *tmtx,
+                             float **dwa);
+
+extern void NuGCutCharAnimProcess(struct nugcutchar_s *cutchar, f32 frame,
+                                  struct numtx_s *mtx, s32 *is_visible,
+                                  void *a, void *b, void *c);
+extern void NuHGobjEvalAnim2(struct NUHGOBJ_s *obj, void *joint_anim, f32 frame,
+                             s32 njoints, void *joints, struct numtx_s *tmtx);
+extern void NuHGobjEval(struct NUHGOBJ_s *obj, s32 njoints, void *joints,
+                        struct numtx_s *tmtx);
+extern float **NuHGobjEvalDwa2(s32 nlayers, short *layers, void *face_anim, f32 frame);
+extern void NuMtxMul(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
+extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
+extern void instNuGCutLocatorUpdate(struct instnugcutscene_s *icutscene,
+                                    struct nugcutlocatorsys_s *locatorsys,
+                                    struct instnugcutlocator_s *ilocator,
+                                    struct nugcutlocator_s *locator, f32 frame,
+                                    struct numtx_s *mtx);
+
+/* Cutscene character render callback: animate and draw one character, then
+ * update the locators attached to it (on a joint, or to the character). */
+void AppCutSceneCharacterRender(struct instnugcutscene_s *icutscene,
+                                struct nugcutscene_s *cutscene,
+                                struct instnugcutchar_s *icutchar,
+                                struct nugcutchar_s *cutchar, f32 current_frame) {
+    struct numtx_s mtx;
+    struct numtx_s tmtx[256];
+    short layertab[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    struct numtx_s locatormtx;
+    s32 is_visible;
+    struct NUHGOBJ_s *obj;
+    float **dwa;
+    struct nugcutlocatorsys_s *locatorsys;
+    struct instnugcutlocatorsys_s *ilocatorsys;
+    struct nugcutlocator_s *locator;
+    s32 locix;
+    s32 j;
+
+    obj = icutchar->character;
+    NuGCutCharAnimProcess(cutchar, current_frame, &mtx, &is_visible, 0, 0, 0);
+    if (icutscene->flags & 0x10) {
+        NuMtxMul(&mtx, &mtx, &icutscene->mtx);
+    }
+    if (is_visible == 0) {
+        return;
+    }
+
+    if (cutchar->joint_anim != 0) {
+        NuHGobjEvalAnim2(obj, cutchar->joint_anim, current_frame, 0, 0, tmtx);
+    } else {
+        NuHGobjEval(obj, 0, 0, tmtx);
+    }
+    if (cutchar->face_anim != 0) {
+        dwa = NuHGobjEvalDwa2(obj->num_layers, layertab, cutchar->face_anim, current_frame);
+    } else {
+        dwa = 0;
+    }
+    NuHGobjRndrMtxDwa(obj, &mtx, obj->num_layers, layertab, tmtx, dwa);
+
+    if (cutchar->first_locator == 0xFF) {
+        return;
+    }
+    locatorsys = cutscene->locators;
+    ilocatorsys = icutscene->ilocators;
+    for (j = 0; j < cutchar->nlocators; j++) {
+        locix = cutchar->first_locator + j;
+        locator = &locatorsys->locators[locix];
+        if (locator->joint_ix == 0xFF) {
+            instNuGCutLocatorUpdate(icutscene, locatorsys, &ilocatorsys->ilocators[locix],
+                                    locator, current_frame, &mtx);
+        } else {
+            NuMtxMulVU0(&locatormtx, &tmtx[locator->joint_ix], &mtx);
+            instNuGCutLocatorUpdate(icutscene, locatorsys, &ilocatorsys->ilocators[locix],
+                                    &locatorsys->locators[locix], current_frame, &locatormtx);
+        }
+    }
+}
 
 struct cutscenedesc_s {
     char *gscname;        /* 0x0 scene (.gsc) */
@@ -546,9 +644,6 @@ extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
 extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *v);
 extern void NuMtxRotateY(struct numtx_s *m, s32 a);
 extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-extern s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hobj, struct numtx_s *m,
-                             s32 nlayers, short *layer, struct numtx_s *tmtx,
-                             float **dwa);
 
 /* Draw the character of the current hub/space cutscene, plus the vortex in
  * space (Level 0x28). Unlike the GameCube build, the bone matrices live in a
