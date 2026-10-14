@@ -309,7 +309,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00214220:DrawWBBolts"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00214400:ProcessWBBolts"
@@ -469,7 +469,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021bc88:DrawVehMasks"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021be58:MoveVehicle"

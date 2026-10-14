@@ -2610,6 +2610,97 @@ void DrawWeatherBossLevelExtra(void)
     DrawBazookaToken();
 }
 
+/* Type-2 bolts are drawn as growing balls; the others as a debris trail,
+   with a model added for the weather boss's own (owner 2) bolts. */
+void DrawWBBolts(void)
+{
+    struct wbbolt_s *bolt;
+    s32 obj;
+    s32 deb;
+    s32 i;
+    f32 scale;
+
+    obj = 0xBD;
+    bolt = BoltList;
+    for (i = 0; i < 0x78; i++, bolt++) {
+        if (bolt->active == 0) {
+            continue;
+        }
+        if (bolt->type == 2) {
+            if (Paused == 0) {
+                AddVariableShotDebrisEffect(GDeb[0x91].i, &bolt->pos, 1, 0, 0);
+            }
+            scale = bolt->scale * 8.0f;
+            NuMtxSetScale(&BoltMtxB, SetNuVecPntr(scale, scale, scale));
+            if ((ObjTab + obj)->obj.special != 0) {
+                *(struct nuvec_s *)&BoltMtxB._30 = bolt->pos;
+                NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                              &BoltMtxB);
+            }
+        } else {
+            if (Paused == 0) {
+                deb = 0x92;
+                if (bolt->owner == 2) {
+                    deb = 0x94;
+                }
+                AddVariableShotDebrisEffect(GDeb[deb].i, &bolt->pos, 1, 0, 0);
+            }
+            if (bolt->owner == 2 && (ObjTab + obj)->obj.special != 0) {
+                *(struct nuvec_s *)&BoltMtxA._30 = bolt->pos;
+                NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                              &BoltMtxA);
+            }
+        }
+    }
+}
+
+extern void NuMtxSetRotationY(struct numtx_s *m, s32 angle);
+extern void NuMtxScale(struct numtx_s *m, struct nuvec_s *s);
+
+void DrawVehMasks(void)
+{
+    struct vehmask_s *mask;
+    struct nuvec_s pos;
+    s32 deb;
+    s32 i;
+
+    mask = VehicleMask;
+    for (i = 0; i < 2; i++, mask++) {
+        if (mask->active == 0) {
+            continue;
+        }
+        if (Level == 0x17) {
+            NuMtxSetRotationY(&mTEMP, NuAtan2D(GameCam.pos.x - mask->pos.x,
+                                               GameCam.pos.z - mask->pos.z) + 0x8000);
+        } else {
+            NuMtxSetRotationY(&mTEMP, (s32)(mask->drawangy * 182.04445f));
+        }
+        NuMtxScale(&mTEMP, SetNuVecPntr(mask->drawscale, mask->drawscale, mask->drawscale));
+        NuMtxTranslate(&mTEMP, &mask->pos);
+        mask->seen = MyDrawModelNew(&mask->draw, &mTEMP, 0);
+        pos = mask->pos;
+        pos.y += 0.2f;
+        deb = 0x7E;
+        switch (mask->id) {
+        case 0x57:
+            deb = 0x7F;
+            break;
+        case 0x56:
+            deb = 0x80;
+            break;
+        case 0x58:
+            deb = 0x81;
+            break;
+        case 3:
+            deb = 0xA3;
+            break;
+        }
+        if (Paused == 0) {
+            AddVariableShotDebrisEffect(GDeb[deb].i, &pos, 1, 0, 0);
+        }
+    }
+}
+
 inline struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
 {
     struct wbbolt_s *b;
