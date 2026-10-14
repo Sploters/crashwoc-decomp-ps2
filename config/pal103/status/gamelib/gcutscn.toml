@@ -97,7 +97,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad358:instNuGCutSceneCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad4c0:instNuGCutSceneFind"
@@ -221,7 +221,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae3b0:instNuGCutRigidSysEnd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae510:instNuGCutRigidSysReset"
@@ -241,7 +241,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae798:instNuCGutCharSysCreate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ae8f0:instNuGCutCharSysEnd"
