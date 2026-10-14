@@ -409,7 +409,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:002195a8:ProcessEarthBossVortex"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002196e8:ProcessEarthBossLevel"
@@ -533,7 +533,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021c428:BossBar"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c558:InitVehMasks"

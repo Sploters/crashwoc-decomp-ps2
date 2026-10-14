@@ -1258,7 +1258,7 @@ extern f32 D_0062DF00;
 extern s32 trailpt;
 extern s32 trailair;
 
-extern u8 PlayerAtlas[];   /* far */
+extern struct NEWBUGGY PlayerAtlas;   /* far */
 extern void ProcessAtlasAtlasCollisions_a(void *atlas, struct earthboss_s *boss);
 extern void KillGameObject(struct obj_s *obj, s32 type);
 
@@ -1426,8 +1426,9 @@ void UnembedRayCastAtlasSimple(struct NEWBUGGY *b, s16 *handle)
 extern struct nuvec_s D_0061F8D0[];     /* vortex centre {0, -3.3, 0} */
 extern f32 NuVecMag(struct nuvec_s *v);
 
-/* Pull the atlasphere towards the vortex when it is close to it. */
-void CheckAtlasVortex(struct NEWBUGGY *b)
+/* Pull the atlasphere towards the vortex when it is close to it.
+ * Inline: ProcessEarthBossVortex carries two copies of it in retail. */
+inline void CheckAtlasVortex(struct NEWBUGGY *b)
 {
     struct nuvec_s vortex = D_0061F8D0[0];
     struct nuvec_s rel;
@@ -1444,10 +1445,43 @@ void CheckAtlasVortex(struct NEWBUGGY *b)
     }
 }
 
+extern s32 DrawPanel3DObject(s32 object, f32 x, f32 y, f32 z, f32 scalex, f32 scaley,
+                             f32 scalez, u16 xrot, u16 yrot, u16 zrot,
+                             struct nugscn_s *scn, struct nuspecial_s *obj, s32 rot);
+
+/* Boss health bar: the frame, then the bar scaled to health / maxhealth. */
+void BossBar(f32 x, f32 y, f32 z, f32 xs, f32 ys, s32 health, s32 maxhealth)
+{
+    f32 scale;
+
+    scale = (f32)health / (f32)maxhealth;
+    if (1.0f < scale) {
+        scale = 1.0f;
+    }
+    if (scale < 0.0f) {
+        scale = 0.0f;
+    }
+    DrawPanel3DObject(0xB9, x, y, z, xs, ys, 0.1f, 0, 0, 0,
+                      ObjTab[0xB9].obj.scene, ObjTab[0xB9].obj.special, 1);
+    DrawPanel3DObject(0xBB, x, y, z, xs * scale, ys, 0.1f, 0, 0, 0,
+                      ObjTab[0xBB].obj.scene, ObjTab[0xBB].obj.special, 1);
+}
+
+extern s32 EarthBossVortexOpen;
+
+void ProcessEarthBossVortex(void)
+{
+    if (EarthBossVortexOpen != 0) {
+        /* The boss is an atlasphere too (earthboss_s only names its own fields). */
+        CheckAtlasVortex((struct NEWBUGGY *)&EarthBoss);
+        CheckAtlasVortex(&PlayerAtlas);
+    }
+}
+
 void ProcessAtlasAtlasCollisions(void)
 {
     if (EarthBoss.health > 0) {
-        ProcessAtlasAtlasCollisions_a(PlayerAtlas, &EarthBoss);
+        ProcessAtlasAtlasCollisions_a(&PlayerAtlas, &EarthBoss);
     }
 }
 
