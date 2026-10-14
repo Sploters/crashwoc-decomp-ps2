@@ -233,7 +233,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0020ff90:InitBattleShip"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00210150:InitBattleShips"

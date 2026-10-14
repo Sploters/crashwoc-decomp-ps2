@@ -1266,10 +1266,18 @@ struct battleship_s {
     f32 yaw;                   /* 0x4F0 */
     f32 pitch;                 /* 0x4F4 */
     f32 roll;                  /* 0x4F8 */
-    char pad_4FC[0x50C - 0x4FC];
+    f32 destpitch;             /* 0x4FC */
+    f32 destroll;              /* 0x500 */
+    f32 desty;                 /* 0x504 */
+    f32 seek;                  /* 0x508 */
     s32 seen;                  /* 0x50C */
-    s32 field510;              /* 0x510 */
-    char pad_514[0x554 - 0x514];
+    s32 hitpoints;             /* 0x510 */
+    f32 firetimer[2];          /* 0x514 */
+    struct nuvec_s gooscale;   /* 0x51C */
+    char pad_528[0x540 - 0x528];
+    f32 goospeed;              /* 0x540 */
+    struct nuvec_s gootimer;   /* 0x544 */
+    char pad_550[0x554 - 0x550];
 };
 extern struct battleship_s BattleShipList[];
 
@@ -1319,6 +1327,45 @@ s32 StillLockedOnTarget(struct nuvec_s *target)
         }
     }
     return 0;
+}
+
+extern f32 frand(void);
+
+void InitBattleShip(struct nuvec_s *pos, f32 angle, s32 index)
+{
+    struct battleship_s *ship;
+
+    ship = &BattleShipList[index];
+    if (ship->active != 0) {
+        return;
+    }
+    memset(&BattleShipList[index], 0, sizeof(struct battleship_s));
+    if (MyInitModelNew(&ship->draw, 0x65, 0x22, 0, 0, &ship->pos) == 0) {
+        return;
+    }
+    ship->pos = *pos;
+    ship->desty = pos->y;
+    ship->yaw = angle;
+    ship->pitch = 0.0f;
+    ship->roll = 0.0f;
+    ship->destpitch = 0.0f;
+    ship->destroll = 0.0f;
+    ship->seek = 1.0f;
+    ship->active = 1;
+    ship->hitpoints = 3;
+    ship->firetimer[0] = frand() * 4.0f;
+    ship->firetimer[1] = frand() * 4.0f;
+    ship->gooscale = SetNuVec(0.0f, 0.0f, 0.0f);
+    ship->gootimer.x = (f32)index / 6.0f;
+    ship->gootimer.y = (f32)(index + 1) / 6.0f;
+    ship->goospeed = (ship->gootimer.x * 0.1f + 0.2f) * 0.02f;
+    if (1.0f <= ship->gootimer.y) {
+        ship->gootimer.y -= 1.0f;
+    }
+    ship->gootimer.z = (f32)(index + 2) / 6.0f;
+    if (1.0f <= ship->gootimer.z) {
+        ship->gootimer.z -= 1.0f;
+    }
 }
 
 void InitBattleShips(void)
@@ -1426,7 +1473,7 @@ s32 GetCurrentFireFlyObjectives(void)
     s32 i;
 
     for (i = 0; i < 6; i++) {
-        if (BattleShipList[i].active != 0 && BattleShipList[i].field510 > 0) {
+        if (BattleShipList[i].active != 0 && BattleShipList[i].hitpoints > 0) {
             count++;
         }
     }
@@ -1768,18 +1815,23 @@ void DrawGliderDebugStuff(void)
 
 struct zoffa_s {
     struct MYDRAW draw;
-    s32 active;
-    char pad_0E4[0xE8 - 0xE4];
-    struct nuvec_s pos;
+    s32 active;                /* 0x0E0 */
+    f32 respawntimer;          /* 0x0E4 */
+    struct nuvec_s pos;        /* 0x0E8 */
     char pad_0F4[0x10C - 0xF4];
-    f32 pitch;
-    f32 roll;
-    char pad_114[0x120 - 0x114];
-    f32 yaw;
+    f32 pitch;                 /* 0x10C */
+    f32 roll;                  /* 0x110 */
+    char pad_114[0x11C - 0x114];
+    f32 destyaw;               /* 0x11C */
+    f32 yaw;                   /* 0x120 */
     char pad_124[0x128 - 0x124];
-    f32 temp[6];
-    char pad_140[0x168 - 0x140];
-    s32 seen;
+    f32 temp[6];               /* 0x128 */
+    char pad_140[0x14C - 0x140];
+    f32 newaltitudetarget;     /* 0x14C */
+    char pad_150[0x158 - 0x150];
+    s32 hitpoints;             /* 0x158 */
+    char pad_15C[0x168 - 0x15C];
+    s32 seen;                  /* 0x168 */
     char pad_16C[0x170 - 0x16C];
     struct numtx_s locators[17];
 };
@@ -1794,6 +1846,71 @@ inline void DrawZoffa(struct zoffa_s *ufo)
 }
 
 extern struct zoffa_s EnemyZoffa[4];
+
+struct zoffastart_s {
+    f32 x, y, z;
+    f32 angle;
+};
+
+static inline struct zoffa_s *FindFreeZoffa(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active == 0) {
+            memset(&EnemyZoffa[i], 0, sizeof(struct zoffa_s));
+            return &EnemyZoffa[i];
+        }
+    }
+    return 0;
+}
+
+/* Near-match (stays asm): retail places the inlined FindFreeZoffa hit block
+   and the model-id switch arms differently, so this overflows its extent. */
+struct zoffa_s *InitZoffa(struct zoffa_s *ufo, struct zoffastart_s *start)
+{
+    s32 index;
+    s32 id;
+
+    if (ufo == 0) {
+        ufo = FindFreeZoffa();
+        if (ufo == 0) {
+            return 0;
+        }
+    }
+    index = ufo - EnemyZoffa;
+    memset(ufo, 0, sizeof(struct zoffa_s));
+    ufo->pos.x = start->x;
+    ufo->pos.y = start->y;
+    ufo->pos.z = start->z;
+    ufo->yaw = start->angle;
+    ufo->active = 1;
+    ufo->destyaw = start->angle;
+    ufo->newaltitudetarget = -100.0f;
+    ufo->hitpoints = 2;
+    ufo->respawntimer = 10.0f;
+    if (Level == 0xD) {
+        switch (index) {
+        case 0: id = 0x5B; break;
+        case 1: id = 0x5E; break;
+        case 2: id = 0x5D; break;
+        default: id = 0x5C; break;
+        }
+    } else if (Level == 0x12) {
+        id = 0x5F;
+    } else {
+        switch (index) {
+        case 0: id = 0x82; break;
+        case 1: id = 0x83; break;
+        case 2: id = 0x84; break;
+        default: id = 0x85; break;
+        }
+    }
+    if (MyInitModelNew(&ufo->draw, id, 0x1D, 0, 0, &ufo->pos) == 0) {
+        return 0;
+    }
+    return ufo;
+}
 
 extern s32 SHEIGHT;
 extern char D_0061F420[]; /* "Action %d" */
