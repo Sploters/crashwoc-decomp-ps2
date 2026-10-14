@@ -848,6 +848,134 @@ void CvtNuIFFNodeHierarchy(int fh)
 }
 
 
+extern void ReadNuIFFGeomVtx(int fh);
+extern void CvtNuIFFGeomPrim(int fh, int mtlid, int write);
+extern void ReadNuIFFGeomSkin(int fh);
+extern void *D_006330CC;
+#define cvt_vtxbuff D_006330CC
+
+void CvtNuIFFGeom(int fh, int write)
+{
+    int pos;
+    int pad;
+    int mtlid;
+    int n;
+    void *buff;
+
+    if (write) {
+        /* Pad so the geometry that follows (0x10 bytes on) starts on a
+           128-byte boundary. */
+        pos = NuFilePos(cvt_fh);
+        pad = pos + 0x10;
+        pad = ((pos + 0x8F) & 0xFFFFFF80) - pad;
+        NuFileWriteInt(cvt_fh, 0);
+        NuFileWriteInt(cvt_fh, pad);
+    }
+    mtlid = NuFileReadInt(fh);
+    if (write) {
+        NuFileWriteInt(cvt_fh, mtlid);
+    }
+    ReadNuIFFGeomVtx(fh);
+    n = NuFileReadInt(fh);
+    if (n) {
+        buff = NuMemAllocFn(n * 0xC, nugscn_srcfile, 0x44C);
+        NuFileRead(fh, buff, n * 0xC);
+        NuMemFreeFn(buff, nugscn_srcfile, 0x451);
+    }
+    if (write) {
+        for (; pad != 0; pad -= 4) {
+            NuFileWriteInt(cvt_fh, 0);
+        }
+    }
+    CvtNuIFFGeomPrim(fh, mtlid, write);
+    ReadNuIFFGeomSkin(fh);
+    NuFileReadInt(fh);
+    NuMemFreeFn(cvt_vtxbuff, nugscn_srcfile, 0x4B7);
+}
+
+/* Copies the instance table (0x50 bytes each) and any animated-instance
+   records (0x60 bytes each) straight through to the converted file. */
+void CvtNuIFFInstSet(int fh)
+{
+    int ninstances;
+    int nanims;
+    void *instances;
+    void *anims;
+
+    ninstances = NuFileReadInt(fh);
+    instances = NuMemAllocFn(ninstances * 0x50, nugscn_srcfile, 0x6EC);
+    NuFileRead(fh, instances, ninstances * 0x50);
+    NuFileBeginBlkWrite(cvt_fh, 0x54534E49, 0);
+    NuFileWriteInt(cvt_fh, ninstances);
+    NuFileWriteInt(cvt_fh, 0);
+    NuFileWrite(cvt_fh, instances, ninstances * 0x50);
+    NuFileEndBlkWrite(cvt_fh);
+
+    nanims = NuFileReadInt(fh);
+    if (nanims != 0) {
+            anims = NuMemAllocFn(nanims * 0x60, nugscn_srcfile, 0x6FA);
+        NuFileRead(fh, anims, nanims * 0x60);
+        NuFileBeginBlkWrite(cvt_fh, 0x4C424149, 0);
+        NuFileWriteInt(cvt_fh, nanims);
+        NuFileWriteInt(cvt_fh, 0);
+        NuFileWrite(cvt_fh, anims, nanims * 0x60);
+        NuFileEndBlkWrite(cvt_fh);
+        NuMemFreeFn(anims, nugscn_srcfile, 0x704);
+    }
+    NuMemFreeFn(instances, nugscn_srcfile, 0x707);
+}
+
+extern char D_00615060[];
+#define texset_msg D_00615060
+extern int NuFileSeek(int fh, int offset, int origin);
+extern int NuMemFileSeek(int fh, int offset, int origin);
+extern int NuTexCreateNative(void *data);
+
+/* Carves `size` bytes, aligned to `align`, off the scene load buffer. */
+static inline void *GScnBufferAlloc(int size, int align)
+{
+    char *aligned;
+    char *end;
+
+    aligned = (char *)(((int)*gscn_buffer + align - 1) & ~(align - 1));
+    end = aligned + size;
+    if (end < gscn_bufferlimit) {
+        *gscn_buffer = end;
+        return aligned;
+    }
+    NuErrorProlog(nugscn_srcfile, 0x184)(bufferalloc_failed_msg);
+    return 0;
+}
+
+void ReadTextureSet(int fh)
+{
+    int ntex;
+    int size;
+    int skip;
+    void *data;
+    int i;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0xA90)(texset_msg);
+    ntex = NuFileReadInt(fh);
+    NuFileReadInt(fh);
+    loading_scene->tids = GScnBufferAlloc(ntex * sizeof(int), 4);
+    memset(loading_scene->tids, 0, ntex * sizeof(int));
+    loading_scene->numtid = ntex;
+    for (i = 0; i < ntex; i++) {
+        size = NuFileReadInt(fh);
+        skip = NuFileReadInt(fh);
+        if (skip == 0) {
+            NuFileReadInt(fh);
+            NuFileReadInt(fh);
+        } else {
+            NuFileSeek(fh, skip, 1);
+        }
+        data = NuMemFileAddr(fh);
+        NuMemFileSeek(fh, size, 1);
+        loading_scene->tids[i] = NuTexCreateNative(data);
+    }
+}
+
 int FindSplinePtSize(char *name)
 {
     struct nusplinecfg_s *cfg;

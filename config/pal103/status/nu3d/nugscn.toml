@@ -57,7 +57,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:001469e8:CvtNuIFFInstSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00146b50:CvtNuIFFAnimationLibrary"
@@ -85,7 +85,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00148528:ReadTextureSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:001486a0:ReadMaterialSet"
@@ -225,7 +225,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c488:CvtNuIFFGeom"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c5f0:CvtNuIFFFaceOnGeom"
