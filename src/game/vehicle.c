@@ -440,9 +440,17 @@ extern struct vehmask_s VehicleMask[];
 /* HovaBlimp array, stride 0x134, 6 entries. */
 struct hovablimp_s {
     s32 active;                /* 0x00 */
-    char pad_04[0xE4 - 0x04];
+    struct MYDRAW draw;        /* 0x04 */
+    char pad_draw[0xE4 - 0x04 - sizeof(struct MYDRAW)];
     struct nuvec_s pos;        /* 0xE4 */
-    char pad_F0[0x134 - 0xF0];
+    struct nuvec_s startpos;   /* 0xF0 */
+    struct nuvec_s vel;        /* 0xFC */
+    f32 angy;                  /* 0x108 */
+    char pad_10C[0x110 - 0x10C];
+    f32 thrustoff;             /* 0x110 */
+    char pad_114[0x11C - 0x114];
+    s32 hitpoints;             /* 0x11C */
+    char pad_120[0x134 - 0x120];
 };
 extern struct hovablimp_s HovaBlimp[];
 
@@ -451,7 +459,8 @@ struct tornado_s {
     s32 active;                /* 0x000 */
     struct nuvec_s pos;        /* 0x004 */
     struct nuvec_s startpos;   /* 0x010 */
-    char pad_01C[0x100 - 0x01C];
+    char pad_01C[0xFC - 0x01C];
+    f32 scale;                 /* 0x0FC */
     f32 yang;                  /* 0x100 degrees */
     f32 yanginc;               /* 0x104 degrees per second */
     char pad_108[0x110 - 0x108];
@@ -498,6 +507,33 @@ s32 ProcessAllHovaBlimps(void)
         }
     }
     return ret;
+}
+
+extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+extern void InitHova(struct nuvec_s *pos, f32 angle);
+extern void DebFree(s32 *key);
+extern s32 jontorn[20];
+extern s32 jonfirst;
+
+void InitialiseHovaBlimps(void)
+{
+    s32 i;
+
+    memset(HovaBlimp, 0, 0x738);
+    memset(TornadoList, 0, 0x660);
+    InitHova(SetNuVecPntr(0.0f, 50.0f, 0.0f), 0.0f);
+    InitHova(SetNuVecPntr(0.0f, 50.0f, 160.0f), 0.0f);
+    InitHova(SetNuVecPntr(152.0f, 50.0f, 49.0f), 0.0f);
+    InitHova(SetNuVecPntr(94.0f, 50.0f, -129.0f), 0.0f);
+    InitHova(SetNuVecPntr(-94.0f, 50.0f, -129.0f), 0.0f);
+    InitHova(SetNuVecPntr(-152.0f, 50.0f, 49.0f), 0.0f);
+    for (i = 0; i < 20; i++) {
+        if (jontorn[i] != -1 && jonfirst != 0) {
+            DebFree(&jontorn[i]);
+        }
+        jontorn[i] = -1;
+    }
+    jonfirst = 1;
 }
 
 /* JeepRock array, stride 0x3D4, 6 entries. */
@@ -1815,7 +1851,7 @@ s32 SafeFromCollisions(struct nuvec_s *pos)
     return 1;
 }
 
-struct hovablimp_s *FindFreeHova(void)
+inline struct hovablimp_s *FindFreeHova(void)
 {
     s32 i;
 
@@ -1825,6 +1861,42 @@ struct hovablimp_s *FindFreeHova(void)
         }
     }
     return 0;
+}
+
+extern f32 frand(void);
+
+/* Near-match (stays asm): retail loads the 0.1f thrust constant into $f1,
+   ee-gcc picks $f0. */
+void InitHova(struct nuvec_s *pos, f32 angle)
+{
+    struct hovablimp_s *hova;
+    struct tornado_s *tornado;
+    struct nuvec_s vel;
+    s32 index;
+
+    hova = FindFreeHova();
+    if (hova == 0) {
+        return;
+    }
+    hova->active = 1;
+    hova->pos = *pos;
+    hova->startpos = *pos;
+    hova->pos.y += frand() - 0.5f;
+    vel = SetNuVec(0.0f, (frand() - 0.5) * 5.0, 0.5f);
+    index = hova - HovaBlimp;
+    hova->vel = vel;
+    hova->thrustoff = 0.1f;
+    hova->angy = angle;
+    tornado = &TornadoList[index];
+    hova->hitpoints = 10;
+    tornado->active = 1;
+    tornado->pos = hova->pos;
+    tornado->pos.y = 27.0f;
+    tornado->startpos = tornado->pos;
+    tornado->yang = frand() * 360.0f;
+    tornado->yanginc = frand() * 40.0f + 160.0f;
+    tornado->scale = 2.0f;
+    MyInitModelNew(&hova->draw, 0x43, 0x46, 0, 0, &hova->pos);
 }
 
 extern s32 SatelliteCharacterId;

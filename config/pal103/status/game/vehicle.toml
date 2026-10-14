@@ -89,7 +89,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:002072f0:InitialiseHovaBlimps"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00207488:ProcessHovaBlimp"
