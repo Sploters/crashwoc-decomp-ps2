@@ -31,6 +31,11 @@ extern s32 sceMcGetInfo(s32 port, s32 slot, s32 *type, s32 *free, s32 *format);
 extern s32 sceMcChdir(s32 port, s32 slot, const char *path, char *pwd);
 extern s32 sceMcFormat(s32 port, s32 slot);
 extern s32 sceMcUnformat(s32 port, s32 slot);
+extern s32 sceMcGetDir(s32 port, s32 slot, const char *name, unsigned int mode, s32 maxent,
+                       void *table);
+extern s32 sceMcOpen(s32 port, s32 slot, const char *name, s32 mode);
+extern s32 sceMcRead(s32 fd, void *buf, s32 size);
+extern s32 sceMcClose(s32 fd);
 
 s32 saveloadGetDirectory(void);
 
@@ -59,6 +64,12 @@ extern char D_00619BC0[];
 #define saveload_gamecode D_00619B70
 #define saveload_slotfmt D_00619BB0
 #define saveload_savedir D_00619BC0
+
+#define SCE_RDONLY 1
+
+extern char fname[];
+extern char D_006B3B40[];               /* sceMcGetDir entry table */
+#define mc_dirtable D_006B3B40
 
 
 s32 saveloadLoadIcon(char *name, void *buf) {
@@ -148,6 +159,49 @@ s32 saveloadCheckSlotsUsed(void) {
     return slots - 1;
 }
 
+
+/* Read slot `slot` of the save into `buf`; returns 1 on success, 0 if the
+ * card, the save directory or the slot file is missing or a step fails.
+ * Near-match (state=asm): retail picks the final result with movn on `found`
+ * where this build uses movz on 0; everything else is exact. */
+s32 saveloadLoadSlot(s32 slot, void *buf, s32 size) {
+    char path[32];
+    s32 dir;
+    s32 found;
+    s32 fd;
+
+    if (slot >= 4) {
+        return 0;
+    }
+    dir = saveloadGetDirectory();
+    if (dir == 0 || dir == -1) {
+        return 0;
+    }
+    sprintf(path, saveload_slotfmt, fname, slot);
+    sceMcGetDir(0, 0, path, 0, 0x12, mc_dirtable);
+    sceMcSync(0, 0, &mc_result);
+    found = mc_result;
+    if (found != 1) {
+        return 0;
+    }
+    sceMcOpen(0, 0, path, SCE_RDONLY);
+    sceMcSync(0, 0, &mc_result);
+    fd = mc_result;
+    if (fd < 0) {
+        return 0;
+    }
+    sceMcRead(fd, buf, size);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result < 0) {
+        return 0;
+    }
+    sceMcClose(fd);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result < 0) {
+        return 0;
+    }
+    return found;
+}
 
 void saveloadASFormat(void) {
     if (saveload_status == 1) {
