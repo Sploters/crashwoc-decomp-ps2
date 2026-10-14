@@ -2427,6 +2427,77 @@ inline void DrawLighteningHail(void)
     }
 }
 
+extern f32 HAILFLYUPSPEED;
+extern f32 HAILTIMERANGE;
+extern f32 LighteningFallXMin;
+extern f32 LighteningFallXMax;
+extern struct nuvec_s LighteningHailVel;
+extern s32 SkipLeftA;
+extern s32 SkipLeftB;
+extern s32 SkipLeftC;
+extern s32 SkipNum;
+extern f32 Level_GliderSpeed;
+
+/* Fires the 30 hailstones of attack `attnum` in a fan, leaving a gap of
+   SkipNum stones after stone SkipLeft[attnum].
+   Near-match (stays asm): retail hoists the LighteningFallXMin load above
+   the switch and allocates the three step registers differently. */
+void UnleashLighteningHail(struct nuvec_s *pos, s32 attnum)
+{
+    struct hail_s *hail;
+    struct nuvec_s vel;
+    f32 upspeed;
+    f32 timer;
+    f32 fallx;
+    f32 timeinc;
+    f32 xinc;
+    f32 fallxinc;
+    f32 count;
+    s32 skipleft;
+    s32 i;
+
+    upspeed = HAILFLYUPSPEED * 0.02f;
+    memset(HailList, 0, sizeof(HailList));
+    NuVecScale(&vel, &LighteningHailVel, 0.02f);
+    timer = 2.0f;
+    fallx = LighteningFallXMax;
+    switch (attnum) {
+    case 0:
+        skipleft = SkipLeftA;
+        break;
+    case 1:
+        skipleft = SkipLeftB;
+        break;
+    default:
+        skipleft = SkipLeftC;
+        break;
+    }
+    count = (f32)(SkipNum + 29);
+    LighteningHailVel.z = -Level_GliderSpeed;
+    timeinc = HAILTIMERANGE / count;
+    xinc = -vel.x * 2.0f / count;
+    fallxinc = (LighteningFallXMin - LighteningFallXMax) / count;
+    hail = HailList;
+    for (i = 0; i < 30; i++, hail++) {
+        hail->state = 1;
+        hail->timer = timer;
+        hail->pos = *pos;
+        hail->vel = vel;
+        NuVecNorm(&hail->vel, &hail->vel);
+        NuVecScale(&hail->vel, &hail->vel, upspeed);
+        hail->fallx = fallx;
+        if (i != skipleft) {
+            vel.x += xinc;
+            timer += timeinc;
+            fallx += fallxinc;
+        } else {
+            vel.x += xinc * SkipNum;
+            timer += timeinc * SkipNum;
+            fallx += fallxinc * SkipNum;
+        }
+    }
+}
+
 extern f32 HAILHIDDENTIME;
 extern f32 HailFallSpeed;
 extern f32 Level_GliderSpeed;
