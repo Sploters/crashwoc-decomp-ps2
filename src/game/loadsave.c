@@ -68,3 +68,50 @@ void SaveGameSlots(void) {
     }
     saveloadSaveSlot(0, SaveSlot, sizeof(SaveSlot));
 }
+
+/* Only the fields DrawGameSlots reads (full layouts in game/game.c, game/camera.c). */
+struct cursor_s {
+    u8 pad00[0x68];
+    char x;                  /* 0x68 */
+    char y;                  /* 0x69 */
+};
+
+struct gametimer_s {
+    u32 frame;               /* 0x00 */
+    u8 pad04[0x18 - 0x04];
+};                           /* 0x18 */
+
+extern struct cursor_s Cursor;
+extern struct gametimer_s GlobalTimer;
+extern f32 SLOTPANELDX;
+extern f32 SLOTPANELDY;
+extern void DrawGameSlot(struct game_s *slot, f32 x, f32 y, s32 colour);
+
+/* The 2x2 grid of save slots; the one under the cursor flashes. */
+void DrawGameSlots(void) {
+    f32 dx;
+    f32 dy;
+    f32 x;
+    f32 y;
+    s32 i;
+    s32 j;
+    s32 colour;
+
+    dx = SLOTPANELDX;
+    dy = SLOTPANELDY;
+    y = dy * 0.5f + 0.0f;
+    for (i = 0; i < 2; i++) {
+        x = 0.0f - dx * 0.5f;
+        for (j = 0; j < 2; j++, x += dx) {
+            colour = 0;
+            if (Cursor.y == i && Cursor.x == j) {
+                colour = 3;
+                if (GlobalTimer.frame % 10 <= 4) {
+                    colour = 4;
+                }
+            }
+            DrawGameSlot(&SaveSlot[i][j], x, y, colour);
+        }
+        y -= dy;
+    }
+}

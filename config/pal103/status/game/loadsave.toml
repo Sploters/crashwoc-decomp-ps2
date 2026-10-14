@@ -33,4 +33,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b508:DrawGameSlots"
-state = "asm"
+state = "matching"
