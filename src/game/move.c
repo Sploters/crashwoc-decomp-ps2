@@ -672,6 +672,100 @@ void DrawRings(void) {
     }
 }
 
+extern struct MoveInfo MechMoveInfo;
+extern f32 MECHSTANDINGJUMPPAUSEFRAME;
+extern f32 MECHRUNNINGJUMPPAUSEFRAME;
+
+void AnimateMECH(struct creature_s *plr) {
+    struct MoveInfo *minfo;
+
+    minfo = &MechMoveInfo;
+    if ((u32)plr->obj.dead > 1) {
+        plr->obj.anim.newaction = plr->obj.die_action;
+    } else if (plr->fire != 0) {
+        plr->obj.anim.newaction = plr->fire_action;
+    } else if (plr->target != 0) {
+        if (plr->fire_action == 0x5D) {
+            plr->obj.anim.newaction = 0x6C;
+        } else if (plr->fire_action == 0x5F) {
+            plr->obj.anim.newaction = 0x6E;
+        } else if (plr->fire_action == 0x60) {
+            plr->obj.anim.newaction = 0x6F;
+        } else {
+            plr->obj.anim.newaction = 0x6B;
+        }
+    } else if (plr->jump != 0 && (plr->obj.ground == 0 || plr->jump_frame < plr->jump_frames)) {
+        if (plr->jump_type == 2) {
+            if (plr->obj.anim.anim_time >= MECHSTANDINGJUMPPAUSEFRAME) {
+                plr->obj.anim.anim_time = MECHSTANDINGJUMPPAUSEFRAME;
+            }
+            plr->obj.anim.newaction = 100;
+        } else {
+            if (plr->obj.anim.anim_time >= MECHRUNNINGJUMPPAUSEFRAME) {
+                plr->obj.anim.anim_time = MECHRUNNINGJUMPPAUSEFRAME;
+            }
+            plr->obj.anim.newaction = 99;
+        }
+    } else if (plr->land != 0) {
+        if (plr->jump_type == 2) {
+            plr->obj.anim.newaction = 100;
+        } else {
+            plr->obj.anim.newaction = 99;
+        }
+    } else if (plr->obj.pad_speed == 0.0f
+               && (plr->pad_type != 1
+                   || !(plr->obj.mom.x * plr->obj.mom.x + plr->obj.mom.z * plr->obj.mom.z
+                        >= plr->OnFootMoveInfo->IDLESPEED * plr->OnFootMoveInfo->IDLESPEED))) {
+        plr->obj.anim.newaction = 0x62;
+    } else if (plr->obj.pad_speed == minfo->WALKSPEED) {
+        plr->obj.anim.newaction = 0x71;
+    } else {
+        plr->obj.anim.newaction = 0x68;
+    }
+    UpdateCharacterIdle(plr, 0);
+}
+
+extern f32 SNOWBOARDJUMPPAUSEFRAME;
+
+void AnimateSNOWBOARD(struct creature_s *plr) {
+    s32 d;
+
+    if (best_cRPos != 0) {
+        d = RotDiff(best_cRPos->angle, plr->obj.hdg);
+    } else {
+        d = 0;
+    }
+    if ((u32)plr->obj.dead > 1) {
+        plr->obj.anim.newaction = plr->obj.die_action;
+    } else if (plr->jump != 0 && (plr->obj.ground == 0 || plr->jump_frame < plr->jump_frames)) {
+        if (plr->obj.anim.anim_time >= SNOWBOARDJUMPPAUSEFRAME) {
+            plr->obj.anim.anim_time = SNOWBOARDJUMPPAUSEFRAME;
+        }
+        plr->obj.anim.newaction = 0x63;
+    } else if (plr->land != 0) {
+        plr->obj.anim.newaction = 0x63;
+    } else if (plr->sprint != 0) {
+        plr->obj.anim.newaction = 0x6A;
+    } else if (d > 0x1000) {
+        plr->obj.anim.newaction = 0x65;
+    } else if (d < -0x1000) {
+        plr->obj.anim.newaction = 0x67;
+    } else {
+        plr->obj.anim.newaction = 0x68;
+    }
+    UpdateCharacterIdle(plr, 1);
+    /* Snow spray from the board's locators. */
+    if (plr->obj.anim.newaction == 0x68 || plr->obj.anim.newaction == 0x6A || plr->land != 0) {
+        AddGameDebrisRot(0x53, (struct nuvec_s *)&plr->mtxLOCATOR[1][0]._30, 1, 0, 0);
+        AddGameDebrisRot(0x53, (struct nuvec_s *)&plr->mtxLOCATOR[1][1]._30, 1, 0, 0);
+        AddGameDebrisRot(0x54, (struct nuvec_s *)&plr->mtxLOCATOR[1][2]._30, 2, 0, 0);
+    } else if (plr->obj.anim.newaction == 0x65) {
+        AddGameDebrisRot(0x55, (struct nuvec_s *)&plr->mtxLOCATOR[1][4]._30, 3, 0, 0);
+    } else if (plr->obj.anim.newaction == 0x67) {
+        AddGameDebrisRot(0x55, (struct nuvec_s *)&plr->mtxLOCATOR[1][3]._30, 3, 0, 0);
+    }
+}
+
 void AnimateSWIMMING(struct creature_s *plr) {
     struct MoveInfo *info = &SwimmingMoveInfo;
     u64 d;

@@ -53,7 +53,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:00253590:AnimateSNOWBOARD"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:00253720:MoveOFFROADER"
@@ -65,7 +65,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:00254338:AnimateMECH"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:002544d0:MoveFIREENGINE"
