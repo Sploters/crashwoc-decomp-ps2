@@ -13,15 +13,15 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0097:00201450:ApplyVisiTable"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0097:00201668:VSAddObjs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0097:00201868:BuildVisiTable"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0097:00201a00:ReleaseVisiTable"
