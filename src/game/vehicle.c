@@ -1463,7 +1463,7 @@ s32 CollideWithBattleShips(struct nuvec_s *pos, f32 radius)
 }
 
 
-void DrawBattleShip(struct battleship_s *ship)
+inline void DrawBattleShip(struct battleship_s *ship)
 {
     NuMtxSetRotationX(&mTEMP, ship->pitch * 182.04445f);
     NuMtxRotateZ(&mTEMP, ship->roll * 182.04445f);
@@ -1843,7 +1843,7 @@ inline void DrawSatellite(struct satellite_s *sat)
     sat->seen = MyDrawModelNew(&sat->draw, &mTEMP, 0);
 }
 
-void DrawSatellites(void)
+inline void DrawSatellites(void)
 {
     s32 i;
 
@@ -2132,7 +2132,7 @@ void ProcessSpaceStations(void)
     }
 }
 
-void DrawSpaceStations(void)
+inline void DrawSpaceStations(void)
 {
     s32 i;
 
@@ -3166,7 +3166,7 @@ void DeadGliderWB(struct gliderstate_s *glider)
 
 extern void DrawAsteroid(struct asteroid_s *asteroid);
 
-void DrawAsteroids(void)
+inline void DrawAsteroids(void)
 {
     s32 i;
 
@@ -3175,6 +3175,16 @@ void DrawAsteroids(void)
             DrawAsteroid(&AsteroidList[i]);
         }
     }
+}
+
+void DrawSpaceArenaLevelExtra(void)
+{
+    DrawGliderBullets();
+    DrawAsteroids();
+    DrawSatellites();
+    DrawSpaceStations();
+    DrawZoffaUFOs();
+    DrawGliderTarget();
 }
 
 
@@ -3231,15 +3241,37 @@ void InitGunBoat(struct nuvec_s *pos, f32 yaw, s32 character)
     boat->active = 1;
 }
 
-void DrawGunBoat(struct gunboat_s *boat)
+inline void DrawGunBoat(struct gunboat_s *boat)
 {
-    struct nuvec_s scale = {1.5f, 1.5f, 1.5f};
+    struct nuvec_s scale = D_0061F460[0];
 
     NuMtxSetScale(&mTEMP, &scale);
     NuMtxRotateX(&mTEMP, boat->pitch * 182.04445f);
     NuMtxRotateY(&mTEMP, (boat->yaw + boat->yawwobble) * 182.04445f);
     NuMtxTranslate(&mTEMP, &boat->pos);
     boat->seen = MyDrawModelNew(&boat->draw, &mTEMP, 0);
+}
+
+extern void DrawTorpedoTarget(void);
+
+void DrawFireFlyLevelExtra(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (GunBoatList[i].active != 0) {
+            DrawGunBoat(&GunBoatList[i]);
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        if (BattleShipList[i].active != 0) {
+            DrawBattleShip(&BattleShipList[i]);
+        }
+    }
+    DrawGliderBombs();
+    DrawGliderBullets();
+    DrawZoffaUFOs();
+    DrawTorpedoTarget();
 }
 extern void ProcessGunBoat(struct gunboat_s *boat);
 

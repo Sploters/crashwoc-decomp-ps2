@@ -269,7 +269,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00212918:DrawFireFlyLevelExtra"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00212b08:ProcessFireFlyIntro"
@@ -289,7 +289,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00213880:DrawSpaceArenaLevelExtra"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213a70:ProcessSpaceArenaLevel"
