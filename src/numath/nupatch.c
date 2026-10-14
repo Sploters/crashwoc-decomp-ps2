@@ -133,6 +133,36 @@ struct nuvec_s *NuBezierCubicPatchEvaluatePartials(struct nuvec_s *out, struct n
 }
 
 
+struct nuvec_s *NuBezierCubicPatchEvaluate(struct nuvec_s *out, struct nuvec_s *cp, float u, float v)
+{
+    float bu[4];
+    float bv[4];
+    struct nuvec_s sum;
+    float su = 1.0f - u;
+    float sv = 1.0f - v;
+    unsigned int i;
+    unsigned int j;
+
+    bu[0] = su * su * su;
+    bu[1] = 3.0f * su * su * u;
+    bu[2] = 3.0f * su * u * u;
+    bu[3] = u * u * u;
+    bv[0] = sv * sv * sv;
+    bv[1] = 3.0f * sv * sv * v;
+    bv[2] = 3.0f * sv * v * v;
+    bv[3] = v * v * v;
+    sum.x = 0.0f;
+    sum.y = 0.0f;
+    sum.z = 0.0f;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            NuVecScaleAccum(&sum, &cp[j * 4 + i], bu[i] * bv[j]);
+        }
+    }
+    *out = sum;
+    return out;
+}
+
 void NuBezierCubicPatchPartialsU(struct nuvec_s *cp, struct nuvec_s *du00, struct nuvec_s *du01,
                                  struct nuvec_s *du10, struct nuvec_s *du11)
 {

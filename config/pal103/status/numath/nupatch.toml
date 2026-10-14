@@ -33,7 +33,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0027:0010f578:NuBezierCubicPatchEvaluate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:0010f6f0:NuBezierCubicPatchPartialsU"
