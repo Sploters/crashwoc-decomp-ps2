@@ -8,97 +8,98 @@
  */
 
 typedef void (*NuErrorFunc)(const char *fmt, ...);
+
+typedef struct NuHighBlock {
+    struct NuHighBlock *next;
+    unsigned int size;
+    int pad[2];
+} NuHighBlock;
+
 extern NuErrorFunc NuErrorProlog(const char *file, int line);
 
-/* High memory is a K&R-style first-fit allocator: a circular list of free
- * blocks, each starting with this 16-byte header. */
-struct nuhighmem_s {
-    struct nuhighmem_s *next;       /* 0x0 next free block */
-    unsigned int size;              /* 0x4 in headers (16 bytes), incl. this one */
-    int pad[2];
-}; /* 0x10 */
-
-/* Retail-owned (no Data-from-C yet). */
-extern char D_00613CC8[];               /* source file name */
-extern char D_00613CF0[];               /* error message */
-extern char D_00613D18[];               /* error message */
-extern struct nuhighmem_s *D_0062EA28;
+extern char D_00613CC8[];
+extern char D_00613CF0[];
+extern char D_00613D18[];
+extern NuHighBlock *D_0062EA28;
 #define numemhi_file D_00613CC8
-#define reinit_msg D_00613CF0
-#define badsize_msg D_00613D18
-#define highmem D_0062EA28
+#define msg_already_initialised D_00613CF0
+#define msg_zero_request D_00613D18
+#define highfree D_0062EA28
 
-void NuAllocHighInit(struct nuhighmem_s *base, int size)
+
+void NuAllocHighInit(int base, int size)
 {
-    if (highmem != 0) {
-        NuErrorProlog(numemhi_file, 0x2F)(reinit_msg);
+    NuHighBlock *block;
+
+    if (highfree != 0) {
+        NuErrorProlog(numemhi_file, 0x2F)(msg_already_initialised);
     }
-    /* Align the region to 16 bytes. Retail masks with 0xF rather than ~0xF. */
-    if ((int)base & 0xF) {
-        size -= 0xF;
-        base = (struct nuhighmem_s *)(((int)base + 0xF) & 0xF);
+    if (base & 15) {
+        size -= 15;
+        base = (base + 15) & 15;
     }
-    if (size & 0xF) {
-        size = (size - 0xF) & 0xF;
+    if (size & 15) {
+        size = (size - 15) & 15;
     }
-    highmem = base;
-    base->size = size;
-    base->next = base;
+    block = (NuHighBlock *)base;
+    highfree = block;
+    block->size = size;
+    block->next = block;
 }
+
 
 void *NuAllocHigh(int size)
 {
-    struct nuhighmem_s *p;
-    struct nuhighmem_s *prev;
-    unsigned int nunits;
+    NuHighBlock *prev;
+    NuHighBlock *block;
+    unsigned int units;
 
     if (size <= 0) {
-        NuErrorProlog(numemhi_file, 0x4C)(badsize_msg);
+        NuErrorProlog(numemhi_file, 0x4C)(msg_zero_request);
     }
-    nunits = (unsigned int)(size + 0xF) / sizeof(struct nuhighmem_s) + 1;
-    prev = highmem;
-    for (p = prev->next;; prev = p, p = p->next) {
-        if (p->size >= nunits) {
-            if (p->size == nunits) {
-                prev->next = p->next;
+    units = (unsigned int)(size + 15) / 16 + 1;
+    prev = highfree;
+    for (block = prev->next; ; prev = block, block = block->next) {
+        if (block->size >= units) {
+            if (block->size == units) {
+                prev->next = block->next;
             } else {
-                p->size -= nunits;
-                p += p->size;
-                p->size = nunits;
+                block->size -= units;
+                block += block->size;
+                block->size = units;
             }
-            highmem = prev;
-            return p + 1;
+            highfree = prev;
+            return block + 1;
         }
-        if (p == highmem) {
+        if (block == highfree) {
             return 0;
         }
     }
 }
 
+
 void NuFreeHigh(void *ptr)
 {
-    struct nuhighmem_s *bp;
-    struct nuhighmem_s *p;
+    NuHighBlock *block;
+    NuHighBlock *p;
 
-    bp = (struct nuhighmem_s *)ptr - 1;
-    for (p = highmem; !(bp > p && bp < p->next); p = p->next) {
-        if (p >= p->next && (bp > p || bp < p->next)) {
-            break; /* freed block at start or end of arena */
+    block = (NuHighBlock *)ptr - 1;
+    for (p = highfree; !(block > p && block < p->next); p = p->next) {
+        if (p >= p->next && (block > p || block < p->next)) {
+            break;
         }
     }
-    /* Join to the upper neighbour... */
-    if (bp + bp->size == p->next) {
-        bp->size += p->next->size;
-        bp->next = p->next->next;
+    if (block + block->size == p->next) {
+        block->size += p->next->size;
+        block->next = p->next->next;
     } else {
-        bp->next = p->next;
+        block->next = p->next;
     }
-    /* ...and to the lower one. */
-    if (p + p->size == bp) {
-        p->size += bp->size;
-        p->next = bp->next;
+    if (p + p->size == block) {
+        p->size += block->size;
+        p->next = block->next;
     } else {
-        p->next = bp;
+        p->next = block;
     }
-    highmem = p;
+    highfree = p;
 }

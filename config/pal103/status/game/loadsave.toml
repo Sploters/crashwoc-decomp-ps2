@@ -13,11 +13,11 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0119:0025ad80:UpdateSaveSlots"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b0f8:DrawGameSlot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b3e0:loadsaveCallEachFrame"
@@ -33,4 +33,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0119:0025b508:DrawGameSlots"
-state = "asm"
+state = "matching"
