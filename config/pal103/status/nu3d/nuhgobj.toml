@@ -73,7 +73,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0048:0014ff88:NuHGobjBoundingSphereToSphere"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0048:001500e0:NuHGobjBoundingBoxToSphere"

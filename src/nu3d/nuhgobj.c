@@ -221,6 +221,36 @@ int NuHGobjJointMtxWithCheck(struct NUHGOBJ_s *hobj, u8 i, struct numtx_s *mC,
 }
 
 
+extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
+
+/* Whether the object's bounding sphere, placed by `wm`, touches the sphere
+   of `radius` at `pos`. */
+int NuHGobjBoundingSphereToSphere(struct NUHGOBJ_s *hobj, struct numtx_s *wm,
+                                  struct nuvec_s *pos, f32 radius) {
+    struct nuvec_s d;
+
+    if (hobj->sphere_y == 0.0f) {
+        d.x = wm->_30 - pos->x;
+        d.y = wm->_31 - pos->y;
+        d.z = wm->_32 - pos->z;
+        if ((radius + hobj->sphere_radius) * (radius + hobj->sphere_radius) < d.x * d.x + d.y * d.y + d.z * d.z) {
+            return 0;
+        }
+    } else {
+        d.x = d.z = 0.0f;
+        d.y = hobj->sphere_y;
+        NuVecMtxRotate(&d, &d, wm);
+        d.x = (wm->_30 + d.x) - pos->x;
+        d.y = (wm->_31 + d.y) - pos->y;
+        d.z = (wm->_32 + d.z) - pos->z;
+        if ((radius + hobj->sphere_radius) * (radius + hobj->sphere_radius) < d.x * d.x + d.y * d.y + d.z * d.z) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
 int NuHGobjBoundingBoxToSphere(struct NUHGOBJ_s *hobj, struct numtx_s *mtx, struct nuvec_s *pos,
                                f32 radius) {
     struct nuvec_s local;
