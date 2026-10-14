@@ -173,7 +173,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0020b198:DrawAsteroid"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020b2a0:ProcessAsteroid"
@@ -801,7 +801,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f0d8:DrawLighteningHail"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f1b0:FindFreeWBBoltOfType"
@@ -909,8 +909,8 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021fdc0:SmashRockIntoTwo"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021feb8:CheckAgainstRocks"
-state = "asm"
+state = "matching"
