@@ -8,10 +8,11 @@
 
 struct _reent;
 
-/* Single-threaded build: the malloc lock hooks are no-ops. */
+
 void __malloc_lock(struct _reent *ptr)
 {
 }
+
 
 void __malloc_unlock(struct _reent *ptr)
 {

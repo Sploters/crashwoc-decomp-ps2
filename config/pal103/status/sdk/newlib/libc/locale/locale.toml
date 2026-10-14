@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0231:00276f78:_setlocale_r"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0231:00277000:_localeconv_r"

@@ -13,11 +13,11 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0039:0011c590:NuTexReadBitmapMMEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011cb90:NuTexReadBitmapMem"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011cfb8:NuTexSetRenderTarget"
@@ -25,7 +25,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011d108:NuTexCreateEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011d300:NuTexCreateStream"
@@ -49,11 +49,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0039:0011dbb8:NuTexRecoverNativeDataEx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011de90:NuTexCreateNative"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011e2d0:NuTexWriteMaterialSettings"
@@ -197,4 +197,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011eff8:NuTexGetTextAddr"
-state = "asm"
+state = "matching"
