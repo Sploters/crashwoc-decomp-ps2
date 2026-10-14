@@ -49,7 +49,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0001:001012e8:NuFileEndBlkRead"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:00101468:NuFileBeginBlkWrite"
@@ -61,7 +61,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0001:00101860:NuFileWriteAddress"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:001019d0:NuFileSetAddress"
