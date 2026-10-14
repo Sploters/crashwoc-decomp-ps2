@@ -2710,7 +2710,7 @@ void RespawnAsteroids(void)
     }
 }
 
-void InitAsteroids(void)
+inline void InitAsteroids(void)
 {
     s32 i;
 
@@ -3377,7 +3377,7 @@ extern CharacterData CData[];
 extern f32 FireFlyIntroTween;
 extern void edppRegisterPointerToGameCharLocation(struct nuvec_s *loc);
 
-void InitGlider(struct glider_s *Glider, struct nuvec_s *StartPos, f32 StartAng)
+inline void InitGlider(struct glider_s *Glider, struct nuvec_s *StartPos, f32 StartAng)
 {
     CharacterData *cdata;
     struct creature_s *cre;
@@ -3411,6 +3411,122 @@ void InitGlider(struct glider_s *Glider, struct nuvec_s *StartPos, f32 StartAng)
     Glider->Cre->obj.bot = cdata->min.y;
     Glider->Cre->obj.top = cdata->max.y;
     FireFlyIntroTween = 0.0f;
+}
+
+extern struct gliderbullet_s GliderBullet[64];
+extern struct gliderbullet_s EnemyGliderBullet[100];
+
+static inline void InitGliderBullets(void)
+{
+    s32 i;
+
+    for (i = 0; i < 64; i++) {
+        FreeGliderBulletList[i] = &GliderBullet[i];
+    }
+    for (i = 0; i < 100; i++) {
+        FreeEnemyGliderBulletList[i] = &EnemyGliderBullet[i];
+    }
+    FreeGliderBulletNum = 64;
+    FreeEnemyGliderBulletNum = 100;
+    UsedGliderBulletNum = 0;
+    UsedEnemyGliderBulletNum = 0;
+}
+
+static inline void InitGliderBombs(void)
+{
+    memset(GliderBombs, 0, sizeof(GliderBombs));
+    memset(EnemyGliderBombs, 0, sizeof(EnemyGliderBombs));
+}
+
+extern struct zoffastart_s D_005A6C30[4];
+#define ZoffaStartPoints D_005A6C30
+extern s32 D_006332A0;
+extern s32 D_006332A4;
+extern s32 D_006332A8;
+#define ZoffaCollisionCounter D_006332A0
+#define ZoffaTeleportIndx D_006332A4
+#define CurrentAggressor D_006332A8
+
+static inline void InitZoffaUFOs(void)
+{
+    s32 i;
+
+    memset(EnemyZoffa, 0, sizeof(EnemyZoffa));
+    ZoffaTeleportIndx = 0;
+    for (i = 0; i < 4; i++) {
+        InitZoffa(0, &ZoffaStartPoints[i]);
+    }
+    CurrentAggressor = 0;
+    ZoffaCollisionCounter = 0;
+}
+
+extern s32 D_006332AC;
+#define LevelResetTimer D_006332AC
+extern f32 Level_GliderCurrentCeiling;
+extern f32 Level_GliderCentreX;
+extern f32 Level_GliderCentreZ;
+extern f32 Level_TargetTime;
+extern f32 GliderCamHighTimer;
+extern s32 FireFlyIntroOn;
+extern s32 FireFlyIntroAction;
+extern s32 FireFlyIntroOldAction;
+extern struct nuvec_s WRStartPos;
+extern f32 WRStartAng;
+extern struct nuvec_s CrashteroidsStart;
+extern f32 CrashteroidsStartAngle;
+extern void ResetGameCameras(struct cammtx_s *cam, s32 n);
+extern void InitBigGuns(void);
+
+void WeatherResearchReset(void)
+{
+    struct nuvec_s start;
+
+    start = WRStartPos;
+    LevelResetTimer = 0;
+    Level_GliderSpeed = 16.0f;
+    Level_GliderCeiling = 60.0f;
+    Level_GliderFloor = -60.0f;
+    Level_GliderCurrentCeiling = 60.0f;
+    Level_GliderRadius = 100.0f;
+    Level_GliderCentreX = 0.32f;
+    Level_GliderCentreZ = 0.09f;
+    Level_DeadTime = 8.0f;
+    Level_TargetTime = 0.7f;
+    InitGlider(&PlayerGlider, &start, WRStartAng);
+    GliderCamHighTimer = 0.0f;
+    GameCam.m._30 = start.x + 0.0f;
+    GameCam.m._31 = start.y + 2.0f;
+    GameCam.m._32 = start.z + 5.0f;
+    ResetGameCameras(&GameCam, 1);
+    InitGliderBullets();
+    InitBigGuns();
+    InitGliderBombs();
+}
+
+void SpaceArenaReset(s32 PlayerDead)
+{
+    Level_DeadTime = 8.0f;
+    Level_GliderFloor = -30.0f;
+    Level_GliderCurrentCeiling = 35.0f;
+    Level_GliderRadius = 180.0f;
+    Level_GliderCentreX = 0.0f;
+    Level_GliderCentreZ = 0.0f;
+    FireFlyIntroOn = 0;
+    LevelResetTimer = 0;
+    FireFlyIntroAction = 0;
+    FireFlyIntroOldAction = -1;
+    Level_GliderSpeed = 8.0f;
+    Level_GliderCeiling = 35.0f;
+    InitGlider(&PlayerGlider, &CrashteroidsStart, CrashteroidsStartAngle);
+    GliderCamHighTimer = 0.0f;
+    GameCam.m._30 = CrashteroidsStart.x + 0.0f;
+    GameCam.m._31 = CrashteroidsStart.y + 2.0f;
+    GameCam.m._32 = CrashteroidsStart.z + 5.0f;
+    ResetGameCameras(&GameCam, 1);
+    InitZoffaUFOs();
+    InitSpaceStations();
+    InitAsteroids();
+    InitGliderBullets();
 }
 
 extern struct nuvec_s WeatherBossTargetPos;

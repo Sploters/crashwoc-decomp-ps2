@@ -281,7 +281,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213308:WeatherResearchReset"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213598:SpaceArenaReset"
