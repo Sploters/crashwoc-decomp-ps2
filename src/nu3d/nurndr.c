@@ -334,7 +334,7 @@ extern struct RndrPacketStream *rndrstream_fx;
 extern NuMtx numtx_identity;
 extern void NuRndrSetLocalMtx(NuMtx *mtx, int mode);
 extern void NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
-extern void NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
+extern int NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
 extern void NuRndrStreamFxMPG(int microcode);
 extern int NuRndrStreamQuadShad(struct RndrPacketStream *stream);
 extern int NuRndrStreamQuadWRip(struct RndrPacketStream *stream, short *visible);
@@ -1262,7 +1262,7 @@ struct numtl_s {
 typedef unsigned int u128 __attribute__((mode(TI)));
 
 extern struct RndrPacketStream *rndrstream_ot_sort;
-extern void NuRndrStreamSetViewMtx(struct RndrPacketStream *stream);
+extern int NuRndrStreamSetViewMtx(struct RndrPacketStream *stream);
 extern u32 *vpDmaTag_Call(u32 *packet, void *addr);
 
 /* Near-match (stays asm): retail loads stream->cur before materialising the
