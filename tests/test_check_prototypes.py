@@ -5,7 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-from check_prototypes import find_mismatches, param_classes, strip_comments, type_class
+from check_prototypes import (find_mismatches, function_name, param_classes,
+                              strip_comments, type_class)
 
 DEFINING = """
 int NuSoundStopStream(int stream) { return 0; }
@@ -32,12 +33,31 @@ class TestClasses(unittest.TestCase):
         self.assertEqual(type_class("f32"), "float")
         self.assertEqual(type_class("struct nuvec_s *"), "int")
         self.assertEqual(type_class("unsigned short"), "int")
+        self.assertEqual(type_class("double"), "wide")
+        self.assertEqual(type_class("f64"), "wide")
+        self.assertEqual(type_class("unsigned long long"), "wide")
+        self.assertEqual(type_class("double *"), "int")
 
     def test_param_classes_ignore_cross_class_order(self):
         self.assertEqual(param_classes("int a, float b"), param_classes("float b, int a"))
         self.assertNotEqual(param_classes("int a"), param_classes("float a"))
-        self.assertEqual(param_classes("void"), (0, ()))
+        self.assertEqual(param_classes("void"), ((), ()))
         self.assertIsNone(param_classes("char *fmt, ..."))
+
+    def test_soft_doubles_travel_in_gprs(self):
+        # Soft-double: a double is a 64-bit GPR value, not an FPR one.
+        self.assertEqual(param_classes("double d"), param_classes("u64 d"))
+        self.assertNotEqual(param_classes("double d"), param_classes("float d"))
+        self.assertNotEqual(param_classes("int a"), param_classes("s64 a"))
+        self.assertNotEqual(param_classes("int a, double d"),
+                            param_classes("double d, int a"))
+
+    def test_function_name_strips_only_the_duplicate_suffix(self):
+        self.assertEqual(function_name("pal103:unit-0001:00100000:Foo"), "Foo")
+        self.assertEqual(function_name("pal103:unit-0001:00100000:Foo__00100000"), "Foo")
+        self.assertEqual(function_name("pal103:unit-0001:00100000:__sread"), "__sread")
+        self.assertEqual(function_name("pal103:unit-0001:00100000:__ieee754_pow"),
+                         "__ieee754_pow")
 
     def test_strip_comments_keeps_line_numbers(self):
         text = "a\n/* x\ny */\nb"

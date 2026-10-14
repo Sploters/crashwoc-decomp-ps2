@@ -333,7 +333,7 @@ extern int nurndr_tritot_this_frame;
 extern struct RndrPacketStream *rndrstream_fx;
 extern NuMtx numtx_identity;
 extern void NuRndrSetLocalMtx(NuMtx *mtx, int mode);
-extern void NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
+extern int NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
 extern int NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
 extern void NuRndrStreamFxMPG(int microcode);
 extern int NuRndrStreamQuadShad(struct RndrPacketStream *stream);
@@ -348,7 +348,7 @@ typedef struct nurndrshadpol_s {
 } nurndrshadpol_s;
 
 extern nurndrshadpol_s NuRndrShadPolDat[];
-extern int NuCameraClipTestPoints(NuVec3 *pos, int count, int mode);
+extern int NuCameraClipTestPoints(NuVec3 *pos, int count, NuMtx *wm);
 
 
 

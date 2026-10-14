@@ -113,7 +113,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:00257570:CheckGates"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:00257700:ResetRings"

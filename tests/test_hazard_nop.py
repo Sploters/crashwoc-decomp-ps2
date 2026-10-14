@@ -8,9 +8,9 @@ sys.path.insert(0, str(ROOT / "tools"))
 from gen_hybrid import _sonyize_seg
 
 
-def _insns(seg):
+def _insns(seg, profile="default"):
     """Emitted lines minus comments/blanks, stripped -- what the assembler sees."""
-    return [l.strip() for l in _sonyize_seg(seg)
+    return [l.strip() for l in _sonyize_seg(seg, profile)
             if l.strip() and not l.strip().startswith("#")]
 
 
@@ -64,6 +64,17 @@ class TestHazardNop(unittest.TestCase):
         self.assertEqual(got, [".set\tnoreorder", "li.s\t$f21,1.8e2",
                                ".p2align 3", "$L295:", ".set\treorder",
                                "lw\t$2,224($16)"])
+
+    def test_lis_before_aligned_loop_head_is_left_alone_for_sce(self):
+        # The sce retail assembler behaves like GNU `as`, so the decompals
+        # `as` padding is already right there.
+        seg = ["\tli.s\t$f21,1.8e2", "\t.p2align 3", "$L295:",
+               "\tlw\t$2,224($16)"]
+        self.assertEqual(_insns(seg, "sce"), [l.strip() for l in seg])
+
+    def test_lis_before_aligned_end_of_segment_is_left_alone(self):
+        seg = ["\tli.s\t$f21,1.8e2", "\t.p2align 3", "$L295:"]
+        self.assertEqual(_insns(seg), [l.strip() for l in seg])
 
     def test_lis_hazard_across_aligned_loop_head_keeps_its_nop(self):
         got = _insns(["\tli.s\t$f0,1.0", "\t.p2align 3", "$Lloop:",

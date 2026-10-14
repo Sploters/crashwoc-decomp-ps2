@@ -20,43 +20,71 @@ extern char *D_00633270;
 #define vscnt D_0063326C
 #define vsdata D_00633270
 
+/* Scene types, as in game/visidat. */
+struct nugeom_s;
+struct nufaceongeom_s;
+struct nucolourref_s;
+struct numtl_s;
+struct nuspecial_s;
+
+struct nugobj_s {
+    struct nugobj_s *sysnext;
+    struct nugobj_s *syslast;
+    int type;
+    struct nugeom_s *geom;
+    struct nufaceongeom_s *faceon_geom;
+    float r;
+    float r2;
+    struct nuvec_s min;
+    struct nuvec_s max;
+    struct nuvec_s cntr;
+    float cntr_r;
+    float cntr_r2;
+    int ngobjs;
+    struct nugobj_s *next_gobj;
+    struct nuvec_s origin;
+    struct nucolourref_s *colourref;
+    int colourref_size;
+    struct nucolourref_s *focolourref;
+    int focolourref_size;
+};
+
 struct nuinstflags_s {
-    unsigned int visible : 1;
-    unsigned int onscreen : 1;
-    unsigned int visitest : 1;
-    unsigned int pad : 29;
+    u32 visible : 1;
+    u32 onscreen : 1;
+    u32 visitest : 1;
+    u32 isanimated : 1;
 };
 
 struct nuinstance_s {
-    struct numtx_s mtx;             /* 0x00 */
-    int objid;                      /* 0x40 */
-    struct nuinstflags_s flags;     /* 0x44 */
-    char pad48[0x08];
-}; /* 0x50 */
+    struct numtx_s mtx;
+    int objid;
+    struct nuinstflags_s flags;
+    void *anim;
+    int pad;
+};
 
 struct nugspline_s {
-    short len;                      /* 0x00 */
-    short ptsize;                   /* 0x02 */
-    char *name;                     /* 0x04 */
-    struct nuvec_s *pts;            /* 0x08 */
-}; /* 0x0C */
-
-struct nugobj_s {
-    char pad00[0x34];
-    struct nuvec_s cntr;            /* 0x34 bounding box centre */
-    char pad40[0x48 - 0x40];
-    int ngobjs;                     /* 0x48 gobjs in this chain */
-    char pad4C[0x6C - 0x4C];
-}; /* 0x6C */
+    short len;
+    short ptsize;
+    char *name;
+    struct nuvec_s *pts;
+};
 
 struct nugscn_s {
-    char pad00[0x14];
-    struct nugobj_s **gobjs;        /* 0x14 */
-    int numinstance;                /* 0x18 */
-    struct nuinstance_s *instances; /* 0x1C */
-    char pad20[0x2C - 0x20];
-    int numsplines;                 /* 0x2C */
-    struct nugspline_s *splines;    /* 0x30 */
+    int *tids;
+    int numtid;
+    struct numtl_s **mtls;
+    int nummtl;
+    int numgobj;
+    struct nugobj_s **gobjs;
+    int numinstance;
+    struct nuinstance_s *instances;
+    int numspecial;
+    struct nuspecial_s *specials;
+    int pad28;
+    int numsplines;
+    struct nugspline_s *splines;
 };
 
 struct nuplane_s {
@@ -186,7 +214,9 @@ void BuildVisiTable(struct nugscn_s *gsc)
 
     vsdata = 0;
     if (ocnt != 0) {
-        vsdata = NuMemAllocFn(vscnt * 0xC + ocnt * 4, visi_srcfile, 0xAA);
+        vsdata = NuMemAllocFn(vscnt * sizeof(struct visidat_s)
+                              + ocnt * sizeof(struct nuinstance_s *),
+                              visi_srcfile, 0xAA);
         if (vsdata != 0) {
             vd = (struct visidat_s *)vsdata;
             vscnt = 0;
@@ -197,7 +227,8 @@ void BuildVisiTable(struct nugscn_s *gsc)
                     ocnt = VSAddObjs(vd->i, gsc, &gsc->splines[n]);
                     vd->sp = &gsc->splines[n];
                     vd->numinstances = ocnt;
-                    vd = (struct visidat_s *)((char *)vd + 0xC + ocnt * 4);
+                    vd = (struct visidat_s *)((char *)vd + sizeof(struct visidat_s)
+                                              + ocnt * sizeof(struct nuinstance_s *));
                 }
             }
         }

@@ -475,54 +475,80 @@ struct rumble_s {
 }; /* 0x4 */
 
 /* ------------------------------------------------------------------ */
-/* NEWBUGGY -- special-vehicle transform state                         */
+/* Special vehicles behind creature_s.Buggy                            */
 /* ------------------------------------------------------------------ */
 
-/* creature_s.Buggy (creature+0x224) points here.  Holds the transform for
- * the glider / atlasphere ("ball") special vehicles.  Offsets are PS2-verified
- * in unit game/vehicle (DrawGlider / DrawAtlas / Move* / ObjectToAtlas).
- * Fields are filled in as the unit is decompiled; gaps are opaque padding. */
+/* creature_s.Buggy (creature+0x224) points at the vehicle the creature is
+ * driving, and the pointee's type depends on the vehicle (as in the GC
+ * source, where Buggy is cast to GLIDERSTRUCT / ATLASSTRUCT / JEEPSTRUCT):
+ *   glider (vehicle 0x36/0x81/0x8B)  struct glider_s (below, GC GLIDERSTRUCT)
+ *   atlasphere (vehicle 0x53)        struct NEWBUGGY (below, GC ATLASSTRUCT)
+ *   jeep (vehicle 0x63)              struct JEEPSTRUCT (game/jeep.c)
+ * Offsets are PS2-verified in unit game/vehicle; gaps are opaque padding. */
+
+/* The player's glider (PlayerGlider), 0x440 bytes (GC GLIDERSTRUCT). */
+struct glider_s {
+    struct creature_s *Cre;    /* 0x00 */
+    char pad_04[0x10 - 0x04];
+    s32 Dead;                  /* 0x10 */
+    char pad_14[0x30 - 0x14];
+    struct nuvec_s Position;   /* 0x30 */
+    char pad_3C[0x6C - 0x3C];
+    f32 RailAngle;             /* 0x6C */
+    f32 TiltX;                 /* 0x70  pitch (NuMtxRotateX) */
+    f32 TiltZ;                 /* 0x74  roll (NuMtxSetRotationZ) */
+    f32 DestTiltX;             /* 0x78 */
+    f32 DestTiltZ;             /* 0x7C */
+    f32 AngleY;                /* 0x80  heading (NuMtxRotateY) */
+    char pad_84[0x98 - 0x84];
+    s32 BarrelRoll;            /* 0x98 */
+    char pad_9C[0xA4 - 0x9C];
+    s32 TerminalDive;          /* 0xA4 */
+    char pad_A8[0xAC - 0xA8];
+    f32 FireTimer;             /* 0xAC */
+    f32 HitTimer;              /* 0xB0 */
+    s32 AutoPilot;             /* 0xB4 */
+    char pad_B8[0xBC - 0xB8];
+    s32 HitPoints;             /* 0xBC  0..100 */
+    char LocatorList[16];      /* 0xC0 */
+    f32 LocatorTime[16];       /* 0xD0 */
+    s32 InTornado;             /* 0x110 */
+    char pad_114[0x43C - 0x114];
+    f32 NextHitSoundTimer;     /* 0x43C */
+}; /* 0x440 */
+
+/* The atlasphere ("ball", GC ATLASSTRUCT): PlayerAtlas and EarthBoss are one
+ * each, and every JeepRock embeds one at +0x30 (JeepRock stride 0x3D4, rock
+ * fields resume at +0x3B4), which fixes the size at 0x384 (InitAtlas clears
+ * exactly that much). */
 struct NEWBUGGY {
     struct creature_s *owner;  /* 0x00  owning creature (KillAtlasphere) */
     char pad_04[0x08 - 0x04];
     s32 type;                  /* 0x08  atlasphere type (InitAtlas) */
-    s32 fieldC;                /* 0x0C  kill flag (KillAtlasphere) */
-    char pad_10[0x24 - 0x10];
-    float inhibitcontroltimer; /* 0x24  atlasphere ignores the pad while > 0 */
-    float timer;               /* 0x28  ProcessTimer countdown (ProcessGliderMovement) */
-    char pad_2C[0x30 - 0x2C];
-    struct nuvec_s pos;        /* 0x30  glider position (NuMtxTranslate) */
-    char pad_3C[0x48 - 0x3C];
-    struct nuvec_s vel;        /* 0x48  glider velocity (pos += vel*dt) */
-    char pad_54[0x70 - 0x54];
-    float pitch;               /* 0x70  glider X rotation (NuMtxRotateX) */
-    float roll;                /* 0x74  glider Z rotation (NuMtxSetRotationZ) */
-    char pad_78[0x80 - 0x78];
-    float yaw;                 /* 0x80  glider Y rotation (NuMtxRotateY) */
-    char pad_84[0x98 - 0x84];
-    s32 mode;                  /* 0x98  glider mode flag (0 normal / weather-boss) */
-    char pad_9C[0xA0 - 0x9C];
-    struct nuvec_s avel;       /* 0xA0  glider angular/seek vector (SetNuVec) */
-    char pad_AC[0xB4 - 0xAC];
-    s32 enable;                /* 0xB4  draw/transform enable flag */
-    char pad_B8[0xBC - 0xB8];
-    s32 health;                /* 0xBC  glider hit points (0..100) */
-    char pad_C0[0x20C - 0xC0];
-    struct nuvec_s ball_pos;   /* 0x20C  atlasphere position (NuMtxTranslate) */
+    s32 dead;                  /* 0x0C  kill flag (KillAtlasphere) */
+    s32 ball_health;           /* 0x10  hit points (EarthBoss) */
+    char pad_14[0x24 - 0x14];
+    float inhibitcontroltimer; /* 0x24  ignores the pad while > 0 */
+    char pad_28[0x2C - 0x28];
+    s32 ball_action;           /* 0x2C  AI action (EarthBoss) */
+    char pad_30[0x3C - 0x30];
+    s32 ball_beenhit;          /* 0x3C  hit flag (ShootRoksSkyward) */
+    char pad_40[0x20C - 0x40];
+    struct nuvec_s ball_pos;   /* 0x20C  position (NuMtxTranslate) */
     struct nuvec_s ball_oldpos; /* 0x218  last safe position (UnembedRayCastAtlas) */
     struct nuvec_s ball_lastpos; /* 0x224 */
     struct nuvec_s ball_target; /* 0x230  position the step moves towards */
-    struct nuvec_s ball_vel;   /* 0x23C  atlasphere velocity (<-> obj->mom) */
+    struct nuvec_s ball_vel;   /* 0x23C  velocity (<-> obj->mom) */
     struct nuvec_s ball_oldvel; /* 0x248 */
     struct nuvec_s ball_resolved; /* 0x254 */
     struct nuvec_s ball_force; /* 0x260  gravity tilted by the stick */
-    float atlas_rotparam;      /* 0x26C  rotation tuning float (AdjustAtlasRotations arg) */
+    float ball_radius;         /* 0x26C  radius (InitAtlas, TryUnembeddPoint*) */
     float anglex;              /* 0x270 */
-    float angley;              /* 0x274  atlasphere heading */
+    float angley;              /* 0x274  heading */
     float anglez;              /* 0x278 */
     float inputang;            /* 0x27C  stick direction, camera relative (degrees) */
     float inputmag;            /* 0x280  stick deflection 0..1 */
-    struct nuquat_s rotquat;   /* 0x284  atlasphere render orientation (NuQuatToMtx) */
+    struct nuquat_s rotquat;   /* 0x284  render orientation (NuQuatToMtx) */
     struct nuquat_s rotquat_delta; /* 0x294  rotation accumulator (NuQuatMul target) */
     struct nuquat_s framequat[4];  /* 0x2A4  recent orientations */
     struct nuquat_s lastquat;  /* 0x2E4 */
@@ -532,7 +558,8 @@ struct NEWBUGGY {
     char pad_308[0x338 - 0x308];
     s32 onground;              /* 0x338  ground contact bits */
     s32 platformid;            /* 0x33C  platform rolled on, -1 for none */
-};
+    char pad_340[0x384 - 0x340];
+}; /* 0x384 */
 
 /* ------------------------------------------------------------------ */
 /* creature_s -- one creature / player slot                            */

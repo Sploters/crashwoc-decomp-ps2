@@ -12,7 +12,9 @@ near-match:
   * a parameter that is float in one and integer in the other: under the EE
     EABI floats travel in $f12.. and integers in $a0.., so the argument lands
     in the wrong register class. (Reordering *between* the two classes is
-    harmless, so only the per-class sequence is compared.)
+    harmless, so only the per-class sequence is compared.) Doubles are
+    soft-float and travel in 64-bit GPRs, so `double` vs `float` differs but
+    `double` vs a 64-bit integer does not, and 32- vs 64-bit integers differ.
 
 A definition is trusted as ground truth only when its own function is
 `matching` in the status manifests (the definition then provably reflects
@@ -51,7 +53,12 @@ SOFT_FLOAT = frozenset((
 ))
 KEYWORDS = frozenset(("if", "while", "for", "switch", "return", "sizeof",
                       "do", "else", "case", "goto"))
-FLOAT_TYPES = re.compile(r"\b(f32|f64|float|double)\b")
+FLOAT_TYPES = re.compile(r"\b(f32|float)\b")
+# Doubles are soft-float here (compiler_knowledge.toml: default.soft-double-abi):
+# they travel in a 64-bit GPR, like the 64-bit integers.
+WIDE_TYPES = re.compile(r"\b(f64|double|s64|u64|long\s+long)\b")
+# Disambiguation suffix of duplicated statics in manifest ids (NAME__<vram>).
+DUP_SUFFIX = re.compile(r"__[0-9a-fA-F]{8}$")
 
 # A declaration or definition head: [storage] type name(params) followed by ';'
 # or '{'. One level of nested parentheses covers function-pointer parameters.
@@ -71,36 +78,40 @@ def strip_comments(text):
 
 
 def type_class(text):
-    """'void', 'float' or 'int' (integers and pointers share the GPRs)."""
+    """'void', 'float' (an FPR), 'wide' (a 64-bit GPR: doubles and 64-bit
+    integers) or 'int' (a 32-bit GPR: other integers and pointers)."""
     text = " ".join(text.split())
     if text == "void":
         return "void"
     if "*" in text:
         return "int"
+    if WIDE_TYPES.search(text):
+        return "wide"
     return "float" if FLOAT_TYPES.search(text) else "int"
 
 
 def param_classes(params):
-    """(number of integer params, tuple of float params), or None if variadic."""
+    """(GPR param classes, float params) as tuples, or None if variadic."""
     params = params.strip()
     if params in ("", "void"):
-        return (0, ())
-    ints, floats = 0, []
+        return ((), ())
+    gprs, floats = [], []
     for param in re.split(r",(?![^()]*\))", params):
         param = param.strip()
         if param == "...":
             return None
         if "(" in param or "*" in param or "[" in param:
-            ints += 1
+            gprs.append("int")
             continue
         tokens = param.split()
         if len(tokens) > 1:
             tokens = tokens[:-1]            # drop the parameter name
-        if type_class(" ".join(tokens)) == "float":
+        cls = type_class(" ".join(tokens))
+        if cls == "float":
             floats.append("float")
         else:
-            ints += 1
-    return (ints, tuple(floats))
+            gprs.append(cls)
+    return (tuple(gprs), tuple(floats))
 
 
 def scan_file(path, text=None):
@@ -124,13 +135,18 @@ def scan_file(path, text=None):
                " ".join((ret + name).split()))
 
 
+def function_name(function_id):
+    """The C name behind a manifest id (version:unit:vram:NAME[__<vram>])."""
+    return DUP_SUFFIX.sub("", function_id.split(":")[-1])
+
+
 def load_states(version):
     """{source path: {function name: state}} from the status manifests."""
     states = {}
     for manifest in (REPO / "config" / version / "status").rglob("*.toml"):
         data = tomllib.loads(manifest.read_text())
         states[data["source"]] = {
-            e["id"].split(":")[-1].split("__")[0]: e["state"]
+            function_name(e["id"]): e["state"]
             for e in data.get("function", [])}
     return states
 

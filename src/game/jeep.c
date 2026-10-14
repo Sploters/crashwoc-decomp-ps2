@@ -457,7 +457,7 @@ extern void *superbuffer_end;
 extern struct nugscn_s *world_scene[];
 extern void LoadScreen(char *name);
 extern void TerrainSetCur(void *buf);
-extern void terraininit(s32 level, void **pptr, void *end, s32 a, char *name,
+extern short *terraininit(s32 level, void **pptr, void *end, s32 a, char *name,
                         struct nugscn_s *scene, s32 b);
 extern char D_0061FAC0[];
 #define LoadingAiPathsText D_0061FAC0

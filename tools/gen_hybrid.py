@@ -777,12 +777,13 @@ def _sonyize_seg(seg, profile="default"):
                 next_index += 1
             if next_index < len(seg) and _mtc1_hazard(line, seg[next_index]):
                 out.append("\tnop")
-            elif aligned and reorder and next_index < len(seg):
+            elif aligned and reorder and pad_slots and next_index < len(seg):
                 # An alignment directive (a loop head) hides the next
                 # instruction from the decompals `as`, which then pads the
                 # mtc1 with a hazard nop SN's `as` does not write (retail:
                 # DrawZoffaUFOs, li.s $f21 before its loop). Assemble it and
-                # the alignment without reordering so no nop appears.
+                # the alignment without reordering so no nop appears. Not for
+                # profile `sce`, whose retail assembler behaves like GNU `as`.
                 out[-1:] = ["\t.set\tnoreorder", out[-1]]
                 reorder_before = next_index
     return out

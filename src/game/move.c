@@ -167,9 +167,13 @@ struct objtab_s {
     u8 pad[0x18];            /* 0x08 */
 };
 
-struct gametimer_s {
-    u32 frame;              /* 0x00 */
-    u8 pad[0x14];           /* 0x04 */
+struct gtimer_s {
+    s32 frame;   /* 0x0 */
+    s32 itime;   /* 0x4 */
+    /* unsigned: UpdateTimer's wrap test is `sltiu`, not `slti`. */
+    u32 isec;    /* 0x8 */
+    float ftime; /* 0xC */
+    float fsec;  /* 0x10 */
 };
 
 struct cammtx_s {
@@ -217,7 +221,7 @@ extern struct nuvec_s carpet_pos;
 extern struct anim_s carpet_anim;
 extern struct Nearest_Light_s carpet_lights;
 extern struct objtab_s ObjTab[];
-extern struct gametimer_s GameTimer;
+extern struct gtimer_s GameTimer;
 extern struct cammtx_s GameCam;
 extern s32 GATECOUNT;
 extern s32 plr_gates;
@@ -558,14 +562,49 @@ extern s32 Draw3DObject(s32 object, struct nuvec_s *pos, u16 xrot, u16 yrot, u16
                         f32 scalex, f32 scaley, f32 scalez,
                         struct nugscn_s *scn, struct nuspecial_s *obj, s32 rot);
 
-struct gamelevel_s {
-    u16 flags;               /* 0x00 */
-    u8 pad_02[0x1A];
-}; /* 0x1C */
+struct hub_s {
+    u8 flags;
+    u8 crystals;
+    char pad1;
+    char pad2;
+};
+
+struct time_s {
+    char name[4];
+    u32 itime;
+};
+
+struct level_s {
+    u16 flags;
+    char pad1;
+    char pad2;
+    struct time_s time[3];
+};
 
 struct game_s {
-    u8 pad_000[0x28];
-    struct gamelevel_s level[35]; /* 0x028 */
+    char name[9];
+    u8 vibration;
+    u8 surround;
+    u8 sfx_volume;
+    u8 music_volume;
+    char screen_x;
+    char screen_y;
+    u8 language;
+    struct hub_s hub[6];
+    struct level_s level[35];
+    u8 lives;
+    u8 wumpas;
+    u8 mask;
+    u8 percent;
+    u8 crystals;
+    u8 relics;
+    u8 crate_gems;
+    u8 bonus_gems;
+    u8 gems;
+    u8 gembits;
+    u8 powerbits;
+    u8 empty;
+    u32 cutbits; /* 0x408, struct ends at 0x40C */
 };
 
 extern struct game_s Game;
@@ -573,8 +612,9 @@ extern struct creature_s *player;
 extern s32 TimeTrial;
 extern void PickupBonusGem(s32 mask);
 
-/* Near-match (state=asm, 98%): retail hoists &Game.level[5] (Game+0x8C) and
- * reads flags at +0x28; ee-gcc folds the whole address to Game+0xB4. */
+/* state=asm, but byte-exact (compile-diff 400/400) since game_s uses the full
+ * game.c layout: retail hoists &Game.level[5] (Game+0x8C) and reads flags at
+ * +0x28. Not promoted yet. */
 void CheckGates(struct obj_s *obj) {
     struct spline_s *spl;
     struct nuvec_s *p0;
@@ -666,6 +706,7 @@ void DrawRings(void) {
             } else {
                 obj = 0x67;
             }
+            /* (ObjTab + obj), not ObjTab[obj]: the index form changes codegen. */
             Draw3DObject(obj, pos, ring_xrot[i], ring_yrot[i], 0, 1.0f, 1.0f, 1.0f,
                          (ObjTab + obj)->obj.scene, (ObjTab + obj)->obj.special, 0);
         }

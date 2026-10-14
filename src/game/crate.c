@@ -260,7 +260,7 @@ struct rndrstream_s {
 extern struct rndrstream_s *rndrstream_3d;
 extern u8 *rndrstream_free;
 
-extern s32 NuCameraClipTestPoints(struct nuvec_s *pos, s32 n, s32 mode);
+extern s32 NuCameraClipTestPoints(struct nuvec_s *pos, s32 n, struct numtx_s *wm);
 extern struct numtx_s *NuCameraGetVPCSMtx(void);
 extern void *NuVpGetCurrentViewport(void);
 extern void NuMtxSetRotateXYZ(struct numtx_s *m, s32 *ang);

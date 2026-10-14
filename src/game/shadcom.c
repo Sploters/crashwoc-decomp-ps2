@@ -112,7 +112,7 @@ extern void NuMtlAdd(struct numtl_s *mtl);
 extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuMtlDestroy(struct numtl_s *mtl);
 extern void NuRndrStreamLink(struct nurndrstream_s *rs);
-extern void NuRndrStreamAddMtl(struct nurndrstream_s *rs, struct numtl_s *mtl);
+extern int NuRndrStreamAddMtl(struct nurndrstream_s *rs, struct numtl_s *mtl);
 extern s32 NuRndrStreamTriStrip3dClip(struct nuvtx_tc1_s *vtx, s32 num, struct numtx_s *mtx,
                                       struct nurndrstream_s *rs);
 extern u8 *vpDmaTag_CntEx(u8 *cur, s32 qwc, u32 tag);
