@@ -352,7 +352,8 @@ struct NuGCutTriggerSys {
 };
 
 struct NuGCutSceneDef {
-    char pad0[8];                 /* 0x00 */
+    int version;                  /* 0x00 */
+    int base;                     /* 0x04 load address; relocation delta once loaded */
     float duration;               /* 0x08 */
     char *names;                  /* 0x0C */
     NuGCutCamDef *camdef;         /* 0x10 */
@@ -484,6 +485,21 @@ void NuSetCutSceneRigidCollisionCheckFn(NuCutSceneRigidCollisionCheckFn fn) {
     NuCutSceneRigidCollisionCheck = fn;
 }
 
+
+int instNuGCutSceneCharGetStartMtx(NuGCutScene *scene, char *name, NuMtx *mtx) {
+    NuGCutCharDef *chardef = scene->def->chardef;
+    int i;
+
+    for (i = 0; i < chardef->count; i++) {
+        NuGCutCharDesc *desc = &chardef->chars[i];
+
+        if (strcasecmp(name, desc->name) == 0) {
+            *mtx = desc->mtx;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void NuGCutSceneFixUp(NuGCutSceneDef *def, void *gscene, void *triggers) {
     if (def) {
@@ -1338,4 +1354,46 @@ void instNuGCutCharSysRender(NuGCutScene *scene, float time) {
             }
         }
     }
+}
+
+
+extern char D_00619C78[];               /* error message */
+extern char D_00619CD8[];               /* error message */
+#define loadfail_msg D_00619C78
+#define badversion_msg D_00619CD8
+extern int NuFileLoadBuffer(char *name, void *buf, int size);
+
+NuGCutSceneDef *NuGCutSceneLoad(char *name, char **heap, char **heapend) {
+    NuGCutSceneDef *def;
+    int size;
+
+    *heap = (char *)(((unsigned int)*heap + 15) & ~15);
+    size = NuFileLoadBuffer(name, *heap, *heapend - *heap);
+    if (size == 0) {
+        NuErrorProlog(gcutscn_srcfile, 0x14C)(loadfail_msg);
+    }
+    def = (NuGCutSceneDef *)*heap;
+    *heap = (char *)def + size;
+    if (def->version != 1) {
+        NuErrorProlog(gcutscn_srcfile, 0x151)(badversion_msg, name, def->version);
+    }
+    def->base = (int)def - def->base;
+    def->names = def->names ? def->names + def->base : 0;
+    if (def->camdef) {
+        NuGCutCamsSysFixPtrs(def, def->base);
+    }
+    if (def->locatordef) {
+        NuGCutLocatorSysFixPtrs(def, def->base);
+    }
+    if (def->rigiddef) {
+        NuGCutRigidSysFixPtrs(def, def->base);
+    }
+    if (def->chardef) {
+        NuGCutCharSysFixPtrs(def, def->base);
+    }
+    if (def->triggerdef) {
+        NuGCutTriggerSysFixPtrs(def, def->base);
+    }
+    def->bounds = def->bounds ? (NuGCutBounds *)((char *)def->bounds + def->base) : 0;
+    return def;
 }

@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0078:001aae88:NuGCutSceneLoad"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001aaff8:instNuGCutSceneUpdate"
@@ -89,7 +89,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad1b0:instNuGCutSceneCharGetStartMtx"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0078:001ad2d0:NuGCutSceneFixUp"
