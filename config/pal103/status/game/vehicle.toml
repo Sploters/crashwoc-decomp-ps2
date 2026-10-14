@@ -105,7 +105,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00207ca8:ProcessSatellite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00207e60:InitSpaceStation"
@@ -117,7 +117,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002082b8:DrawSpaceStation"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002084a0:ProcessSpaceStation"

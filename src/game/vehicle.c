@@ -1515,7 +1515,15 @@ struct spacestation_s {
     struct numtx_s mtx;
     s32 field40;               /* 0x40 */
     struct nuvec_s pos;
-    char pad_50[0xD0 - 0x50];
+    char pad_50[0x60 - 0x50];
+    s32 seen;                  /* 0x60 */
+    char pad_64[0x6C - 0x64];
+    f32 satelliteangle;        /* 0x6C */
+    char pad_70[0x7C - 0x70];
+    struct numtx_s shieldmtx;  /* 0x7C */
+    s32 shielddraw;            /* 0xBC frames left to show the shield */
+    s32 shieldgreen;           /* 0xC0 */
+    char pad_C4[0xD0 - 0xC4];
 };
 extern struct spacestation_s SpaceStationList[];
 
@@ -1831,6 +1839,54 @@ struct satellite_s {
 };
 extern struct satellite_s SatelliteList[];
 
+extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
+extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
+extern s32 CollideGliderBullets(struct nuvec_s *pos, f32 radius, s32 enemy, f32 yscale,
+                                s32 a, s32 b);
+extern void AddScreenWumpa(f32 x, f32 y, f32 z, s32 n);
+extern void ClockOff(void);
+extern void AddGameDebris(s32 type, struct nuvec_s *pos);
+extern void SeekAngHalfLife360f(f32 *dest, f32 target, f32 halflife, f32 dt);
+extern void MyGameSfxLoop(s32 id, struct nuvec_s *pos, s32 vol);
+extern short CRASHTEROIDSSATELLITEVOL;
+
+void ProcessSatellite(struct satellite_s *sat)
+{
+    s32 id;
+    short vol;
+    struct nuvec_s vec;
+
+    MyAnimateModelNew(&sat->draw, 0.59999996f);
+    NuVecRotateY(&vec, SetNuVecPntr(0.0f, 0.0f, 18.0f),
+                 (sat->angle + sat->station->satelliteangle) * 182.04445f);
+    NuVecMtxTransform(&sat->pos, &vec, &sat->station->mtx);
+    CollideGliderBullets(&sat->pos, 3.0f, 1, 0.6666667f, 0, 1);
+    if (CollideGliderBullets(&sat->pos, 3.0f, 0, 0.6666667f, 0, 0) != 0) {
+        sat->hits--;
+        if (sat->hits > 0) {
+            MyGameSfx(0xD4, &sat->pos, 0x3FFF);
+        }
+        AddScreenWumpa(sat->pos.x, sat->pos.y, sat->pos.z, 1);
+        ClockOff();
+    }
+    if (sat->hits < 1 || sat->destroyed != 0) {
+        sat->active = 0;
+        AddGameDebris(0x17, &sat->pos);
+        MyGameSfx(0xCD, &sat->pos, 0x7FFF);
+    }
+    SeekAngHalfLife360f(&sat->tilt[0], sat->tiltdest[0], 1.0f, 0.02f);
+    SeekAngHalfLife360f(&sat->tilt[1], sat->tiltdest[1], 1.0f, 0.02f);
+    id = -1;
+    vol = 0;
+    if (Level == 0x1A) {
+        vol = CRASHTEROIDSSATELLITEVOL;
+        id = 0xD6;
+    }
+    if (id != -1) {
+        MyGameSfxLoop(id, &sat->pos, vol);
+    }
+}
+
 extern void NuMtxPreRotateY(struct numtx_s *m, s32 r);
 extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
 
@@ -1864,7 +1920,37 @@ extern void NuFntSetPen(s32 col);
 extern void NuFntScale(s32 x, s32 y);
 extern void ProcessSatellite(struct satellite_s *s);
 extern void ProcessSpaceStation(struct spacestation_s *s);
-extern void DrawSpaceStation(struct spacestation_s *s);
+extern void NuMtxPreRotateY(struct numtx_s *m, s32 r);
+
+void DrawSpaceStation(struct spacestation_s *station)
+{
+    s32 i;
+
+    station->seen = 0;
+    i = 0x6D;
+    if ((ObjTab + i)->obj.special != 0) {
+        mTEMP = station->mtx;
+        station->seen = NuRndrGScnObj((ObjTab + i)->obj.scene->gobjs[(ObjTab + i)->obj.special->instance->objid],
+                                      &mTEMP);
+    }
+    if (station->seen != 0) {
+        if (station->shielddraw == 0) {
+            return;
+        }
+        i = 0x71;
+        if (station->shieldgreen != 0) {
+            i = 0x70;
+        }
+        if ((ObjTab + i)->obj.special != 0) {
+            mTEMP = station->shieldmtx;
+            NuRndrGScnObj((ObjTab + i)->obj.scene->gobjs[(ObjTab + i)->obj.special->instance->objid], &mTEMP);
+            NuMtxPreRotateY(&station->shieldmtx, 0x2000);
+        }
+    }
+    if (station->shielddraw != 0) {
+        station->shielddraw--;
+    }
+}
 
 void DrawVehicleTrail(void)
 {
