@@ -2335,7 +2335,7 @@ void DrawAsteroids(void)
 /* GunBoatList: stride 0x134, 4 entries. */
 struct gunboat_s {
     s32 active;                /* 0x000 */
-    char pad_004[0x008 - 0x004];
+    s32 character;             /* 0x004 -1 if the model failed to load */
     struct MYDRAW draw;        /* 0x008 */
     struct nuvec_s pos;        /* 0x0E8 */
     f32 yaw;                   /* 0x0F4 */
@@ -2343,9 +2343,47 @@ struct gunboat_s {
     f32 yawwobble;             /* 0x0FC */
     char pad_100[0x118 - 0x100];
     s32 seen;                  /* 0x118 */
-    char pad_11C[0x134 - 0x11C];
+    s32 action;                /* 0x11C */
+    s32 lastaction;            /* 0x120 */
+    char pad_124[0x134 - 0x124];
 };
 extern struct gunboat_s GunBoatList[];
+
+void InitGunBoat(struct nuvec_s *pos, f32 yaw, s32 character)
+{
+    struct gunboat_s *boat;
+    s32 id;
+
+    boat = &GunBoatList[character];
+    if (boat->active != 0) {
+        return;
+    }
+    memset(&GunBoatList[character], 0, sizeof(struct gunboat_s));
+    boat->character = character;
+    boat->pos = *pos;
+    boat->yaw = yaw;
+    boat->action = 1;
+    boat->lastaction = -1;
+    boat->pitch = 45.0f;
+    switch (character) {
+    case 0:
+        id = 0x68;
+        break;
+    case 1:
+        id = 0x69;
+        break;
+    case 2:
+        id = 0x67;
+        break;
+    default:
+        id = 0x66;
+        break;
+    }
+    if (MyInitModelNew(&boat->draw, id, 0x22, 0, 0, &boat->pos) == 0) {
+        boat->character = -1;
+    }
+    boat->active = 1;
+}
 
 void DrawGunBoat(struct gunboat_s *boat)
 {
