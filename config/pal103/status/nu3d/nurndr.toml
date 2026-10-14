@@ -37,7 +37,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0040:00120590:NuRndrFxBlueAndGreenData"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001207d0:NuRndrFxSpriteSet"
@@ -353,7 +353,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:0012fc98:NuRndrRect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:0012fdf0:NuRndrLine3dDbg"
@@ -433,7 +433,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001304e8:NuRndrFxBlueOrGreenData"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:00130638:NuRndrOTInsertItem"
