@@ -487,7 +487,8 @@ struct NEWBUGGY {
     char pad_04[0x08 - 0x04];
     s32 type;                  /* 0x08  atlasphere type (InitAtlas) */
     s32 fieldC;                /* 0x0C  kill flag (KillAtlasphere) */
-    char pad_10[0x28 - 0x10];
+    char pad_10[0x24 - 0x10];
+    float inhibitcontroltimer; /* 0x24  atlasphere ignores the pad while > 0 */
     float timer;               /* 0x28  ProcessTimer countdown (ProcessGliderMovement) */
     char pad_2C[0x30 - 0x2C];
     struct nuvec_s pos;        /* 0x30  glider position (NuMtxTranslate) */
@@ -515,7 +516,9 @@ struct NEWBUGGY {
     float atlas_rotparam;      /* 0x26C  rotation tuning float (AdjustAtlasRotations arg) */
     float anglex;              /* 0x270 */
     float angley;              /* 0x274  atlasphere heading */
-    char pad_278[0x284 - 0x278];
+    float anglez;              /* 0x278 */
+    float inputang;            /* 0x27C  stick direction, camera relative (degrees) */
+    float inputmag;            /* 0x280  stick deflection 0..1 */
     struct nuquat_s rotquat;   /* 0x284  atlasphere render orientation (NuQuatToMtx) */
     struct nuquat_s rotquat_delta; /* 0x294  rotation accumulator (NuQuatMul target) */
     struct nuquat_s framequat[4];  /* 0x2A4  recent orientations */
@@ -523,7 +526,8 @@ struct NEWBUGGY {
     s32 lasthit;               /* 0x2F4 */
     s32 axis;                  /* 0x2F8 */
     struct nuvec_s lastnormal; /* 0x2FC  last ground normal */
-    char pad_308[0x33C - 0x308];
+    char pad_308[0x338 - 0x308];
+    s32 onground;              /* 0x338  ground contact bits */
     s32 platformid;            /* 0x33C  platform rolled on, -1 for none */
 };
 

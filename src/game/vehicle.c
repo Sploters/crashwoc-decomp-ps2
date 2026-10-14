@@ -1479,6 +1479,8 @@ struct cammtx_s {
     struct numtx_s m;          /* 0x00 */
     char pad_40[0xA4 - 0x40];
     struct nuvec_s pos;        /* 0xA4 */
+    char pad_B0[0xF8 - 0xB0];
+    s32 yrot;                  /* 0xF8 */
 };
 extern struct cammtx_s GameCam;
 
@@ -1802,6 +1804,79 @@ void InitAtlas(struct NEWBUGGY *Atlas, struct nuvec_s *Pos, f32 Radius, s32 Type
         Atlas->owner->obj.bot = cdata->min.y;
         Atlas->owner->obj.top = cdata->max.y;
         Atlas->owner->obj.vehicle = 0x53;
+    }
+}
+
+struct nupad_s {
+    char pad_000[0x55C];
+    u32 paddata;               /* 0x55C */
+    char pad_560[0x57E - 0x560];
+    u8 l_alg_x;                /* 0x57E left stick */
+    u8 l_alg_y;                /* 0x57F */
+};
+
+struct gametimer_s {
+    u32 frame;                 /* 0x00 */
+    char pad_04[0x18 - 0x04];
+};
+extern struct gametimer_s GameTimer;
+
+extern s32 ProcessTimer(f32 *timer);
+
+extern s32 ProcessTimer(f32 *timer);
+
+/* Turns the pad into the atlasphere's camera-relative steering input. */
+void ControlAtlas(struct NEWBUGGY *Atlas, struct nupad_s *Pad, f32 DeltaTime)
+{
+    struct nuvec_s ctrl;
+    f32 anx;
+    f32 anz;
+    f32 scale;
+
+    anx = (f32)(Pad->l_alg_x - 0x7F);
+    anz = (f32)(Pad->l_alg_y - 0x7F);
+    if (Pad->paddata & 0x4000) {
+        anz = 127.0f;
+    }
+    if (Pad->paddata & 0x1000) {
+        anz = -127.0f;
+    }
+    if (Pad->paddata & 0x2000) {
+        anx = 127.0f;
+    }
+    if (Pad->paddata & 0x8000) {
+        anx = -127.0f;
+    }
+    if (ProcessTimer(&Atlas->inhibitcontroltimer) == 0) {
+        if (Atlas->inhibitcontroltimer < 1.0f) {
+            scale = 1.0f - Atlas->inhibitcontroltimer;
+        } else {
+            scale = 0.0f;
+        }
+        anx *= scale;
+        anz *= scale;
+    }
+    if ((Atlas->onground & 3) == 0 && Level == 0x15) {
+        anx = 0.0f;
+        anz = 0.0f;
+    }
+    ctrl.x = anx;
+    ctrl.z = -anz;
+    ctrl.y = 0.0f;
+    if (GameTimer.frame < 50) {
+        ctrl.x = ctrl.z = 0.0f;
+    }
+    Atlas->inputmag = NuVecMag(&ctrl);
+    if (Atlas->inputmag >= 40.0f) {
+        Atlas->inputang = ((GameCam.yrot + NuAtan2D(ctrl.x, ctrl.z)) & 0xFFFF) / 182.04445f;
+        Atlas->inputmag = ((Atlas->inputmag - 40.0f) * 1.02f) / 88.0f;
+        if (Atlas->inputmag > 1.0f) {
+            Atlas->inputmag = 1.0f;
+        } else if (Atlas->inputmag < -1.0f) {
+            Atlas->inputmag = -1.0f;
+        }
+    } else {
+        Atlas->inputmag = 0.0f;
     }
 }
 
