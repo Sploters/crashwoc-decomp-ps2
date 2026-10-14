@@ -833,8 +833,6 @@ void DrawFarmLevelExtra(void)
 }
 
 extern struct nuvec_s BazookaTokenPos;
-extern struct nuvec_s D_005A73E8;
-#define bazooka_token_dest D_005A73E8
 extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void NuVecScaleAccum(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void MyAnimateModelNew(struct MYDRAW *draw, f32 dt);
@@ -848,7 +846,7 @@ void ProcessBazookaToken(void)
         t = WeatherBoss.draw.anim.anim_time /
             WeatherBoss.draw.model->anmdata[WeatherBoss.draw.anim.action]->time;
         NuVecScale(&pos, &BazookaTokenPos, 1.0f - t);
-        NuVecScaleAccum(&pos, &bazooka_token_dest, t);
+        NuVecScaleAccum(&pos, &PlayerGlider.pos, t);
         pos.y += t * 0.75f;
         BazookaTokenCurrentPos = pos;
         MyAnimateModelNew(&IconMainDraw, 0.59999996f);
@@ -1011,8 +1009,7 @@ struct nuspecial_s {
 };
 
 struct objtab_s {
-    struct nugscn_s *scene;          /* 0x00 */
-    struct nuspecial_s *special;     /* 0x04 */
+    struct nuhspecial_s obj;         /* 0x00 */
     char pad_08[0x20 - 0x08];
 };
 
@@ -1038,9 +1035,9 @@ void DrawJeepRock(struct jeeprock_s *rock)
     }
     rock->seen = 0;
     entry = &ObjTab[obj];
-    special = entry->special;
+    special = entry->obj.special;
     if (special != 0) {
-        rock->seen = NuRndrGScnObj(entry->scene->gobjs[special->instance->objid],
+        rock->seen = NuRndrGScnObj(entry->obj.scene->gobjs[special->instance->objid],
                                    &mTEMP);
     }
 }
@@ -1263,6 +1260,29 @@ s32 CheckAgainstRocks(struct nuvec_s *pos, struct nuvec_s *move)
     return hit;
 }
 
+extern s32 JonnyOn;
+extern s32 ebgo;
+extern struct nuvec_s ebpos[3];
+extern f32 ebtime[3];
+extern void NuSpecialDrawAt(struct nuhspecial_s *obj, struct numtx_s *m);
+
+void DrawJonny(void)
+{
+    struct numtx_s m;
+    s32 i;
+
+    if (JonnyOn == 1 && ebgo != 0) {
+        for (i = 0; i < 3; i++) {
+            if (ebpos[i].x != 99999.0f) {
+                NuMtxSetRotationX(&m, ebtime[i] * 128.0f);
+                NuMtxRotateZ(&m, ebtime[i] * 200.0f);
+                NuMtxTranslate(&m, &ebpos[i]);
+                NuSpecialDrawAt(&ObjTab[0x58].obj, &m);
+            }
+        }
+    }
+}
+
 extern struct nuvec_s ShadNorm;
 extern s32 TryUnembeddPointDir(struct nuvec_s *pos, struct nuvec_s *norm, struct nuvec_s *dir,
                                s16 *handle, f32 radius);
@@ -1349,13 +1369,25 @@ struct satellite_s {
     f32 angle;
     f32 tilt[2];
     f32 tiltdest[2];
-    char pad_110[0x114 - 0x110];
+    s32 seen;                  /* 0x110 */
     s32 hits;
     s32 destroyed;
     struct spacestation_s *station;
     char pad_120[0x124 - 0x120];
 };
 extern struct satellite_s SatelliteList[];
+
+extern void NuMtxPreRotateY(struct numtx_s *m, s32 r);
+extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+
+void DrawSatellite(struct satellite_s *sat)
+{
+    mTEMP = sat->station->mtx;
+    NuMtxPreRotateY(&mTEMP, sat->angle * 182.04445f);
+    NuMtxPreScale(&mTEMP, SetNuVecPntr(3.0f, 3.0f, 3.0f));
+    *(struct nuvec_s *)&mTEMP._30 = sat->pos;
+    sat->seen = MyDrawModelNew(&sat->draw, &mTEMP, 0);
+}
 
 extern s32 D_005A74C8[];   /* far scratch, zeroed each ProcessSpaceStations */
 extern void *app_fnt;
@@ -1407,6 +1439,46 @@ inline void DrawZoffa(struct zoffa_s *ufo)
     NuMtxRotateY(&mTEMP, (ufo->yaw + 180.0f) * 182.0444489f);
     NuMtxTranslate(&mTEMP, &ufo->pos);
     ufo->seen = MyDrawModelNew(&ufo->draw, &mTEMP, ufo->locators);
+}
+
+extern struct zoffa_s EnemyZoffa[4];
+
+void DrawZoffaUFOs(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0) {
+            DrawZoffa(&EnemyZoffa[i]);
+        }
+    }
+}
+
+/* Whether `a` and `b` are within `radius`, with the y distance scaled. */
+static inline s32 CheckSphereCollide(struct nuvec_s *a, struct nuvec_s *b, f32 radius, f32 yscale)
+{
+    struct nuvec_s rel;
+
+    rel.x = a->x - b->x;
+    rel.y = (a->y - b->y) * yscale;
+    rel.z = a->z - b->z;
+    return rel.x * rel.x + rel.y * rel.y + rel.z * rel.z <= radius * radius;
+}
+
+/* Whether `pos` is clear of the player's glider and every live UFO. */
+s32 SafeFromCollisions(struct nuvec_s *pos)
+{
+    s32 i;
+
+    if (CheckSphereCollide(pos, &PlayerGlider.pos, 3.0f, 1.0f)) {
+        return 0;
+    }
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0 && CheckSphereCollide(&EnemyZoffa[i].pos, pos, 3.0f, 1.0f)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 struct hovablimp_s *FindFreeHova(void)
@@ -1588,8 +1660,6 @@ struct asteroid_s {
 extern struct asteroid_s AsteroidList[];   /* far; 100 entries, InitAsteroid's argument is always 0 */
 extern void InitAsteroid(s32 x);
 
-extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
-
 void DrawAsteroid(struct asteroid_s *asteroid)
 {
     if (asteroid->stealth != 0) {
@@ -1602,9 +1672,9 @@ void DrawAsteroid(struct asteroid_s *asteroid)
         NuMtxTranslate(&mTEMP, &asteroid->pos);
     }
     asteroid->inview = 0;
-    if (ObjTab[0x50].special != 0) {
+    if (ObjTab[0x50].obj.special != 0) {
         asteroid->inview = NuRndrGScnObj(
-            ObjTab[0x50].scene->gobjs[ObjTab[0x50].special->instance->objid], &mTEMP);
+            ObjTab[0x50].obj.scene->gobjs[ObjTab[0x50].obj.special->instance->objid], &mTEMP);
     }
 }
 

@@ -61,7 +61,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00205440:DrawZoffaUFOs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00205548:FindZoffaRestartPoint"
@@ -185,7 +185,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0020c498:SafeFromCollisions"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020c5b0:LinesIntersectEllipse"
@@ -625,7 +625,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d4e8:DrawSatellite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021d610:ProcessSatellites"
@@ -857,7 +857,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021f7d8:DrawJonny"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f8d8:UpdateRumbleCamTween"
