@@ -115,7 +115,7 @@ struct plrevent_s {
     struct spline_s *spl;           /* 0x00 */
     struct nuhspecial_s obj[16];    /* 0x04 */
     struct nuvec_s pos;             /* 0x84 */
-    u8 triggered;                   /* 0x90 */
+    s8 triggered;                   /* 0x90 */
     s8 iRAIL;                       /* 0x91 */
     s16 iALONG;                     /* 0x92 */
     f32 fALONG;                     /* 0x94 */
@@ -223,6 +223,10 @@ extern s32 GATECOUNT;
 extern s32 plr_gates;
 extern u64 gate_bits;
 extern s32 bonusgem_ok;
+extern s32 LineCrossed(f32 xold, f32 zold, f32 xnew, f32 znew,
+                       f32 x0, f32 z0, f32 x1, f32 z1);
+extern s32 StartHGobjAnim(struct nuhspecial_s *obj);
+extern void JudderGameCamera(struct cammtx_s *cam, f32 time, struct nuvec_s *pos);
 extern s32 temp_iRAIL;
 extern s32 temp_iALONG;
 extern f32 temp_fALONG;
@@ -546,6 +550,128 @@ void DrawCarpet(void) {
     }
 }
 
+extern s32 RINGCOUNT;
+extern s32 i_ring;
+extern u16 ring_xrot[];
+extern u16 ring_yrot[];
+extern s32 Draw3DObject(s32 object, struct nuvec_s *pos, u16 xrot, u16 yrot, u16 zrot,
+                        f32 scalex, f32 scaley, f32 scalez,
+                        struct nugscn_s *scn, struct nuspecial_s *obj, s32 rot);
+
+struct gamelevel_s {
+    u16 flags;               /* 0x00 */
+    u8 pad_02[0x1A];
+}; /* 0x1C */
+
+struct game_s {
+    u8 pad_000[0x28];
+    struct gamelevel_s level[35]; /* 0x028 */
+};
+
+extern struct game_s Game;
+extern struct creature_s *player;
+extern s32 TimeTrial;
+extern void PickupBonusGem(s32 mask);
+
+/* Near-match (state=asm, 98%): retail hoists &Game.level[5] (Game+0x8C) and
+ * reads flags at +0x28; ee-gcc folds the whole address to Game+0xB4. */
+void CheckGates(struct obj_s *obj) {
+    struct spline_s *spl;
+    struct nuvec_s *p0;
+    struct nuvec_s *p1;
+    s32 i;
+    s32 cross;
+    s32 sfx;
+
+    if (TimeTrial == 0 && SplTab[28].spl != 0) {
+        spl = SplTab[28].spl;
+        for (i = 0; i < GATECOUNT; i++) {
+            if ((gate_bits & (1 << i)) == 0) {
+                p1 = (struct nuvec_s *)(spl->pts + i * 2 * spl->ptsize);
+                p0 = (struct nuvec_s *)(spl->pts + (i * 2 + 1) * spl->ptsize);
+                cross = LineCrossed(obj->oldpos.x, obj->oldpos.z, obj->pos.x, obj->pos.z,
+                                    p1->x, p1->z, p0->x, p0->z);
+                if (cross != 0) {
+                    NewBuzz(&player->rumble, 5);
+                }
+                if (cross == 2) {
+                    sfx = 0x36;
+                    gate_bits |= 1 << i;
+                    plr_gates++;
+                    if (plr_gates == GATECOUNT) {
+                        if (Level == 5 && (Game.level[Level].flags & 0x20) == 0) {
+                            PickupBonusGem(4);
+                        }
+                    }
+                } else if (cross == 1) {
+                    sfx = 0x3C;
+                } else {
+                    sfx = -1;
+                }
+                if (sfx != -1) {
+                    GameSfx(sfx, 0);
+                }
+            }
+        }
+    }
+}
+
+extern struct nuvec_s ring_pos;
+
+void ResetRings(void) {
+    struct nuvec_s *pos;
+    struct nuvec_s v;
+    s32 i;
+
+    RINGCOUNT = 0;
+    if (SplTab[64].spl != 0 && ObjTab[0x67].obj.special != 0 && ObjTab[0x68].obj.special != 0) {
+        RINGCOUNT = SplTab[64].spl->len / 2;
+        if (RINGCOUNT > 0x30) {
+            RINGCOUNT = 0x30;
+        }
+        pos = (struct nuvec_s *)SplTab[64].spl->pts;
+        GetALONG(pos, 0, -1, -1, 1);
+        if (AheadOfCheckpoint(temp_iRAIL, temp_iALONG, temp_fALONG) != 0) {
+            i_ring = 0;
+        }
+        for (i = 0; i < RINGCOUNT; i++, pos += 2) {
+            NuVecSub(&v, pos + 1, pos);
+            ring_yrot[i] = NuAtan2D(v.x, v.z);
+            ring_xrot[i] = -NuAtan2D(v.y, NuFsqrt(v.x * v.x + v.z * v.z));
+            if (i == i_ring) {
+                ring_pos = *pos;
+            }
+        }
+    }
+}
+
+void DrawRings(void) {
+    struct spline_s *spl;
+    struct nuvec_s *pos;
+    s32 obj;
+    s32 i;
+
+    if (RINGCOUNT != 0) {
+        spl = SplTab[64].spl;
+        for (i = 0; i < RINGCOUNT; i++) {
+            pos = (struct nuvec_s *)(spl->pts + i * 2 * spl->ptsize);
+            if (i == RINGCOUNT - 1 && i_ring == RINGCOUNT) {
+                obj = 0x69;
+            } else if (i == i_ring) {
+                if (i == 0 || i == RINGCOUNT - 1) {
+                    obj = 0x69;
+                } else {
+                    obj = 0x68;
+                }
+            } else {
+                obj = 0x67;
+            }
+            Draw3DObject(obj, pos, ring_xrot[i], ring_yrot[i], 0, 1.0f, 1.0f, 1.0f,
+                         (ObjTab + obj)->obj.scene, (ObjTab + obj)->obj.special, 0);
+        }
+    }
+}
+
 void AnimateSWIMMING(struct creature_s *plr) {
     struct MoveInfo *info = &SwimmingMoveInfo;
     u64 d;
@@ -743,6 +869,40 @@ void ResetGates(void) {
             gate_bits = 0;
             if (Level == 5) {
                 bonusgem_ok = 0;
+            }
+        }
+    }
+}
+
+void CheckPlayerEvents(struct obj_s *obj) {
+    struct plrevent_s *ev;
+    struct nuvec_s *p0;
+    struct nuvec_s *p1;
+    s32 i;
+    s32 j;
+    s32 started;
+
+    if (world_scene[0] != 0) {
+        ev = PlrEvent;
+        for (i = 0; i < 8; i++, ev++) {
+            if (ev->spl != 0) {
+                p0 = (struct nuvec_s *)ev->spl->pts;
+                p1 = (struct nuvec_s *)(ev->spl->pts + ev->spl->ptsize);
+                if (ev->triggered == 0 &&
+                    LineCrossed(obj->oldpos.x, obj->oldpos.z, obj->pos.x, obj->pos.z,
+                                p0->x, p0->z, p1->x, p1->z) == 2) {
+                    ev->triggered = 1;
+                    started = 0;
+                    for (j = 0; j < 16; j++) {
+                        if (StartHGobjAnim(&ev->obj[j]) != 0) {
+                            started++;
+                        }
+                    }
+                    if (started != 0) {
+                        JudderGameCamera(&GameCam, 0.5f, 0);
+                        GameSfx(0x3B, 0);
+                    }
+                }
             }
         }
     }
