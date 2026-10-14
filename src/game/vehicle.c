@@ -1880,6 +1880,56 @@ void ControlAtlas(struct NEWBUGGY *Atlas, struct nupad_s *Pad, f32 DeltaTime)
     }
 }
 
+extern void ApplyFriction(f32 *val, f32 rate, f32 dt);
+extern void SeekHalfLife(f32 *dest, f32 target, f32 halflife, f32 dt);
+extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
+
+/* One physics step: friction, gravity tilted towards the stick, then the
+   new target position and velocity. */
+void ProcessMovementAtlas(struct NEWBUGGY *Atlas, f32 DeltaTime)
+{
+    struct nuvec_s resolved;
+    f32 time2;
+    f32 scale;
+    f32 newmag;
+    f32 mag;
+    f32 tilt;
+
+    time2 = DeltaTime * DeltaTime;
+    mag = NuVecMag(&Atlas->ball_vel);
+    if (mag > 0.0f) {
+        newmag = mag;
+        if (mag < 4.0f) {
+            scale = 0.05f;
+        } else {
+            scale = (mag - 4.0f) * 0.1f;
+        }
+        ApplyFriction(&newmag, scale, DeltaTime);
+        Atlas->ball_vel.x *= newmag / mag;
+        Atlas->ball_vel.y *= newmag / mag;
+        Atlas->ball_vel.z *= newmag / mag;
+    }
+    Atlas->ball_force = SetNuVec(0.0f, -10.0f, 0.0f);
+    NuVecRotateY(&resolved, &Atlas->ball_vel, (s32)(-Atlas->inputang * 182.04445f));
+    if (resolved.z < 0.0f) {
+        resolved.z = 0.0f;
+    }
+    if (Level == 0x15) {
+        tilt = -Atlas->inputmag * 89.0f;
+    } else {
+        tilt = -Atlas->inputmag * 53.0f;
+    }
+    SeekHalfLife(&tilt, 0.0f, 3.0f, resolved.z);
+    NuVecRotateX(&Atlas->ball_force, &Atlas->ball_force, (s32)(tilt * 182.04445f));
+    NuVecRotateY(&Atlas->ball_force, &Atlas->ball_force, (s32)(Atlas->inputang * 182.04445f));
+    Atlas->ball_target.x = Atlas->ball_pos.x + Atlas->ball_vel.x * DeltaTime + time2 * Atlas->ball_force.x * 0.5f;
+    Atlas->ball_target.y = Atlas->ball_pos.y + Atlas->ball_vel.y * DeltaTime + time2 * Atlas->ball_force.y * 0.5f;
+    Atlas->ball_target.z = Atlas->ball_pos.z + Atlas->ball_vel.z * DeltaTime + time2 * Atlas->ball_force.z * 0.5f;
+    Atlas->ball_vel.x += Atlas->ball_force.x * DeltaTime;
+    Atlas->ball_vel.y += Atlas->ball_force.y * DeltaTime;
+    Atlas->ball_vel.z += Atlas->ball_force.z * DeltaTime;
+}
+
 extern struct nuvec_s D_0061F750[]; /* fixed ray direction, far from $gp */
 extern f32 D_0062DF04;
 extern s32 TryUnembeddPointDirSimple(struct nuvec_s *pos, struct nuvec_s *dir,

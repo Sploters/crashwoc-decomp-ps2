@@ -510,9 +510,12 @@ struct NEWBUGGY {
     char pad_C0[0x20C - 0xC0];
     struct nuvec_s ball_pos;   /* 0x20C  atlasphere position (NuMtxTranslate) */
     struct nuvec_s ball_oldpos; /* 0x218  last safe position (UnembedRayCastAtlas) */
-    char pad_224[0x23C - 0x224];
+    struct nuvec_s ball_lastpos; /* 0x224 */
+    struct nuvec_s ball_target; /* 0x230  position the step moves towards */
     struct nuvec_s ball_vel;   /* 0x23C  atlasphere velocity (<-> obj->mom) */
-    char pad_248[0x26C - 0x248];
+    struct nuvec_s ball_oldvel; /* 0x248 */
+    struct nuvec_s ball_resolved; /* 0x254 */
+    struct nuvec_s ball_force; /* 0x260  gravity tilted by the stick */
     float atlas_rotparam;      /* 0x26C  rotation tuning float (AdjustAtlasRotations arg) */
     float anglex;              /* 0x270 */
     float angley;              /* 0x274  atlasphere heading */
