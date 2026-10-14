@@ -371,7 +371,7 @@ extern void ProcessFireFlyIntro(void);
 extern void InitWeatherBoss_a(void);
 extern void ProcessWeatherBoss_a(struct weatherboss_s *wb);
 extern void DrawWeatherBoss_a(struct weatherboss_s *wb);
-extern void AddRockVel(struct nuvec_s *pos, struct nuvec_s *vel, s32 owner);
+extern struct jeeprock_s *AddRockVel(struct nuvec_s *pos, struct nuvec_s *vel, f32 radius, s32 owner);
 extern void *memset(void *dst, s32 val, s32 len);
 extern char *best_cRPos;
 
@@ -450,14 +450,18 @@ struct jeeprock_s {
     struct nuvec_s vel;        /* 0x00C */
     s32 exists;                /* 0x018 */
     s32 seen;                  /* 0x01C */
-    char pad_020[0x06C - 0x020];
+    char pad_020[0x024 - 0x020];
+    s32 explode;               /* 0x024 set when something hits the rock */
+    char pad_028[0x06C - 0x028];
     s32 grounded;              /* 0x06C */
     char pad_070[0x23C - 0x070];
     struct nuvec_s holdpos;    /* 0x23C */
     struct nuvec_s oldholdpos; /* 0x248 */
     char pad_254[0x26C - 0x254];
     struct nuvec_s holdvel;    /* 0x26C */
-    char pad_278[0x2B4 - 0x278];
+    char pad_278[0x29C - 0x278];
+    f32 radius;                /* 0x29C */
+    char pad_2A0[0x2B4 - 0x2A0];
     struct nuquat_s quat;      /* 0x2B4 */
     char pad_2C4[0x3B4 - 0x2C4];
     s32 held;                  /* 0x3B4 */
@@ -957,14 +961,33 @@ void UpdateRumbleCamTween(void)
     }
 }
 
+/* Replace a rock with two smaller ones flying apart. */
+void SmashRockIntoTwo(struct jeeprock_s *rock)
+{
+    struct nuvec_s vel;
+    struct nuvec_s pos;
+    f32 radius;
+
+    radius = rock->radius / 1.2599f; /* half the volume each */
+    vel = rock->vel;
+    pos = rock->pos;
+    pos.x -= radius * 0.5f;
+    vel.x -= 2.0f;
+    AddRockVel(&pos, &vel, radius, 0);
+    pos.x += radius * 1.01f;
+    vel.x += 4.0f;
+    AddRockVel(&pos, &vel, radius, 0);
+    rock->explode = 1;
+}
+
 void InitRumblePanel(void)
 {
     NumRockPanel = 0;
 }
 
-void AddRock(struct nuvec_s *pos, s32 owner)
+void AddRock(struct nuvec_s *pos, f32 radius, s32 owner)
 {
-    AddRockVel(pos, &v000, owner);
+    AddRockVel(pos, &v000, radius, owner);
 }
 
 
@@ -1199,6 +1222,46 @@ extern struct nuvec_s D_0061F750[]; /* fixed ray direction, far from $gp */
 extern f32 D_0062DF04;
 extern s32 TryUnembeddPointDirSimple(struct nuvec_s *pos, struct nuvec_s *dir,
                                      s16 *handle, s32 n, f32 x, f32 y);
+
+struct gdeb_s {
+    s32 i;                     /* 0x0 debris effect */
+    char *name;                /* 0x4 */
+    u64 levbits;               /* 0x8 */
+};
+extern struct gdeb_s GDeb[];
+
+extern s32 Paused;
+extern s32 FlyingLevelVictoryDance;
+extern void AddVariableShotDebrisEffect(s32 effect, struct nuvec_s *pos, s32 n,
+                                        short xrot, short yrot);
+extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
+extern f32 NuVecMagSqr(struct nuvec_s *v);
+
+/* On the jeep level, mark every rock within 0.75 of `pos + move` to explode.
+ * Returns whether any was hit. */
+s32 CheckAgainstRocks(struct nuvec_s *pos, struct nuvec_s *move)
+{
+    struct nuvec_s rel;
+    struct nuvec_s p;
+    s32 i;
+    s32 hit;
+
+    hit = 0;
+    if (Level != 0x16) {
+        return 0;
+    }
+    NuVecAdd(&p, pos, move);
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0) {
+            NuVecSub(&rel, &p, &JeepRock[i].pos);
+            if (NuVecMagSqr(&rel) < 0.5625f) {
+                JeepRock[i].explode = 1;
+                hit = 1;
+            }
+        }
+    }
+    return hit;
+}
 
 extern struct nuvec_s ShadNorm;
 extern s32 TryUnembeddPointDir(struct nuvec_s *pos, struct nuvec_s *norm, struct nuvec_s *dir,
@@ -1508,15 +1571,42 @@ void FreeGliderBullet(s32 index, s32 enemy)
 struct asteroid_s {
     s32 active;                /* 0x00 */
     struct nuvec_s pos;        /* 0x04 */
-    char pad_10[0x2C - 0x10];
-    f32 radius;                /* 0x2C */
-    char pad_30[0x38 - 0x30];
+    char pad_10[0x1C - 0x10];
+    f32 anglex;                /* 0x1C degrees */
+    f32 angley;                /* 0x20 degrees */
+    char pad_24[0x2C - 0x24];
+    union {
+        f32 radius;            /* 0x2C */
+        struct nuvec_s scale;  /* 0x2C */
+    };
     s32 inview;                /* 0x38 */
     s32 age;                   /* 0x3C */
-    char pad_40[0x4C - 0x40];
+    char pad_40[0x44 - 0x40];
+    s32 stealth;               /* 0x44 drawn shrunk to nothing */
+    char pad_48[0x4C - 0x48];
 };
 extern struct asteroid_s AsteroidList[];   /* far; 100 entries, InitAsteroid's argument is always 0 */
 extern void InitAsteroid(s32 x);
+
+extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+
+void DrawAsteroid(struct asteroid_s *asteroid)
+{
+    if (asteroid->stealth != 0) {
+        NuMtxSetScale(&mTEMP, SetNuVecPntr(0.0f, 0.0f, 0.0f));
+        NuMtxTranslate(&mTEMP, &asteroid->pos);
+    } else {
+        NuMtxSetScale(&mTEMP, &asteroid->scale);
+        NuMtxRotateY(&mTEMP, asteroid->angley * 182.04445f);
+        NuMtxRotateX(&mTEMP, asteroid->anglex * 182.04445f);
+        NuMtxTranslate(&mTEMP, &asteroid->pos);
+    }
+    asteroid->inview = 0;
+    if (ObjTab[0x50].special != 0) {
+        asteroid->inview = NuRndrGScnObj(
+            ObjTab[0x50].scene->gobjs[ObjTab[0x50].special->instance->objid], &mTEMP);
+    }
+}
 
 struct asteroid_s *FindFreeAsteroid(s32 passes)
 {
@@ -1633,6 +1723,30 @@ void InitLighteningHail(void)
 {
     memset(HailList, 0, sizeof(HailList));
     NuMtxSetScale(&BoltMtxC, SetNuVecPntr(0.5f, 1.5f, 0.5f));
+}
+
+void DrawLighteningHail(void)
+{
+    struct hail_s *hail;
+    s32 i;
+
+    if (FlyingLevelVictoryDance != 0) {
+        return;
+    }
+    hail = HailList;
+    for (i = 0; i < 30; i++, hail++) {
+        if (hail->state != 0) {
+            if (hail->state == 1) {
+                if (Paused == 0) {
+                    AddVariableShotDebrisEffect(GDeb[0x93].i, &hail->pos, 1, 0, 0);
+                }
+            } else if (hail->state == 3) {
+                if (Paused == 0) {
+                    AddVariableShotDebrisEffect(GDeb[0x93].i, &hail->pos, 1, 0, 0);
+                }
+            }
+        }
+    }
 }
 
 struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
