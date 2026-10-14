@@ -105,7 +105,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00149918:ReadNuIFFTexAnimSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00149b40:ReadAnimationLibrary"
