@@ -281,7 +281,7 @@ extern char D_0061B2D8[];
 extern void NuStrCat(char *dst, char *src);
 extern void NuRndrInitWorld(void);
 extern void *visiLoadData(char *name, struct nugscn_s *scene, void **pptr);
-extern void BuildVisiTable(void);
+extern void BuildVisiTable(struct nugscn_s *gsc);
 extern void edobjRegisterBaseScene(struct nugscn_s *scene);
 extern void edbitsRegisterBaseScene(struct nugscn_s *scene);
 extern void NuBridgeRegisterBaseScene(struct nugscn_s *scene);
