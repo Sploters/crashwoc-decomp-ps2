@@ -323,13 +323,67 @@ int NuHGobjBoundingSphereToLine(struct NUHGOBJ_s *hobj, struct numtx_s *mtx, str
 }
 
 
-struct NUHGOBJ_s *NuHGobjReadForCutScene(int fh, struct NUHGOBJ_s *shared) {
+static inline struct NUHGOBJ_s *NuHGobjCreate(void) {
     struct NUHGOBJ_s *hobj;
 
     hobj = NuMemAllocFn(sizeof(struct NUHGOBJ_s), nuhgobj_file, 0xE5);
     memset(hobj, 0, sizeof(struct NUHGOBJ_s));
     hobj->type = 0;
     hobj->scale = 1.0f;
+    return hobj;
+}
+
+
+extern int NuFileSize(char *name);
+extern int NuFileLoadBuffer(char *name, void *buf, int size);
+extern int NuMemFileOpen(void *buf, int size, int mode);
+extern void NuFileClose(int fh);
+extern void NuMemFreeFn(void *ptr, char *file, int line);
+extern char *strlwr(char *s);
+typedef void (*NuErrorFunc)(const char *fmt, ...);
+extern NuErrorFunc NuErrorProlog(const char *file, int line);
+extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
+extern void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj);
+extern char D_006152B0[];
+extern char D_006152D0[];
+extern char D_006152F0[];
+#define msg_hgobj_loading D_006152B0
+#define msg_hgobj_open_failed D_006152D0
+#define msg_hgobj_alloc_failed D_006152F0
+
+struct NUHGOBJ_s *NuHGobjLoad(char *file) {
+    struct NUHGOBJ_s *hobj;
+    void *buf;
+    int size;
+    int fh;
+
+    hobj = 0;
+    size = NuFileSize(file);
+    buf = NuMemAllocFn(size, nuhgobj_file, 0x19F);
+    if (buf) {
+        fh = NuMemFileOpen(buf, NuFileLoadBuffer(file, buf, size), 0);
+        if (fh) {
+            NuDebugMsgProlog(nuhgobj_file, 0x1A8)(msg_hgobj_loading, strlwr(file));
+            NuFileBeginBlkRead(fh, 0x464F4748);
+            hobj = NuHGobjCreate();
+            ReadNuIFFHGobj(fh, hobj);
+            NuFileEndBlkRead(fh);
+            NuFileClose(fh);
+        } else {
+            NuDebugMsgProlog(nuhgobj_file, 0x1B2)(msg_hgobj_open_failed, strlwr(file));
+        }
+        NuMemFreeFn(buf, nuhgobj_file, 0x1B4);
+    } else {
+        NuErrorProlog(nuhgobj_file, 0x1B7)(msg_hgobj_alloc_failed, size);
+    }
+    return hobj;
+}
+
+
+struct NUHGOBJ_s *NuHGobjReadForCutScene(int fh, struct NUHGOBJ_s *shared) {
+    struct NUHGOBJ_s *hobj;
+
+    hobj = NuHGobjCreate();
     hobj->nummtl = shared->nummtl;
     hobj->mtls = shared->mtls;
     hobj->numtid = shared->numtid;
