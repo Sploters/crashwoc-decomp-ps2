@@ -72,13 +72,15 @@ extern char D_006B3B40[];               /* sceMcGetDir entry table */
 #define mc_dirtable D_006B3B40
 
 
-s32 saveloadLoadIcon(char *name, void *buf) {
-    iconsize = NuFileSize(name);
-    iconbuff = buf;
-    NuFileLoadBuffer(name, buf, iconsize);
-    return iconsize;
-}
-
+extern char dname[];
+extern char D_0062F790[];
+extern char D_0062F798[];
+extern char D_0062F7A0[];
+extern char D_0062F7A8[];
+#define saveload_rootdir D_0062F790
+#define saveload_fnamefmt D_0062F798
+#define saveload_dnamefmt D_0062F7A0
+#define saveload_dirfmt D_0062F7A8
 
 s32 saveloadCheckCardPresent(void) {
     s32 nocard;
@@ -88,6 +90,53 @@ s32 saveloadCheckCardPresent(void) {
     nocard = -10;
     return mc_result > nocard;
 }
+
+
+/* Fills mc_dirtable with the save directory listing. Returns 0 when the
+   directory does not exist yet, otherwise the entry count or -1 on error. */
+s32 saveloadGetDirectory(void) {
+    char path[32];
+    s32 present;
+
+    sceMcGetInfo(0, 0, 0, 0, 0);
+    sceMcSync(0, 0, &mc_result);
+    present = mc_result > -10;
+    if (!present) {
+        return -1;
+    }
+    sceMcChdir(0, 0, saveload_rootdir, 0);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result != 0) {
+        return -1;
+    }
+    sprintf(fname, saveload_fnamefmt, saveload_gamecode);
+    sprintf(dname, saveload_dnamefmt, fname);
+    sprintf(path, saveload_dirfmt, fname);
+    sceMcGetDir(0, 0, fname, 0, 0x12, mc_dirtable);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result == 0) {
+        return 0;
+    }
+    sceMcChdir(0, 0, dname, 0);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result != 0) {
+        return -1;
+    }
+    sceMcGetDir(0, 0, path, 0, 0x12, mc_dirtable);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result == 0) {
+        return -1;
+    }
+    return mc_result;
+}
+
+s32 saveloadLoadIcon(char *name, void *buf) {
+    iconsize = NuFileSize(name);
+    iconbuff = buf;
+    NuFileLoadBuffer(name, buf, iconsize);
+    return iconsize;
+}
+
 
 
 s32 saveloadCheckCardType(void) {

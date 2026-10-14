@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0077:001a9b08:saveloadGetDirectory"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001a9c98:saveloadSaveSlot"
