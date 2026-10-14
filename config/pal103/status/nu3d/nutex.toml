@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0039:0011cfb8:NuTexSetRenderTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011d108:NuTexCreateEx"
@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0039:0011d300:NuTexCreateStream"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011d450:NuTexAccomodateRS"
@@ -41,7 +41,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0039:0011d6e0:NuTexSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011d848:NuTexDisplayTexturePage"

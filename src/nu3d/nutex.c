@@ -58,11 +58,16 @@ typedef long long s64;
 typedef unsigned long long u64;
 
 typedef struct NuPs2Tex {
-    u8 unk000[0x30];
+    u8 unk000[0x10];
+    u16 p2w;
+    u16 p2h;
+    u8 unk014[0x1C];
     int reqsize[10];
     u8 unk058[0x10];
     u16 texaddr;
-    u8 unk06A[0x28];
+    u8 unk06A[0xC];
+    u16 tbw;
+    u8 unk078[0x1A];
     u8 mipcount;
     u8 psm;
     u8 unk094[0x18];
@@ -70,15 +75,36 @@ typedef struct NuPs2Tex {
     u8 unk0B0[0x10];
 } NuPs2Tex;
 
-typedef struct NuTex {
+/* Caller-supplied texture description; copied into the head of NuTex. */
+typedef struct NuTexSpec {
     int type;
     int width;
-    u8 unk008[0x8];
+    int height;
+    int decal;
     void *bits;
-    u8 unk014[0x4];
+    void *pal;
+} NuTexSpec;
+
+typedef struct NuTex {
+    union {
+        NuTexSpec spec;
+        struct {
+            int type;
+            int width;
+            int height;
+            int decal;
+            void *bits;
+            void *pal;
+        };
+    };
     union {
         u16 refcount;
         s64 flags;
+        struct {
+            u64 : 16;
+            u64 valid : 1;          /* NUTEX_VALID */
+            u64 native : 1;         /* NUTEX_NATIVE */
+        };
     };
     NuPs2Tex ps2tex;
 } NuTex;
@@ -136,6 +162,11 @@ extern NuTex *D_0062EBEC;
 #define TexList D_0062EBEC
 
 extern int gs_botfree;
+extern int nurndr_pixel_width;
+extern int nurndr_pixel_height;
+extern int nurndr_pixel_p2w;
+extern int nurndr_pixel_p2h;
+extern u64 cur_rt;
 extern int gs_top;
 extern int D_00633068;
 #define gs_tempfree D_00633068
@@ -179,7 +210,7 @@ extern int D_002D3F40[4];
 extern char D_00614590[];
 #define nutex_srcfile D_00614590
 extern char D_00614690[];
-#define msg_setpal_invalid D_00614690
+#define msg_tex_invalid D_00614690
 
 extern int NuTexReadBitmapMMEx(char *name, int mipmaps, int *addr, int *addrend);
 extern int NuTexCreateEx(NuTex *spec, void *extmem, int extsize);
@@ -189,6 +220,7 @@ extern void NuTexClose(void);
 extern void NuPs2ChangeTexPal(NuPs2Tex *ps2tex);
 extern void NuPs2ChangeTexPalStreamTemp(NuPs2Tex *ps2tex);
 extern void NuPs2TxDestroy(NuPs2Tex *ps2tex);
+extern int NuPs2TxCreate(NuTex *spec, NuPs2Tex *ps2tex);
 extern u64 Ps2TxGetTex0(NuPs2Tex *ps2tex);
 extern void NuRndrStreamSetZBState(int addr, int psm, int test);
 extern void *NuRndrStreamAddZBState(void *stream, int enable);
@@ -207,6 +239,7 @@ extern u8 *gsBeginGifPacket(u8 *cur, int eop, int nloop, int pre, int prim,
                             int flg, int nreg, ...);
 extern u8 *gsCloseGifPacket(u8 *cur);
 extern u8 *Ps2TxSetStateData(u8 *cur, NuPs2Tex *tex, NuPs2Tex *pal, int mode);
+extern u8 *Ps2TxSetSurfaceStateData(u8 *cur, int surface);
 
 
 u64 *NuTexWriteMaterialSettings(u64 *dst, NuMtl *mtl) {
@@ -607,8 +640,106 @@ u8 *NuTexSetPal(u8 *cur, int tid, int paltid, s8 mode) {
             cur = vtCloseDirect(cur);
             cur = vpDmaTag_Close(cur);
         } else {
-            NuErrorProlog(nutex_srcfile, 0x5A4)(msg_setpal_invalid);
+            NuErrorProlog(nutex_srcfile, 0x5A4)(msg_tex_invalid);
         }
+    }
+    return cur;
+}
+
+static inline int NuTexFindFree(void) {
+    int start;
+
+    start = nutex_cnt;
+    while (TexList[nutex_cnt].flags & NUTEX_VALID) {
+        if (start == ++nutex_cnt) {
+            return -1;
+        }
+        if (nutex_cnt >= nutex_max) {
+            nutex_cnt = 0;
+        }
+    }
+    nutex_alloc_cnt++;
+    return nutex_cnt;
+}
+
+int NuTexCreateStream(NuTex *spec) {
+    int tex;
+
+    tex = NuTexFindFree();
+    if (tex >= 0) {
+        TexList[tex].spec = spec->spec;
+        if (NuPs2TxCreate(spec, &TexList[tex].ps2tex)) {
+            TexList[tex].bits = 0;
+            TexList[tex].valid = 1;
+            TexList[tex].native = (spec == 0);
+            return tex + 1;
+        }
+    }
+    return 0;
+}
+
+u8 *NuTexSetRenderTarget(u8 *cur, int tid) {
+    NuTex *tex;
+    int addr;
+
+    if (TexList[tid - 1].flags & NUTEX_VALID) {
+        tex = &TexList[tid - 1];
+        cur = vpDmaTag_CntEx(cur, 0x13000000, 0x50000000);
+        cur[-0xE] = 0xA;
+        cur = vtBeginDirect(cur - 4, 0);
+        cur = gsBeginGifPacket(cur, 0, 1, 0, 0, 0, 1, 0xE);
+        addr = tex->ps2tex.texaddr;
+        if (!addr) {
+            addr = tex->ps2tex.gsaddr;
+            if (!addr) {
+                addr = gs_botfree;
+            }
+        }
+        *(u64 *)cur = 0;
+        cur += 8;
+        *(u64 *)cur = 0x3F; /* TEXFLUSH */
+        cur += 8;
+        *(u64 *)cur = (addr >> 5) | ((u64)tex->ps2tex.tbw << 16) | ((u64)tex->ps2tex.psm << 24);
+        cur += 8;
+        *(u64 *)cur = 0x4C; /* FRAME_1 */
+        cur += 8;
+        cur = gsCloseGifPacket(cur);
+        cur = vtCloseDirect(cur);
+        cur = vpDmaTag_Close(cur);
+        nurndr_pixel_width = tex->width;
+        nurndr_pixel_height = tex->height;
+        nurndr_pixel_p2w = tex->ps2tex.p2w;
+        nurndr_pixel_p2h = tex->ps2tex.p2h;
+    }
+    cur_rt = (addr >> 5) | ((u64)tex->ps2tex.tbw << 16) | ((u64)tex->ps2tex.psm << 24);
+    return cur;
+}
+
+u8 *NuTexSet(u8 *cur, int tid, s8 mode) {
+    NuPs2Tex *tex;
+
+    if (tid > 0) {
+        if (TexList[tid - 1].flags & NUTEX_VALID) {
+            tex = &TexList[tid - 1].ps2tex;
+            cur = vpDmaTag_CntEx(cur, 0x13000000, 0x50000000);
+            cur[-0xE] = 2;
+            cur = vtBeginDirect(cur - 4, 0);
+            cur = gsBeginGifPacket(cur, 0, 1, 0, 0, 0, 1, 0xE);
+            cur = Ps2TxSetStateData(cur, tex, 0, mode);
+            cur = gsCloseGifPacket(cur);
+            cur = vtCloseDirect(cur);
+            cur = vpDmaTag_Close(cur);
+        } else {
+            NuErrorProlog(nutex_srcfile, 0x57A)(msg_tex_invalid);
+        }
+    } else if (tid < 0) {
+        cur = vpDmaTag_CntEx(cur, 0x11000000, 0x50000000);
+        cur = vtBeginDirect(cur - 4, 0);
+        cur = gsBeginGifPacket(cur, 0, 1, 0, 0, 0, 1, 0xE);
+        cur = Ps2TxSetSurfaceStateData(cur, tid);
+        cur = gsCloseGifPacket(cur);
+        cur = vtCloseDirect(cur);
+        cur = vpDmaTag_Close(cur);
     }
     return cur;
 }
