@@ -17,11 +17,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001a9c98:saveloadSaveSlot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001aa020:saveloadDeleteSlot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0077:001aa1c0:saveloadASCallEachFrame"

@@ -130,6 +130,148 @@ s32 saveloadGetDirectory(void) {
     return mc_result;
 }
 
+extern s32 sceMcDelete(s32 port, s32 slot, const char *name);
+extern char D_00619B80[];
+extern char D_00619BA0[];
+#define saveload_iconsys D_00619B80
+#define saveload_iconfile D_00619BA0
+
+extern s32 sceMcMkdir(s32 port, s32 slot, const char *name);
+extern s32 sceMcWrite(s32 fd, const void *buf, s32 size);
+extern void *NuStreamGetOutputBuffer(s32 stream);
+extern void NuRndrSwapStreamBuffers(void);
+extern char D_004A8C28[];               /* icon.sys image */
+extern char D_00619B90[];
+#define saveload_iconsysdata D_004A8C28
+#define saveload_iconsrc D_00619B90
+
+/* Writes `size` bytes of `buf` to save `slot`, creating the save directory
+   (with its icon files) first if the card has none. Returns 1 on success. */
+s32 saveloadSaveSlot(s32 slot, void *buf, s32 size) {
+    char path[32];
+    s32 count;
+    s32 fd;
+    void *icon;
+
+    if (slot >= 4) {
+        return 0;
+    }
+    count = saveloadGetDirectory();
+    if (count == -1) {
+        return 0;
+    }
+    if (count == 0) {
+        sceMcChdir(0, 0, saveload_rootdir, 0);
+        sceMcSync(0, 0, &mc_result);
+        if (mc_result != 0) {
+            return 0;
+        }
+        sceMcMkdir(0, 0, fname);
+        sceMcSync(0, 0, &mc_result);
+        if (mc_result != 0) {
+            return 0;
+        }
+        sceMcChdir(0, 0, dname, 0);
+        sceMcSync(0, 0, &mc_result);
+        if (mc_result != 0) {
+            return 0;
+        }
+        sceMcOpen(0, 0, fname, 0x200);
+        sceMcSync(0, 0, &mc_result);
+        fd = mc_result;
+        sceMcWrite(fd, &count, 4);
+        sceMcSync(0, 0, &mc_result);
+        sceMcClose(fd);
+        sceMcSync(0, 0, &mc_result);
+
+        sceMcOpen(0, 0, saveload_iconsys, 0x200);
+        sceMcSync(0, 0, &mc_result);
+        fd = mc_result;
+        sceMcWrite(fd, saveload_iconsysdata, 0x3C4);
+        sceMcSync(0, 0, &mc_result);
+        sceMcClose(fd);
+        sceMcSync(0, 0, &mc_result);
+
+        iconsize = NuFileSize(saveload_iconsrc);
+        icon = NuStreamGetOutputBuffer(0);
+        iconsize = NuFileLoadBuffer(saveload_iconsrc, icon, 0x7FFFFFFF);
+        sceMcOpen(0, 0, saveload_iconfile, 0x200);
+        sceMcSync(0, 0, &mc_result);
+        fd = mc_result;
+        sceMcWrite(fd, icon, iconsize);
+        sceMcSync(0, 0, &mc_result);
+        sceMcClose(fd);
+        sceMcSync(0, 0, &mc_result);
+        NuRndrSwapStreamBuffers();
+    }
+    sprintf(path, saveload_slotfmt, fname, slot);
+    sceMcGetDir(0, 0, path, 0, 0x12, mc_dirtable);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result == 1) {
+        sceMcDelete(0, 0, path);
+        sceMcSync(0, 0, &mc_result);
+        if (mc_result != 0) {
+            return 0;
+        }
+    }
+    sceMcOpen(0, 0, path, 0x200);
+    sceMcSync(0, 0, &mc_result);
+    fd = mc_result;
+    if (fd < 0) {
+        return 0;
+    }
+    sceMcWrite(fd, buf, size);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result < 0) {
+        return 0;
+    }
+    sceMcClose(fd);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result < 0) {
+        return 0;
+    }
+    return 1;
+}
+
+/* Deletes save `slot`; deleting the last one removes the whole save
+   directory. Returns 1 on success. */
+s32 saveloadDeleteSlot(s32 slot) {
+    char path[32];
+    s32 count;
+
+    if (slot >= 4) {
+        return 0;
+    }
+    count = saveloadGetDirectory();
+    if (count == -1 || count == 0) {
+        return 0;
+    }
+    sprintf(path, saveload_slotfmt, fname, slot);
+    sceMcGetDir(0, 0, path, 0, 0x12, mc_dirtable);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result != 1) {
+        return 0;
+    }
+    sceMcDelete(0, 0, path);
+    sceMcSync(0, 0, &mc_result);
+    if (mc_result < 0) {
+        return 0;
+    }
+    if (count == 2) {
+        sceMcDelete(0, 0, fname);
+        sceMcSync(0, 0, &mc_result);
+        sceMcDelete(0, 0, saveload_iconsys);
+        sceMcSync(0, 0, &mc_result);
+        sceMcDelete(0, 0, saveload_iconfile);
+        sceMcSync(0, 0, &mc_result);
+        sceMcChdir(0, 0, saveload_rootdir, 0);
+        sceMcSync(0, 0, &mc_result);
+        sceMcDelete(0, 0, fname);
+        sceMcSync(0, 0, &mc_result);
+    }
+    return 1;
+}
+
 s32 saveloadLoadIcon(char *name, void *buf) {
     iconsize = NuFileSize(name);
     iconbuff = buf;
