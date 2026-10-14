@@ -2539,7 +2539,7 @@ void DrawWeatherBossLevelExtra(void)
     DrawBazookaToken();
 }
 
-struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
+inline struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
 {
     struct wbbolt_s *b;
     s32 i;
@@ -2556,7 +2556,7 @@ struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
     return 0;
 }
 
-struct wbbolt_s *FindFreeWBBolt(void)
+inline struct wbbolt_s *FindFreeWBBolt(void)
 {
     struct wbbolt_s *b;
     s32 i;
@@ -2567,6 +2567,55 @@ struct wbbolt_s *FindFreeWBBolt(void)
             return b;
         }
         b++;
+    }
+    return 0;
+}
+
+extern f32 BOLTHOMESEEKSPEED;
+extern f32 WBTYPE2SCALETIME;
+
+struct nuvec_s *FireWBBolt(struct nuvec_s *pos, struct nuvec_s *vel, s32 type, f32 life,
+                           s32 owner)
+{
+    struct wbbolt_s *bolt;
+    s32 given;
+    f32 oldscale;
+
+    bolt = 0;
+    given = 0;
+    if (type == 2) {
+        bolt = FindFreeWBBoltOfType(type);
+    }
+    if (bolt != 0) {
+        given = 1;
+    } else {
+        bolt = FindFreeWBBolt();
+    }
+    if (bolt != 0) {
+        if (given) {
+            oldscale = bolt->scale;
+        } else if (type == 2) {
+            oldscale = 0.0f;
+        } else {
+            oldscale = 1.0f;
+        }
+        memset(bolt, 0, sizeof(struct wbbolt_s));
+        bolt->owner = owner;
+        bolt->pos = *pos;
+        NuVecScale(&bolt->vel, vel, 0.02f);
+        bolt->life = life;
+        bolt->type = type;
+        bolt->active = 2;
+        bolt->scale = oldscale + 0.02f / WBTYPE2SCALETIME;
+        if (bolt->scale >= 1.0f) {
+            bolt->scale = 1.0f;
+        }
+        if (bolt->type == 0) {
+            bolt->seekspeed = BOLTHOMESEEKSPEED * 0.02f;
+        } else {
+            bolt->seekspeed = 0.0f;
+        }
+        return &bolt->pos;
     }
     return 0;
 }

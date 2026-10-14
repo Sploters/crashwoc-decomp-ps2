@@ -757,7 +757,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021eb58:FireWBBolt"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ed08:WeatherBossNextAction"
