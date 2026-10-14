@@ -364,7 +364,34 @@ extern s32 D_005B7CA0[];   /* current rumble objectives (far) */
 extern struct nuvec_s D_005B44F8[]; /* weather boss position (far) */
 extern struct spline_s D_005B4548;  /* weather boss spline (far) */
 extern struct nuvec_s D_006B75B0;   /* weather start pos temp (far) */
-extern struct NEWBUGGY PlayerGlider;
+/* GLIDERSTRUCT (0x440 bytes): the player's glider. */
+struct glider_s {
+    struct creature_s *Cre;    /* 0x00 */
+    char pad_04[0x30 - 0x04];
+    struct nuvec_s Position;   /* 0x30 */
+    char pad_3C[0x6C - 0x3C];
+    f32 RailAngle;             /* 0x6C */
+    f32 TiltX;                 /* 0x70 */
+    f32 TiltZ;                 /* 0x74 */
+    f32 DestTiltX;             /* 0x78 */
+    f32 DestTiltZ;             /* 0x7C */
+    f32 AngleY;                /* 0x80 */
+    char pad_84[0x98 - 0x84];
+    s32 BarrelRoll;            /* 0x98 */
+    char pad_9C[0xA4 - 0x9C];
+    s32 TerminalDive;          /* 0xA4 */
+    char pad_A8[0xAC - 0xA8];
+    f32 FireTimer;             /* 0xAC */
+    f32 HitTimer;              /* 0xB0 */
+    s32 AutoPilot;             /* 0xB4 */
+    char pad_B8[0xBC - 0xB8];
+    s32 HitPoints;             /* 0xBC */
+    char LocatorList[16];      /* 0xC0 */
+    f32 LocatorTime[16];       /* 0xD0 */
+    char pad_110[0x43C - 0x110];
+    f32 NextHitSoundTimer;     /* 0x43C */
+};
+extern struct glider_s PlayerGlider;
 extern struct nuvec_s v000;
 
 extern void ProcessFireFlyIntro(void);
@@ -693,7 +720,7 @@ void VehicleSetup(void)
 void SetWeatherStartPos(void *x)
 {
     D_006B75B0 = *(struct nuvec_s *)((char *)x + 0x6C);
-    PlayerGlider.pos = D_006B75B0;
+    PlayerGlider.Position = D_006B75B0;
 }
 
 s32 GetRumblePlayerHealthPercentage(void)
@@ -812,7 +839,7 @@ inline s32 PickGliderTarget(struct nuvec_s **pos, struct nuvec_s **vel, s32 *typ
 {
     f32 best;
 
-    if (PlayerGlider.enable != 0 || FlyingLevelExtro != 0) {
+    if (PlayerGlider.AutoPilot != 0 || FlyingLevelExtro != 0) {
         return 0;
     }
     if (Level == 0x24) {
@@ -940,7 +967,7 @@ void ProcessBazookaToken(void)
         t = WeatherBoss.draw.anim.anim_time /
             WeatherBoss.draw.model->anmdata[WeatherBoss.draw.anim.action]->time;
         NuVecScale(&pos, &BazookaTokenPos, 1.0f - t);
-        NuVecScaleAccum(&pos, &PlayerGlider.pos, t);
+        NuVecScaleAccum(&pos, &PlayerGlider.Position, t);
         pos.y += t * 0.75f;
         BazookaTokenCurrentPos = pos;
         MyAnimateModelNew(&IconMainDraw, 0.59999996f);
@@ -1387,7 +1414,7 @@ s32 StillLockedOnTarget(struct nuvec_s *target)
             NuVecScale(&rel, &rel, 1.0f / dist);
             dot = DotProduct(&view, &rel);
             if (0.9f < dot) {
-                NuVecSub(&ray, &PlayerGlider.pos, target);
+                NuVecSub(&ray, &PlayerGlider.Position, target);
                 NuVecNorm(&ray, &ray);
                 NuVecScale(&ray, &ray, 3.0f);
                 return NewRayCast(target, &ray, 0.0f) == 0;
@@ -2111,7 +2138,7 @@ s32 SafeFromCollisions(struct nuvec_s *pos)
 {
     s32 i;
 
-    if (CheckSphereCollide(pos, &PlayerGlider.pos, 3.0f, 1.0f)) {
+    if (CheckSphereCollide(pos, &PlayerGlider.Position, 3.0f, 1.0f)) {
         return 0;
     }
     for (i = 0; i < 4; i++) {
@@ -2589,7 +2616,54 @@ extern f32 HailFallSpeed;
 extern f32 Level_GliderSpeed;
 extern f32 HAILCOLLRAD;
 extern s32 ProcessTimer(f32 *timer);
-extern s32 CollidePlayerPoint(struct nuvec_s *pos, f32 radius, s32 type);
+extern f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
+extern s32 InvincibilityCHEAT;
+extern s32 VehicleLevelImmune;
+extern void NewBuzz(struct rumble_s *rumble, s32 frames);
+extern void NewRumble(struct rumble_s *rumble, s32 power);
+extern s32 BEENHITBIGBUZZTIME;
+extern s32 BEENHITBIGRUMTIME;
+extern f32 GLIDERHITSOUNDFREQUENCY;
+extern s32 GLIDERHITSOUNDOTHERID;
+extern f32 Level_DeadTime;
+
+/* Damages the player's glider by `hits` if it is within sqrt(rad2) of `pos`;
+   returns whether it was hit. */
+s32 CollidePlayerPoint(struct nuvec_s *pos, f32 rad2, s32 hits)
+{
+    s32 oldhits;
+    f32 timerinc;
+
+    oldhits = PlayerGlider.HitPoints;
+    if (NuVecDistSqr(pos, &PlayerGlider.Position, 0) <= rad2) {
+        timerinc = (f32)hits * 0.125f;
+        if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+            PlayerGlider.HitPoints -= hits;
+        }
+        PlayerGlider.HitTimer += timerinc;
+        if (hits != 0) {
+            NewBuzz(&player->rumble, (BEENHITBIGBUZZTIME * 25) / hits);
+            NewRumble(&player->rumble, (BEENHITBIGRUMTIME * 25) / hits);
+        }
+        if (4.5f <= PlayerGlider.HitTimer) {
+            PlayerGlider.HitTimer = 4.5f;
+        }
+        if (PlayerGlider.NextHitSoundTimer == 0.0f
+            || (PlayerGlider.HitPoints < 1 && oldhits > 0) || hits > 4) {
+            MyGameSfx(0x5A, &PlayerGlider.Position, 0x7FFF);
+            PlayerGlider.NextHitSoundTimer = GLIDERHITSOUNDFREQUENCY;
+        } else {
+            MyGameSfx(GLIDERHITSOUNDOTHERID, &PlayerGlider.Position, 0x4FFF);
+        }
+        if (PlayerGlider.HitPoints < 1) {
+            PlayerGlider.HitPoints = 0;
+            PlayerGlider.TerminalDive = 1;
+            PlayerGlider.HitTimer = Level_DeadTime;
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void ProcessLighteningHail(void)
 {
@@ -2608,7 +2682,7 @@ void ProcessLighteningHail(void)
                 if (hail->state == 3) {
                     hail->pos.x = hail->fallx;
                     hail->pos.y = 46.0f;
-                    hail->pos.z = PlayerGlider.pos.z;
+                    hail->pos.z = PlayerGlider.Position.z;
                     hail->timer = 1.5f;
                     hail->vel.x = 0.0f;
                     hail->vel.y = -HailFallSpeed * 0.02f;
@@ -2644,12 +2718,12 @@ void ProcessWBBolts(void)
                 bolt->active = 0;
             }
             if (bolt->seekspeed != 0.0f) {
-                NuVecSub(&temp, &PlayerGlider.pos, &bolt->pos);
+                NuVecSub(&temp, &PlayerGlider.Position, &bolt->pos);
                 temp.z = 0.0f;
                 dist = NuVecMag(&temp);
                 if (dist <= bolt->seekspeed) {
-                    bolt->pos.x = PlayerGlider.pos.x;
-                    bolt->pos.y = PlayerGlider.pos.y;
+                    bolt->pos.x = PlayerGlider.Position.x;
+                    bolt->pos.y = PlayerGlider.Position.y;
                     bolt->vel.x = 0.0f;
                     bolt->vel.y = 0.0f;
                 } else {
@@ -3039,28 +3113,6 @@ void MoveVehicle(struct creature_s *c, struct pad_s *pad)
 }
 
 
-/* GLIDERSTRUCT (0x440 bytes); only the fields InitGlider touches. */
-struct glider_s {
-    struct creature_s *Cre;    /* 0x00 */
-    char pad_04[0x30 - 0x04];
-    struct nuvec_s Position;   /* 0x30 */
-    char pad_3C[0x6C - 0x3C];
-    f32 RailAngle;             /* 0x6C */
-    f32 TiltX;                 /* 0x70 */
-    f32 TiltZ;                 /* 0x74 */
-    f32 DestTiltX;             /* 0x78 */
-    f32 DestTiltZ;             /* 0x7C */
-    f32 AngleY;                /* 0x80 */
-    char pad_84[0x98 - 0x84];
-    s32 BarrelRoll;            /* 0x98 */
-    char pad_9C[0xAC - 0x9C];
-    f32 FireTimer;             /* 0xAC */
-    char pad_B0[0xBC - 0xB0];
-    s32 HitPoints;             /* 0xBC */
-    char LocatorList[16];      /* 0xC0 */
-    f32 LocatorTime[16];       /* 0xD0 */
-    char pad_110[0x440 - 0x110];
-};
 
 extern struct creature_s *player;
 extern CharacterData CData[];
@@ -3130,9 +3182,9 @@ void ProcessWeatherBossTarget(void)
     if (WBIntroOn == 0 && FlyingLevelExtro == 0) {
         ProcessTimer(&WeatherBossTargetAppearTimer);
     }
-    WeatherBossTargetPos.x = (PlayerGlider.pos.x * WBTARGLIMX) / WBLIMX;
+    WeatherBossTargetPos.x = (PlayerGlider.Position.x * WBTARGLIMX) / WBLIMX;
     WeatherBossTargetPos.y =
-        ((PlayerGlider.pos.y - mid) * WBTARGLIMY) / (range * 0.5f) + 1.0f;
+        ((PlayerGlider.Position.y - mid) * WBTARGLIMY) / (range * 0.5f) + 1.0f;
 }
 
 

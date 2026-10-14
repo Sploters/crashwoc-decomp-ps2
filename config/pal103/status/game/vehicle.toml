@@ -297,7 +297,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00213d10:CollidePlayerPoint"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213ed0:ProcessLighteningHail"
