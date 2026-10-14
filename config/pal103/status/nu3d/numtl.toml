@@ -89,11 +89,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011c1a0:NuMtlGetZupd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011c1b8:NuMtlAdd"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0038:0011c2c0:NuMtlIterate"

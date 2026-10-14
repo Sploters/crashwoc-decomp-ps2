@@ -113,7 +113,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:002081a0:InitSpaceStations"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002082b8:DrawSpaceStation"
@@ -589,7 +589,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ceb0:InitGlider"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021cfd8:InitWeatherBossTarget"

@@ -1926,6 +1926,18 @@ inline struct gliderbullet_s *GrabGliderBullet(s32 enemy)
     return 0;
 }
 
+extern void InitSpaceStation(struct nuvec_s *pos, f32 xrot, f32 yrot, f32 zrot, s32 type);
+
+void InitSpaceStations(void)
+{
+    memset(SpaceStationList, 0, 0x270);
+    memset(SatelliteList, 0, 0xA44);
+    SatelliteCharacterId = 0;
+    InitSpaceStation(SetNuVecPntr(0.0f, 0.0f, 80.0f), -0.0f, 15.0f, 20.0f, 0);
+    InitSpaceStation(SetNuVecPntr(69.0f, 0.0f, -40.0f), -13.0f, -20.0f, 7.0f, 1);
+    InitSpaceStation(SetNuVecPntr(-69.0f, 0.0f, -40.0f), -26.0f, 15.0f, -20.0f, 2);
+}
+
 s32 AddGliderBullet(struct numtx_s *m, struct nuvec_s *pos, struct nuvec_s *vel,
                     s32 enemy)
 {
@@ -2472,6 +2484,70 @@ void MoveVehicle(struct creature_s *c, struct pad_s *pad)
     }
 }
 
+
+/* GLIDERSTRUCT (0x440 bytes); only the fields InitGlider touches. */
+struct glider_s {
+    struct creature_s *Cre;    /* 0x00 */
+    char pad_04[0x30 - 0x04];
+    struct nuvec_s Position;   /* 0x30 */
+    char pad_3C[0x6C - 0x3C];
+    f32 RailAngle;             /* 0x6C */
+    f32 TiltX;                 /* 0x70 */
+    f32 TiltZ;                 /* 0x74 */
+    f32 DestTiltX;             /* 0x78 */
+    f32 DestTiltZ;             /* 0x7C */
+    f32 AngleY;                /* 0x80 */
+    char pad_84[0x98 - 0x84];
+    s32 BarrelRoll;            /* 0x98 */
+    char pad_9C[0xAC - 0x9C];
+    f32 FireTimer;             /* 0xAC */
+    char pad_B0[0xBC - 0xB0];
+    s32 HitPoints;             /* 0xBC */
+    char LocatorList[16];      /* 0xC0 */
+    f32 LocatorTime[16];       /* 0xD0 */
+    char pad_110[0x440 - 0x110];
+};
+
+extern struct creature_s *player;
+extern CharacterData CData[];
+extern f32 FireFlyIntroTween;
+extern void edppRegisterPointerToGameCharLocation(struct nuvec_s *loc);
+
+void InitGlider(struct glider_s *Glider, struct nuvec_s *StartPos, f32 StartAng)
+{
+    CharacterData *cdata;
+    struct creature_s *cre;
+    s32 i;
+
+    WBIntroOn = 0;
+    memset(Glider, 0, sizeof(struct glider_s));
+    Glider->Cre = player;
+    if (StartPos != 0) {
+        Glider->Position = *StartPos;
+    }
+    Glider->AngleY = StartAng;
+    Glider->HitPoints = 100;
+    Glider->DestTiltX = Glider->TiltX = 0.0f;
+    Glider->DestTiltZ = Glider->TiltZ = 0.0f;
+    Glider->BarrelRoll = 0;
+    Glider->FireTimer = 0.0f;
+    Glider->RailAngle = 0.0f;
+    for (i = 0; i < 16; i++) {
+        Glider->LocatorList[i] = 0x7F;
+        Glider->LocatorTime[i] = 0.0f;
+    }
+    edppRegisterPointerToGameCharLocation(&Glider->Position);
+    if (Level == 0x1A) {
+        cdata = &CData[0x81];
+    } else {
+        cdata = &CData[0x36];
+    }
+    cre = Glider->Cre;
+    cre->obj.scale = cre->obj.SCALE = 1.0f;
+    Glider->Cre->obj.bot = cdata->min.y;
+    Glider->Cre->obj.top = cdata->max.y;
+    FireFlyIntroTween = 0.0f;
+}
 
 extern struct nuvec_s WeatherBossTargetPos;
 extern struct nuvec_s WeatherBossTargetVel;

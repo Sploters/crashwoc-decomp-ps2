@@ -178,6 +178,8 @@ extern int D_002D3F40[4];
 
 extern char D_00614590[];
 #define nutex_srcfile D_00614590
+extern char D_00614690[];
+#define msg_setpal_invalid D_00614690
 
 extern int NuTexReadBitmapMMEx(char *name, int mipmaps, int *addr, int *addrend);
 extern int NuTexCreateEx(NuTex *spec, void *extmem, int extsize);
@@ -195,6 +197,16 @@ extern int NuFileLoadBuffer(char *name, void *buf, int max);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern void *memset(void *dst, int value, unsigned int size);
+typedef void (*NuErrorFunc)(const char *fmt, ...);
+extern NuErrorFunc NuErrorProlog(const char *file, int line);
+extern u8 *vpDmaTag_CntEx(u8 *cur, unsigned int qwc, unsigned int tag);
+extern u8 *vpDmaTag_Close(u8 *cur);
+extern u8 *vtBeginDirect(u8 *cur, int flags);
+extern u8 *vtCloseDirect(u8 *cur);
+extern u8 *gsBeginGifPacket(u8 *cur, int eop, int nloop, int pre, int prim,
+                            int flg, int nreg, ...);
+extern u8 *gsCloseGifPacket(u8 *cur);
+extern u8 *Ps2TxSetStateData(u8 *cur, NuPs2Tex *tex, NuPs2Tex *pal, int mode);
 
 
 u64 *NuTexWriteMaterialSettings(u64 *dst, NuMtl *mtl) {
@@ -577,6 +589,29 @@ u64 NuTexGetTex0(int tex) {
     return 0;
 }
 
+
+u8 *NuTexSetPal(u8 *cur, int tid, int paltid, s8 mode) {
+    NuPs2Tex *tex;
+    NuPs2Tex *pal;
+
+    if (tid > 0 && paltid > 0) {
+        if (TexList[tid - 1].flags & NUTEX_VALID) {
+            tex = &TexList[tid - 1].ps2tex;
+            pal = &TexList[paltid - 1].ps2tex;
+            cur = vpDmaTag_CntEx(cur, 0x13000000, 0x50000000);
+            cur[-0xE] = 2;
+            cur = vtBeginDirect(cur - 4, 0);
+            cur = gsBeginGifPacket(cur, 0, 1, 0, 0, 0, 1, 0xE);
+            cur = Ps2TxSetStateData(cur, tex, pal, mode);
+            cur = gsCloseGifPacket(cur);
+            cur = vtCloseDirect(cur);
+            cur = vpDmaTag_Close(cur);
+        } else {
+            NuErrorProlog(nutex_srcfile, 0x5A4)(msg_setpal_invalid);
+        }
+    }
+    return cur;
+}
 
 void *NuTexSetZBuffer(void *stream, int tex) {
     NuTex *entry;

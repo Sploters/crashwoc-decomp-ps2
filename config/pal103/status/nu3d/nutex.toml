@@ -189,7 +189,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011ee60:NuTexSetPal"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0039:0011ef80:NuTexSetZBuffer"
