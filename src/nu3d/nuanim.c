@@ -473,6 +473,40 @@ float NuAnimCurve2CalcVal(NuAnimCurve2 *curve, NuAnimTime *atime, int keytype) {
 }
 
 
+extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
+extern void *NuStreamGetOutputBuffer(int stream);
+extern int NuMemFileOpen(void *buf, int size, int mode);
+extern NuAnimData *NuAnimDataRead(int fh);
+extern char D_00614A80[];
+extern char D_00614AA0[];
+#define nuanim_load_deprecated_msg D_00614A80
+#define nuanim_memfile_failed_msg D_00614AA0
+
+NuAnimData *NuAnimDataLoad(char *file) {
+    NuAnimData *data;
+    void *buf;
+    int size;
+    int fh;
+
+    NuErrorProlog(nuanim_srcfile, 0x2D4)(nuanim_load_deprecated_msg);
+    data = 0;
+    if (!bitcount_table_built) {
+        buildBitCountTable();
+    }
+    buf = NuStreamGetOutputBuffer(0);
+    size = NuFileLoadBuffer(file, buf, 0x7FFFFFFF);
+    if (size > 0) {
+        fh = NuMemFileOpen(buf, size, 0);
+        if (fh) {
+            data = NuAnimDataRead(fh);
+            NuFileClose(fh);
+        } else {
+            NuDebugMsgProlog(nuanim_srcfile, 0x2EA)(nuanim_memfile_failed_msg, file);
+        }
+    }
+    return data;
+}
+
 NuAnimData *NuAnimDataLoadBuff(char *file, void **buffer, void **buffend) {
     NuAnimDataHdr *hdr;
     int size;
@@ -634,7 +668,7 @@ NuAnimCurve *NuAnimCurveCreate(int numkeys) {
 }
 
 
-void NuAnimCurveWrite(int fh, NuAnimCurve *curve) {
+inline void NuAnimCurveWrite(int fh, NuAnimCurve *curve) {
     unsigned int i;
 
     if (curve) {
@@ -645,6 +679,24 @@ void NuAnimCurveWrite(int fh, NuAnimCurve *curve) {
             NuAnimKeyWrite(fh, &curve->animkeys[i]);
         }
         NuFileWriteInt(fh, curve->flags);
+    } else {
+        NuFileWriteInt(fh, 0);
+    }
+}
+
+
+void NuAnimCurveSetWrite(int fh, NuAnimCurveSet *curveset) {
+    int i;
+
+    if (curveset) {
+        NuFileWriteInt(fh, 1);
+        NuFileWriteInt(fh, curveset->flags);
+        for (i = 0; i < NUANIM_SET_CURVES; i++) {
+            NuFileWriteFloat(fh, curveset->constants[i]);
+        }
+        for (i = 0; i < NUANIM_SET_CURVES; i++) {
+            NuAnimCurveWrite(fh, curveset->set[i]);
+        }
     } else {
         NuFileWriteInt(fh, 0);
     }
