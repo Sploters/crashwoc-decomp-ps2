@@ -572,20 +572,27 @@ struct jeeprock_s {
     s32 seen;                  /* 0x01C */
     char pad_020[0x024 - 0x020];
     s32 explode;               /* 0x024 set when something hits the rock */
-    char pad_028[0x06C - 0x028];
-    s32 grounded;              /* 0x06C */
-    char pad_070[0x23C - 0x070];
-    struct nuvec_s holdpos;    /* 0x23C */
-    struct nuvec_s oldholdpos; /* 0x248 */
-    char pad_254[0x26C - 0x254];
-    struct nuvec_s holdvel;    /* 0x26C */
-    char pad_278[0x29C - 0x278];
-    f32 radius;                /* 0x29C */
-    char pad_2A0[0x2B4 - 0x2A0];
-    struct nuquat_s quat;      /* 0x2B4 */
-    char pad_2C4[0x368 - 0x2C4];
-    s32 onground;              /* 0x368 */
-    char pad_36C[0x3B4 - 0x36C];
+    char pad_028[0x030 - 0x028];
+    /* The rock rolls as an atlasphere; the fields below live inside it. */
+    union {
+        struct NEWBUGGY atlas;     /* 0x030 */
+        struct {
+            char pad_030[0x06C - 0x030];
+            s32 grounded;              /* 0x06C */
+            char pad_070[0x23C - 0x070];
+            struct nuvec_s holdpos;    /* 0x23C */
+            struct nuvec_s oldholdpos; /* 0x248 */
+            char pad_254[0x26C - 0x254];
+            struct nuvec_s holdvel;    /* 0x26C */
+            char pad_278[0x29C - 0x278];
+            f32 radius;                /* 0x29C */
+            char pad_2A0[0x2B4 - 0x2A0];
+            struct nuquat_s quat;      /* 0x2B4 */
+            char pad_2C4[0x368 - 0x2C4];
+            s32 onground;              /* 0x368 */
+            char pad_36C[0x3B4 - 0x36C];
+        };
+    };
     s32 held;                  /* 0x3B4 */
     s32 owner;                 /* 0x3B8 */
     f32 size;                  /* 0x3BC */
@@ -1603,7 +1610,7 @@ extern s32 trailpt;
 extern s32 trailair;
 
 extern struct NEWBUGGY PlayerAtlas;   /* far */
-extern void ProcessAtlasAtlasCollisions_a(void *atlas, struct earthboss_s *boss);
+extern void ProcessAtlasAtlasCollisions_a(struct NEWBUGGY *a, struct NEWBUGGY *b);
 extern void KillGameObject(struct obj_s *obj, s32 type);
 
 s32 GetCurrentFireFlyObjectives(void)
@@ -1857,7 +1864,131 @@ void ProcessEarthBossVortex(void)
 void ProcessAtlasAtlasCollisions(void)
 {
     if (EarthBoss.health > 0) {
-        ProcessAtlasAtlasCollisions_a(&PlayerAtlas, &EarthBoss);
+        ProcessAtlasAtlasCollisions_a(&PlayerAtlas, (struct NEWBUGGY *)&EarthBoss);
+    }
+}
+
+/* Tests each edge of the closed polygon Points against an ellipsoid around
+   Centre (squashed by RadiusY on y) and returns a bit mask of the edges hit. */
+s32 LinesIntersectEllipse(struct nuvec_s *Points, s32 NumPoints, struct nuvec_s *Centre,
+                          f32 Radius, f32 RadiusY)
+{
+    struct nuvec_s ToCenter;
+    struct nuvec_s ToCenter2;
+    struct nuvec_s Edge;
+    struct nuvec_s ScaledPoints[16];
+    s32 result = 0;
+    s32 i;
+    f32 dot;
+    f32 Radius2;
+    f32 perpDist;
+
+    for (i = 0; i < NumPoints; i++) {
+        ScaledPoints[i].x = Points[i].x;
+        ScaledPoints[i].y = (Points[i].y - Centre->y) / RadiusY + Centre->y;
+        ScaledPoints[i].z = Points[i].z;
+    }
+    ScaledPoints[i] = ScaledPoints[0];
+
+    Radius2 = Radius * Radius;
+
+    for (i = 0; i < NumPoints; i++) {
+        NuVecSub(&Edge, &ScaledPoints[i + 1], &ScaledPoints[i]);
+        NuVecSub(&ToCenter, Centre, &ScaledPoints[i]);
+        dot = DotProduct(&ToCenter, &Edge);
+        if (dot < 0.0f) {
+            if (NuVecMagSqr(&ToCenter) < Radius2) {
+                result |= 1 << i;
+            }
+        } else {
+            NuVecSub(&ToCenter2, Centre, &ScaledPoints[i + 1]);
+            if (DotProduct(&ToCenter2, &Edge) > 0.0f) {
+                if (NuVecMagSqr(&ToCenter2) < Radius2) {
+                    result |= 1 << i;
+                }
+            } else {
+                perpDist = NuVecMagSqr(&ToCenter) - (dot * dot) / NuVecMagSqr(&Edge);
+                if (perpDist < Radius2) {
+                    result |= 1 << i;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+/* Returns 1 if two moving spheres will meet head-on within MaxTime, -1 if
+   they meet while travelling the same way, 0 if they miss. */
+s32 PossIntersect(struct nuvec_s *PosA, struct nuvec_s *VelA, struct nuvec_s *PosB,
+                  struct nuvec_s *VelB, f32 Radius, f32 MaxTime)
+{
+    struct nuvec_s A;
+    struct nuvec_s AV;
+    f32 MagA;
+    f32 MagVelA;
+    f32 Angle;
+    f32 Time;
+
+    A.x = PosA->x - PosB->x;
+    A.y = PosA->y - PosB->y;
+    A.z = PosA->z - PosB->z;
+    AV.x = VelB->x - VelA->x;
+    AV.y = VelB->y - VelA->y;
+    AV.z = VelB->z - VelA->z;
+
+    MagA = NuVecMag(&A);
+    if (MagA < Radius) {
+        if (DotProduct(VelA, VelB) <= 0.0f) {
+            return 1;
+        }
+        return -1;
+    }
+
+    MagVelA = NuVecMag(VelA);
+    NuVecMag(&AV);
+
+    Angle = -DotProduct(&A, VelA) / (MagA * MagVelA);
+    if (Angle < 0.866f) {
+        return 0;
+    }
+
+    Time = DotProduct(&A, &A) / DotProduct(&A, &AV);
+    if (Time > 0.0f && Time < MaxTime) {
+        if (DotProduct(VelA, VelB) <= 0.0f) {
+            return 1;
+        }
+        return -1;
+    }
+    return 0;
+}
+
+void ProcessRockRockCollisions(void)
+{
+    s32 i;
+    s32 j;
+
+    for (i = 1; i < 6; i++) {
+        if (JeepRock[i].exists != 0 && JeepRock[i].owner != 20) {
+            for (j = 0; j < i; j++) {
+                if (JeepRock[j].exists != 0) {
+                    if (JeepRock[j].owner != 20) {
+                        ProcessAtlasAtlasCollisions_a(&JeepRock[i].atlas, &JeepRock[j].atlas);
+                    }
+                }
+            }
+        }
+    }
+    if (Level == 0x15) {
+        for (i = 0; i < 6; i++) {
+            if (JeepRock[i].exists != 0) {
+                if (JeepRock[i].owner != 20) {
+                    ProcessAtlasAtlasCollisions_a(&JeepRock[i].atlas, &PlayerAtlas);
+                    if (EarthBoss.health > 0) {
+                        ProcessAtlasAtlasCollisions_a(&JeepRock[i].atlas, (struct NEWBUGGY *)&EarthBoss);
+                    }
+                }
+            }
+        }
     }
 }
 

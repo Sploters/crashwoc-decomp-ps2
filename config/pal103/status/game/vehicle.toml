@@ -189,7 +189,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020c5b0:LinesIntersectEllipse"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020c7b8:CheckGliderCollisions"
@@ -457,7 +457,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021b598:ProcessRockRockCollisions"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021b718:RumbleCam"
@@ -693,7 +693,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021df90:PossIntersect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e128:GetCurrentFarmObjectives"
