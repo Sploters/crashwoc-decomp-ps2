@@ -65,7 +65,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:001019d0:NuFileSetAddress"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0001:00101b68:NuFileAlign"

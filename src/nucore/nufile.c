@@ -498,6 +498,32 @@ void NuFileWriteAddress(int fh, int id)
 }
 
 
+extern char D_00613838[];
+#define msg_too_many_addr_defs  D_00613838
+
+/* Records the current file position as the definition of address `id`. */
+void NuFileSetAddress(int fh, int id)
+{
+    int i;
+
+    if (id) {
+        for (i = 0; i < addr_def_cnt; i++) {
+            if (addr_defs[i].id == id) {
+                break;
+            }
+        }
+        if (i >= addr_max) {
+            NuErrorProlog(nufile_file, 0x59A)(msg_too_many_addr_defs);
+        }
+        if (i == addr_def_cnt) {
+            addr_def_cnt = i + 1;
+        }
+        addr_defs[i].id = id;
+        addr_defs[i].pos = NuFilePos(fh);
+    }
+}
+
+
 void NuFileInitAddress(int max)
 {
     if (max != addr_max) {
