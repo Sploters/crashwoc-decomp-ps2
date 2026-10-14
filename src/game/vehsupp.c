@@ -211,7 +211,10 @@ s16 ASin(f32 val) {
     }
 
     if (val >= 1.0f) {
-        return positive ? 0x4000 : -0x4000;
+        if (positive) {
+            return 0x4000;
+        }
+        return -0x4000;
     }
 
     lo = 0;

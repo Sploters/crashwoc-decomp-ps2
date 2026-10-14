@@ -246,9 +246,12 @@ extern int NuRndrWaterRipCnt;
 
 
 typedef struct nurndrotitem_s {
-    char pad00[0xC];
+    void *dma;                      /* DMA chain to call */
+    NuMtx *mtx;
+    struct numtl_s *mtl;
     struct nurndrotitem_s *next;
     float depth;
+    int mtxmode;
 } nurndrotitem_s;
 
 typedef struct nurndrotbin_s {
@@ -330,8 +333,8 @@ extern int nurndr_tritot_this_frame;
 extern struct RndrPacketStream *rndrstream_fx;
 extern NuMtx numtx_identity;
 extern void NuRndrSetLocalMtx(NuMtx *mtx, int mode);
-extern void NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
-extern void NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
+extern int NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
+extern int NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
 extern void NuRndrStreamFxMPG(int microcode);
 extern int NuRndrStreamQuadShad(struct RndrPacketStream *stream);
 extern int NuRndrStreamQuadWRip(struct RndrPacketStream *stream, short *visible);
@@ -345,13 +348,13 @@ typedef struct nurndrshadpol_s {
 } nurndrshadpol_s;
 
 extern nurndrshadpol_s NuRndrShadPolDat[];
-extern int NuCameraClipTestPoints(NuVec3 *pos, int count, int mode);
+extern int NuCameraClipTestPoints(NuVec3 *pos, int count, NuMtx *wm);
 
 
 
 
 extern void NuRndrStreamSetMisc(struct RndrPacketStream *stream);
-extern void NuRndrStreamAddMtl(struct RndrPacketStream *stream, struct numtl_s *mtl);
+extern int NuRndrStreamAddMtl(struct RndrPacketStream *stream, struct numtl_s *mtl);
 extern u32 *vpDmaTag_CntEx(u32 *packet, u32 vif0, u32 vif1);
 extern u32 *vpDmaTag_Next(u32 *packet, u32 address);
 extern u32 *vtBeginDirect(u32 *packet, u32 irq);
@@ -896,6 +899,143 @@ void NuRndrStarfield(void) {
 }
 
 
+/* Screen-space rectangle (see NuMtlDisplayMtl). */
+struct nurndrrect_s {
+    float x, y, w, h;
+    float z;
+    float u0, v0, u1, v1;
+    struct numtl_s *mtl;
+};
+
+struct nuvtx2d_s {
+    float x, y, z;
+    float rhw;
+    int colour;
+    float u, v;
+};
+
+extern void NuRndrQuad2d(struct nuvtx2d_s *vtx, struct numtl_s *mtl);
+
+void NuRndrRect(struct nurndrrect_s *rect) {
+    struct nuvtx2d_s vtx[4];
+
+    vtx[0].x = rect->x;
+    vtx[0].y = rect->y;
+    vtx[0].z = 1.0f;
+    if (rect->z > 1.0f) {
+        vtx[0].rhw = 1.0f / rect->z;
+    } else {
+        vtx[0].rhw = 1.0f;
+    }
+    vtx[0].colour = -1;
+    vtx[0].u = rect->u0;
+    vtx[0].v = rect->v0;
+    vtx[1] = vtx[0];
+    vtx[1].u = rect->u1;
+    vtx[1].x += rect->w;
+    vtx[2] = vtx[0];
+    vtx[2].v = rect->v1;
+    vtx[2].y += rect->h;
+    vtx[3] = vtx[2];
+    vtx[3].u = rect->u1;
+    vtx[3].x = vtx[1].x;
+    NuRndrQuad2d(vtx, rect->mtl);
+}
+
+u32 *NuRndrFxBlueAndGreenData(u32 code) {
+    /* The target reserves two quadwords for its GIF tag scratch. */
+    u32 tag[8];
+    u32 *base;
+    u32 *packet;
+    int i;
+
+    base = NuRndrStreamAlloc(0x18);
+    packet = vpDmaTag_RetEx(base, 0x13000000, 0x6C158000);
+    *(unsigned long long *)tag = 0x1003000000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 1;
+    *packet++ = 0;
+    *(unsigned long long *)tag = 0x1003000000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 0xE;
+    *packet++ = 0;
+    *(unsigned long long *)packet = 0xA;
+    packet += 2;
+    *(unsigned long long *)packet = 0x42;
+    packet += 2;
+    *(unsigned long long *)packet = 0x8000000068ULL;
+    packet += 2;
+    *(unsigned long long *)packet = 0x42;
+    packet += 2;
+    *(unsigned long long *)tag = 0x4403400000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 0x5252;
+    *packet++ = 0;
+
+    /* Eight 320x32 strips, as GS 12.4 fixed-point coordinates. */
+    for (i = 0; i < 8; i++) {
+        *packet++ = 0;
+        *(float *)packet++ = i * 128.0f * (1.0f / 1024.0f) + 0.0625f;
+        *(float *)packet++ = (i & 1) * 320.0f * 16.0f;
+        *(float *)packet++ = (i & 0xFE) * 16.0f * 16.0f;
+        *(float *)packet++ = 1.0f / 64.0f;
+        *(float *)packet++ = i * 128.0f * (1.0f / 1024.0f) + 0.0625f;
+        *(float *)packet++ = ((i & 1) * 320.0f + 64.0f) * 16.0f;
+        *(float *)packet++ = (i & 0xFE) * 16.0f * 16.0f;
+    }
+
+    *packet++ = code | 0x14000000;
+    *packet++ = 0x13000000;
+    *packet++ = 0;
+    *packet++ = 0;
+    vpDmaTag_Close(packet);
+    return base;
+}
+
+/* Parameters of the single-channel colour filter; names remain unknown. */
+struct FxBlueOrGreen {
+    float parameter_00;
+    float parameter_04;
+    float parameter_08;
+    float parameter_0c;
+    int parameter_10;
+};
+
+u32 *NuRndrFxBlueOrGreenData(u32 code, struct FxBlueOrGreen *fx) {
+    /* The target reserves two quadwords for its GIF tag scratch. */
+    u32 tag[8];
+    u32 *base;
+    u32 *packet;
+
+    base = NuRndrStreamAlloc(0x10);
+    packet = vpDmaTag_RetEx(base, 0x13000000, 0x6C048000);
+    *(unsigned long long *)tag = 0x1003000000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 1;
+    *packet++ = 0;
+    *(unsigned long long *)tag = 0x4403400000008001ULL;
+    *packet++ = tag[0];
+    *packet++ = tag[1];
+    *packet++ = 0x5252;
+    *packet++ = 0;
+    *(float *)packet++ = fx->parameter_00;
+    *(float *)packet++ = fx->parameter_04;
+    *(float *)packet++ = fx->parameter_08;
+    *(float *)packet++ = fx->parameter_0c;
+    *(float *)packet++ = fx->parameter_10;
+    *packet++ = 0;
+    *packet++ = 0;
+    *packet++ = 0;
+    *packet++ = code | 0x14000000;
+    *packet++ = 0x13000000;
+    vpDmaTag_Close(packet);
+    return base;
+}
+
 void NuRndrLine3dDbg(u32 colour, float x0, float y0, float z0, float x1, float y1, float z1) {
 }
 
@@ -1112,6 +1252,67 @@ void NuRndrDeformerWeightsArrayInit(void) {
     vpDmaTag_Close(p + 1);
 }
 
+
+/* Only the material's microprogram tag is needed here. */
+struct numtl_s {
+    char pad000[0x13C];
+    void *mpgtag;                   /* 0x13C */
+};
+
+typedef unsigned int u128 __attribute__((mode(TI)));
+
+extern struct RndrPacketStream *rndrstream_ot_sort;
+extern int NuRndrStreamSetViewMtx(struct RndrPacketStream *stream);
+extern u32 *vpDmaTag_Call(u32 *packet, void *addr);
+
+/* Near-match (stays asm): retail loads stream->cur before materialising the
+   ot_close_packet / bin addresses, so the quadword copy schedules differently. */
+void NuRndrOTFlush(void) {
+    struct RndrPacketStream *stream;
+    nurndrotbin_s *bin;
+    nurndrotitem_s *item;
+    struct numtl_s *mtl;
+    void *mpgtag;
+    NuMtx *mtx;
+    int mtxmode;
+
+    mtx = 0;
+    mpgtag = 0;
+    mtxmode = -1;
+    mtl = 0;
+    if (ot_batch_free == 0x400) {
+        return;
+    }
+    stream = rndrstream_ot_sort;
+    NuRndrStreamLink(stream);
+    NuRndrStreamSetMisc(stream);
+    NuRndrStreamSetViewMtx(stream);
+    *((u128 *)stream->cur)++ = *(u128 *)ot_close_packet;
+    bin = &ot_bins[0xFFF];
+    do {
+        for (item = bin->head; item != 0; item = item->next) {
+            if (item->mtl != mtl) {
+                mtl = item->mtl;
+                NuRndrStreamAddMtl(stream, mtl);
+                if (mtl->mpgtag != mpgtag) {
+                    mpgtag = mtl->mpgtag;
+                    stream->cur = vpDmaTag_Call(stream->cur, mpgtag);
+                }
+            }
+            if (item->mtx != mtx || item->mtxmode != mtxmode) {
+                mtx = item->mtx;
+                mtxmode = item->mtxmode;
+                NuRndrSetLocalMtx(mtx, mtxmode);
+                NuRndrStreamSetLocalMtx(stream);
+            }
+            stream->cur = vpDmaTag_Call(stream->cur, item->dma);
+        }
+        bin->head = 0;
+        bin--;
+    } while (bin >= ot_bins);
+    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    ot_batch_free = 0x400;
+}
 
 void NuRndrOTInsertItem(nurndrotitem_s *item) {
     nurndrotbin_s *bin;

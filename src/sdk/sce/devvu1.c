@@ -18,3 +18,15 @@
  *   0x00263bb8 sceDevVu1GetCnd
  *   0x00263d48 sceDevVu1PutCnd
  */
+
+extern void sceVu0MemReadQ(void *data, unsigned int addr);
+
+#define VU1_TPC_ADDR 0x43A /* VU1 TPC, mapped into VU0 register space */
+
+unsigned short sceDevVu1GetTpc(void)
+{
+    unsigned short data[8];
+
+    sceVu0MemReadQ(data, VU1_TPC_ADDR);
+    return data[0];
+}

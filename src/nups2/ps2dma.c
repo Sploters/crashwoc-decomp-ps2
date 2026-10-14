@@ -230,7 +230,7 @@ extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern char *strcpy(char *dst, const char *src);
 extern char *strcat(char *dst, const char *src);
-extern char *NuStrCat(char *dst, char *src);
+extern void NuStrCat(char *dst, char *src);
 extern void *memset(void *dst, int c, unsigned int n);
 extern int sprintf(char *buf, const char *fmt, ...);
 extern void TagWalk(DmaTag *tag, TagWalkFunc walker);

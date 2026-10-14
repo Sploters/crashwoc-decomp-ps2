@@ -783,21 +783,12 @@ void NuMtxSetRotationX(struct numtx_s *m, int r)
 
 void NuMtxSetRotationY(struct numtx_s *m, int r)
 {
-    float zero = 0.0f;
-    float c;
-    float s;
-
-    c = NuTrigTable[(r + 0x4000) & 0xffff];
-    m->_22 = c;
-    m->_00 = c;
-    s = NuTrigTable[r & 0xffff];
-    m->_33 = 1.0f;
-    m->_01 = zero;
-    m->_20 = s;
+    m->_00 = m->_22 = NuTrigTable[r + 0x4000U & 0xffff];
+    m->_20 = NuTrigTable[r & 0xffff];
     m->_11 = 1.0f;
-    m->_02 = -s;
-    m->_32 = m->_10 = m->_03 = m->_23 = m->_12 = m->_21 = m->_13 =
-        m->_30 = m->_31 = zero;
+    m->_02 = -m->_20;
+    m->_01 = m->_10 = m->_03 = m->_23 = m->_12 = m->_21 = m->_13 = m->_30 = m->_31 = m->_32 = 0.0f;
+    m->_33 = 1.0f;
 }
 
 void NuMtxSetRotationZ(struct numtx_s *m, int a)

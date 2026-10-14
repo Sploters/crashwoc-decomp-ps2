@@ -81,9 +81,9 @@ extern void NuSoundPlay3d(struct nuvec_s *pos, s32 sfx, s32 volL, s32 volR,
                           s32 pitch);
 extern void NuSoundPlayChan(s32 track, s32 volL, s32 volR, s32 pitch, s32 channel);
 extern void NuSoundPlay(s32 sfx, s32 volL, s32 volR, s32 pitch);
-extern void NuSoundSetChannelPitch(s32 chan, s32 pitch, s32 a2);
+extern int NuSoundSetChannelPitch(s32 chan, s32 pitch, s32 stereo);
 extern void NuSoundUpdate(void);
-extern void SOUND_StopSound(s32 chan);
+extern int SOUND_StopSound(s32 chan);
 extern s32 NuSoundStopStream(s32 channel);
 extern void NuSoundPlayStereo(s32 track, s32 sfx2, s32 volL, s32 volR, s32 pitch);
 extern void NuSoundPlayStereo2(s32 track, s32 sfx2, s32 volL, s32 volR, s32 pitch);

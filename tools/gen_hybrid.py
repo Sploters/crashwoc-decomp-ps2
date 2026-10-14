@@ -233,6 +233,8 @@ _GPREL_SYM_RE = re.compile(r"%gp_rel\(([A-Za-z_$][\w$]*)\)")
 # dropped, and the label rewritten onto that retail symbol -- the same trick
 # _rewrite_lis plays for .lit4 pool constants.
 _LOCAL_LABEL_RE = re.compile(r"^(\$[A-Za-z_.$][\w.$]*):\s*$")
+# Alignment directives ee-gcc puts before loop heads.
+_ALIGN_RE = re.compile(r"^\s*\.(?:p2align|align)\s+\d+\s*$")
 _ENTER_DATA_RE = re.compile(
     r"^\s*\.(sdata|data|rdata|rodata|sdata2)\b"
     r"|^\s*\.section\s+\.(sdata|data|rdata|rodata)\b")
@@ -747,7 +749,11 @@ def _sonyize_seg(seg, profile="default"):
     out = []
     reorder = True
     pad_slots = profile != "sce"
+    reorder_before = None
     for index, line in enumerate(seg):
+        if index == reorder_before:
+            out.append("\t.set\treorder")
+            reorder_before = None
         m = _SET_REORDER_RE.match(line)
         if m:
             reorder = m.group(1) is None
@@ -762,12 +768,24 @@ def _sonyize_seg(seg, profile="default"):
         out.append(_sonyize(line))
         if _writes_fpr_via_mtc1(line):
             next_index = index + 1
+            aligned = False
             while next_index < len(seg) and (
                     _is_noise(seg[next_index])
-                    or _LOCAL_LABEL_RE.match(seg[next_index])):
+                    or _LOCAL_LABEL_RE.match(seg[next_index])
+                    or _ALIGN_RE.match(seg[next_index])):
+                aligned = aligned or bool(_ALIGN_RE.match(seg[next_index]))
                 next_index += 1
             if next_index < len(seg) and _mtc1_hazard(line, seg[next_index]):
                 out.append("\tnop")
+            elif aligned and reorder and pad_slots and next_index < len(seg):
+                # An alignment directive (a loop head) hides the next
+                # instruction from the decompals `as`, which then pads the
+                # mtc1 with a hazard nop SN's `as` does not write (retail:
+                # DrawZoffaUFOs, li.s $f21 before its loop). Assemble it and
+                # the alignment without reordering so no nop appears. Not for
+                # profile `sce`, whose retail assembler behaves like GNU `as`.
+                out[-1:] = ["\t.set\tnoreorder", out[-1]]
+                reorder_before = next_index
     return out
 
 

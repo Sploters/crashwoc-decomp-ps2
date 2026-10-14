@@ -61,11 +61,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109498:NuMtxSetTranslation"
-state = "equivalent"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:001094f8:NuMtxSetScale"
-state = "equivalent"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109558:NuMtxSetRotationX"
@@ -73,7 +73,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:001095e0:NuMtxSetRotationY"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0015:00109668:NuMtxSetRotationZ"

@@ -35,10 +35,37 @@ typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned long long u64;
 
+struct nurndrstream_s {
+    void *start;
+    void *cur;
+    void *txtr_start;
+    void *txtr_end;
+    void *zbuf;
+    struct NuMtl *mtl;
+    void *mpgtag;
+    unsigned int sortkey;
+    int local_mtx_id;
+    short view_mtx_id;
+    short scissor_id;
+    short xyoffset_id;
+    char pad_0x2A[2];
+    void *light_addr;
+    unsigned int flags;
+    int mtl_tid;
+};
+
 typedef struct NuMtl {
     u8 unk000[0x120];
-    u64 flags;
-    u8 unk128[0x38];
+    /* The attribute bits only fill the low word but are accessed as a dword;
+       the render stream starts right after them, at 0x124. */
+    union {
+        u64 flags;                          /* 0x120 */
+        struct {
+            u32 attrib;
+            struct nurndrstream_s stream;   /* 0x124 */
+            void *unk15C;                   /* 0x15C */
+        };
+    };
     struct NuMtl *next;
     struct NuMtl *prev;
     struct NuMtl *display_next;
@@ -74,6 +101,7 @@ extern int NuMtlUpdateEx(NuMtl *mtl, int force);
 extern void NuMtlClose(void);
 extern void NuMtlDestroy(NuMtl *mtl);
 extern void NuMtlRemove(NuMtl *mtl);
+extern void NuRndrStreamResetStream(struct nurndrstream_s *stream, int flag);
 extern NuMtlReadEventFunc NuMtlReadEventSetHandler(NuMtlReadEventFunc handler);
 
 extern void *memset(void *dst, int value, unsigned int size);
@@ -305,6 +333,57 @@ void *NuMtlGetStateBlockDma(void *dma) {
 }
 
 
+int NuMtlGetZupd(NuMtl *mtl) {
+    u64 flags;
+
+    flags = mtl->flags;
+    return ((signed char)((u8)flags << 4)) >> 7;
+}
+
+
+inline void NuMtlInsert(NuMtl *mtl) {
+    NuMtl *cur;
+    NuMtl *prev;
+    int key;
+
+    prev = 0;
+    cur = mtl_list;
+    NuDisableVBlank();
+    key = (mtl->alpha << 16) + (mtl->tid >= 0 ? mtl->tid : 0);
+    mtl->next = 0;
+    mtl->prev = 0;
+    while (cur && (cur->alpha << 16) + (cur->tid >= 0 ? cur->tid : 0) < key) {
+        prev = cur;
+        cur = cur->next;
+    }
+    if (prev) {
+        mtl->prev = prev;
+        mtl->next = prev->next;
+        prev->next = mtl;
+    } else {
+        mtl->next = mtl_list;
+        mtl_list = mtl;
+    }
+    if (mtl->next) {
+        mtl->next->prev = mtl;
+    }
+    NuEnableVBlank();
+}
+
+
+void NuMtlAdd(NuMtl *mtl) {
+    mtl->unk15C = 0;
+    mtl->prev = 0;
+    mtl->next = 0;
+    mtl->display_next = 0;
+    mtl->flags |= NUMTL_VALID;
+    mtl->flags &= ~NUMTL_POOLED;
+    mtl->flags &= ~NUMTL_ALLOCATED;
+    mtl->stream.mtl = mtl;
+    NuRndrStreamResetStream(&mtl->stream, 1);
+    NuMtlInsert(mtl);
+}
+
 NuMtl *NuMtlIterate(int restart) {
     NuMtl *mtl;
 
@@ -341,35 +420,6 @@ int NuMtlReadEventDefault(NuMtl *mtl) {
     return 0;
 }
 
-
-void NuMtlInsert(NuMtl *mtl) {
-    NuMtl *cur;
-    NuMtl *prev;
-    int key;
-
-    prev = 0;
-    cur = mtl_list;
-    NuDisableVBlank();
-    key = (mtl->alpha << 16) + (mtl->tid >= 0 ? mtl->tid : 0);
-    mtl->next = 0;
-    mtl->prev = 0;
-    while (cur && (cur->alpha << 16) + (cur->tid >= 0 ? cur->tid : 0) < key) {
-        prev = cur;
-        cur = cur->next;
-    }
-    if (prev) {
-        mtl->prev = prev;
-        mtl->next = prev->next;
-        prev->next = mtl;
-    } else {
-        mtl->next = mtl_list;
-        mtl_list = mtl;
-    }
-    if (mtl->next) {
-        mtl->next->prev = mtl;
-    }
-    NuEnableVBlank();
-}
 
 
 void NuMtlUpdateAll(void) {

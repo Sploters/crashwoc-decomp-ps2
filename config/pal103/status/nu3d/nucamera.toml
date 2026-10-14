@@ -105,23 +105,23 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00113d18:NuCameraTransformView"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00113e28:NuCameraTransformPerspective"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00113f38:NuCameraTransformScreenClip"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00114048:NuCameraTransformScreen"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00114158:NuCameraTransformScreenVU0"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00114268:NuCameraClipTestExtents"
@@ -129,7 +129,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:001142d8:NuCameraClipTestPoints"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00114488:NuCameraDistSqr"
@@ -161,4 +161,4 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0031:00114608:NuCameraTransformScissorClip"
-state = "asm"
+state = "matching"

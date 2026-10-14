@@ -125,7 +125,7 @@ struct nugscn_s {
     char pad28[0x04];
     int numsplines;                 /* 0x2C */
     struct nugspline_s *splines;    /* 0x30 */
-    char pad34[0x04];
+    char *nametable;                /* 0x34 */
     int numexspecials;              /* 0x38 */
     struct nuspecial_s *exspecials; /* 0x3C */
     int exallocix;                  /* 0x40 */
@@ -136,9 +136,9 @@ struct nugscn_s {
     short crossfaderate;            /* 0x56 */
     int crossfadegobj;              /* 0x58 */
     int crossfadefirst;             /* 0x5C */
-    char pad60[0x04];
+    int numtexanims;                /* 0x60 */
     struct nutexanim_s *texanims;   /* 0x64 */
-    char pad68[0x04];
+    short *texanim_tids;            /* 0x68 */
 }; /* 0x6C */
 
 struct nuhspecial_s {
@@ -178,7 +178,12 @@ struct nutexanimenv_s {
 };
 
 struct nutexanim_s {
-    char pad00[0x14];
+    struct nutexanim_s *succ;       /* 0x00 */
+    struct nutexanim_s *prev;       /* 0x04 */
+    short *tids;                    /* 0x08 index into texanim_tids on disk */
+    short numtids;                  /* 0x0C */
+    unsigned int dynalloc : 1;      /* 0x0E */
+    struct numtl_s *mtl;            /* 0x10 index into mtls on disk */
     struct nutexanimenv_s *env;     /* 0x14 */
     char *ntaname;                  /* 0x18 */
     char *scriptname;               /* 0x1C */
@@ -194,6 +199,8 @@ extern char *strstr(const char *haystack, const char *needle);
 extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
 extern void *NuTexAnimProgFind(char *name);
+extern struct nutexanimenv_s *NuTexAnimEnvCreate(void *buff, struct numtl_s *mtl, short *tids, void *prog);
+extern void NuTexAnimAddList(struct nutexanim_s *list);
 extern void NuTexAnimEnvReset(struct nutexanimenv_s *env);
 extern void NuTexAnimRemoveList(struct nutexanim_s *list);
 extern void NuMtlDestroy(struct numtl_s *mtl);
@@ -207,7 +214,7 @@ extern int NuFileReadInt(int fh);
 extern float NuFileReadFloat(int fh);
 extern void NuFileBeginBlkWrite(int fh, int blk, int flags);
 extern void NuFileEndBlkWrite(int fh);
-extern void NuFileWrite(int fh, void *buf, int size);
+extern int NuFileWrite(int fh, void *buf, int size);
 extern void NuFileWriteInt(int fh, int value);
 extern void NuFileWriteFloat(int fh, float value);
 extern struct nunode_s *NuNodeRead(int fh, int depth);
@@ -291,6 +298,23 @@ extern char D_00614D00[];
 extern char D_00615130[];
 #define nugscn_srcfile D_00614D00
 #define removed_mtls_msg D_00615130
+
+/* Spline set as read from the IFF: a 0x3C-byte record per spline, with all
+ * the control points stored after them in one block. */
+struct nucvtspline_s {
+    int ncvs;                       /* 0x00 */
+    struct nuvec_s *cvs;            /* 0x04 */
+    char pad08[0x3C - 0x08];
+}; /* 0x3C */
+
+extern struct nucvtspline_s *cvt_splines;
+extern int cvt_numsplines;
+extern struct nuvec_s *cvt_spline_cvs;
+
+extern char D_00614D70[];
+extern char D_00614E08[];
+#define texanimset_msg D_00614D70
+#define splineset_msg D_00614E08
 
 extern struct nuvec_s nugscn_gobj_min;
 extern struct nuvec_s nugscn_gobj_max;
@@ -733,6 +757,67 @@ void NuSceneReAssignTexAnims(struct nutexanim_s *texanims, int count)
 }
 
 
+void CvtNuIFFTexAnimSet(int fh)
+{
+    int ntexanims;
+    int nscript;
+    int size;
+    void *texanims;
+    short *script;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0x234)(texanimset_msg);
+    NuFileBeginBlkWrite(cvt_fh, 0x30534154, 0);
+    ntexanims = NuFileReadInt(fh);
+    NuFileReadInt(fh);
+    size = ntexanims * 0x20;
+    NuFileWriteInt(cvt_fh, ntexanims);
+    NuFileWriteInt(cvt_fh, 0);
+    texanims = NuMemAllocFn(size, nugscn_srcfile, 0x23F);
+    NuFileRead(fh, texanims, size);
+    NuFileWrite(cvt_fh, texanims, size);
+
+    nscript = NuFileReadInt(fh);
+    NuFileWriteInt(cvt_fh, nscript);
+    size = nscript * sizeof(short);
+    script = NuMemAllocFn(size, nugscn_srcfile, 0x246);
+    NuFileRead(fh, script, size);
+    NuFileWrite(cvt_fh, script, size);
+    NuFileEndBlkWrite(cvt_fh);
+
+    NuMemFreeFn(texanims, nugscn_srcfile, 0x24D);
+    NuMemFreeFn(script, nugscn_srcfile, 0x24E);
+}
+
+
+void CvtNuIFFSplineSet(int fh)
+{
+    int nsplines;
+    int ncvs;
+    int i;
+    struct nuvec_s *cvs;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0x31E)(splineset_msg);
+    nsplines = NuFileReadInt(fh);
+    cvt_splines = NuMemAllocFn(nsplines * sizeof(struct nucvtspline_s), nugscn_srcfile, 0x324);
+    cvt_numsplines = nsplines;
+    if (nsplines != 0) {
+        NuFileRead(fh, cvt_splines, nsplines * sizeof(struct nucvtspline_s));
+        ncvs = NuFileReadInt(fh);
+        if (ncvs != 0) {
+            cvt_spline_cvs = NuMemAllocFn(ncvs * sizeof(struct nuvec_s), nugscn_srcfile, 0x32C);
+            NuFileRead(fh, cvt_spline_cvs, ncvs * sizeof(struct nuvec_s));
+
+            /* Point each spline at its control points. */
+            cvs = cvt_spline_cvs;
+            for (i = 0; i < nsplines; i++) {
+                cvt_splines[i].cvs = cvs;
+                cvs += cvt_splines[i].ncvs;
+            }
+        }
+    }
+}
+
+
 void CvtNuIFFFaceOnGeom(int fh)
 {
     struct nufaceongeom_s geom;
@@ -769,6 +854,223 @@ void CvtNuIFFNodeHierarchy(int fh)
     NuFileEndBlkWrite(cvt_fh);
 }
 
+
+extern void ReadNuIFFGeomVtx(int fh);
+extern void CvtNuIFFGeomPrim(int fh, int mtlid, int write);
+extern void ReadNuIFFGeomSkin(int fh);
+extern void *D_006330CC;
+#define cvt_vtxbuff D_006330CC
+
+void CvtNuIFFGeom(int fh, int write)
+{
+    int pos;
+    int pad;
+    int mtlid;
+    int n;
+    void *buff;
+
+    if (write) {
+        /* Pad so the geometry that follows (0x10 bytes on) starts on a
+           128-byte boundary. */
+        pos = NuFilePos(cvt_fh);
+        pad = pos + 0x10;
+        pad = ((pos + 0x8F) & 0xFFFFFF80) - pad;
+        NuFileWriteInt(cvt_fh, 0);
+        NuFileWriteInt(cvt_fh, pad);
+    }
+    mtlid = NuFileReadInt(fh);
+    if (write) {
+        NuFileWriteInt(cvt_fh, mtlid);
+    }
+    ReadNuIFFGeomVtx(fh);
+    n = NuFileReadInt(fh);
+    if (n) {
+        buff = NuMemAllocFn(n * 0xC, nugscn_srcfile, 0x44C);
+        NuFileRead(fh, buff, n * 0xC);
+        NuMemFreeFn(buff, nugscn_srcfile, 0x451);
+    }
+    if (write) {
+        for (; pad != 0; pad -= 4) {
+            NuFileWriteInt(cvt_fh, 0);
+        }
+    }
+    CvtNuIFFGeomPrim(fh, mtlid, write);
+    ReadNuIFFGeomSkin(fh);
+    NuFileReadInt(fh);
+    NuMemFreeFn(cvt_vtxbuff, nugscn_srcfile, 0x4B7);
+}
+
+/* Copies the instance table (0x50 bytes each) and any animated-instance
+   records (0x60 bytes each) straight through to the converted file. */
+void CvtNuIFFInstSet(int fh)
+{
+    int ninstances;
+    int nanims;
+    void *instances;
+    void *anims;
+
+    ninstances = NuFileReadInt(fh);
+    instances = NuMemAllocFn(ninstances * 0x50, nugscn_srcfile, 0x6EC);
+    NuFileRead(fh, instances, ninstances * 0x50);
+    NuFileBeginBlkWrite(cvt_fh, 0x54534E49, 0);
+    NuFileWriteInt(cvt_fh, ninstances);
+    NuFileWriteInt(cvt_fh, 0);
+    NuFileWrite(cvt_fh, instances, ninstances * 0x50);
+    NuFileEndBlkWrite(cvt_fh);
+
+    nanims = NuFileReadInt(fh);
+    if (nanims != 0) {
+            anims = NuMemAllocFn(nanims * 0x60, nugscn_srcfile, 0x6FA);
+        NuFileRead(fh, anims, nanims * 0x60);
+        NuFileBeginBlkWrite(cvt_fh, 0x4C424149, 0);
+        NuFileWriteInt(cvt_fh, nanims);
+        NuFileWriteInt(cvt_fh, 0);
+        NuFileWrite(cvt_fh, anims, nanims * 0x60);
+        NuFileEndBlkWrite(cvt_fh);
+        NuMemFreeFn(anims, nugscn_srcfile, 0x704);
+    }
+    NuMemFreeFn(instances, nugscn_srcfile, 0x707);
+}
+
+extern char D_00615060[];
+#define texset_msg D_00615060
+extern int NuFileSeek(int fh, int offset, int origin);
+extern int NuMemFileSeek(int fh, int offset, int origin);
+extern int NuTexCreateNative(void *data);
+
+/* Carves `size` bytes, aligned to `align`, off the scene load buffer. */
+static inline void *GScnBufferAlloc(int size, int align)
+{
+    char *aligned;
+    char *end;
+
+    aligned = (char *)(((int)*gscn_buffer + align - 1) & ~(align - 1));
+    end = aligned + size;
+    if (end < gscn_bufferlimit) {
+        *gscn_buffer = end;
+        return aligned;
+    }
+    NuErrorProlog(nugscn_srcfile, 0x184)(bufferalloc_failed_msg);
+    return 0;
+}
+
+void ReadTextureSet(int fh)
+{
+    int ntex;
+    int size;
+    int skip;
+    void *data;
+    int i;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0xA90)(texset_msg);
+    ntex = NuFileReadInt(fh);
+    NuFileReadInt(fh);
+    loading_scene->tids = GScnBufferAlloc(ntex * sizeof(int), 4);
+    memset(loading_scene->tids, 0, ntex * sizeof(int));
+    loading_scene->numtid = ntex;
+    for (i = 0; i < ntex; i++) {
+        size = NuFileReadInt(fh);
+        skip = NuFileReadInt(fh);
+        if (skip == 0) {
+            NuFileReadInt(fh);
+            NuFileReadInt(fh);
+        } else {
+            NuFileSeek(fh, skip, 1);
+        }
+        data = NuMemFileAddr(fh);
+        NuMemFileSeek(fh, size, 1);
+        loading_scene->tids[i] = NuTexCreateNative(data);
+    }
+}
+
+void ReadNuIFFTexAnimSet(int fh, struct nugscn_s *gsc, short *tids)
+{
+    struct nutexanim_s *tex;
+    int size;
+    int i;
+    int j;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0xC64)(texanimset_msg);
+    gsc->numtexanims = NuFileReadInt(fh);
+    NuFileReadInt(fh);
+    gsc->texanims = NuMemAllocFn(gsc->numtexanims * sizeof(struct nutexanim_s), nugscn_srcfile, 0xC6B);
+    NuFileRead(fh, gsc->texanims, gsc->numtexanims * sizeof(struct nutexanim_s));
+    size = NuFileReadInt(fh) * sizeof(short);
+    gsc->texanim_tids = NuMemAllocFn(size, nugscn_srcfile, 0xC70);
+    NuFileRead(fh, gsc->texanim_tids, size);
+
+    for (i = 0; i < gsc->numtexanims; i++) {
+        tex = &gsc->texanims[i];
+        tex->succ = 0;
+        tex->prev = 0;
+        tex->tids = gsc->texanim_tids + (int)tex->tids;
+        tex->dynalloc = 0;
+        for (j = 0; j < tex->numtids; j++) {
+            tex->tids[j] = tids[tex->tids[j]];
+        }
+        tex->ntaname = gsc->nametable + (int)tex->ntaname;
+        tex->scriptname = gsc->nametable + (int)tex->scriptname;
+        tex->mtl = gsc->mtls[(int)tex->mtl];
+        tex->env = NuTexAnimEnvCreate(0, tex->mtl, tex->tids, NuTexAnimProgFind(tex->scriptname));
+    }
+
+    for (i = 0; i < gsc->numtexanims - 1; i++) {
+        gsc->texanims[i].succ = &gsc->texanims[i] + 1;
+        gsc->texanims[i + 1].prev = &gsc->texanims[i];
+    }
+    NuTexAnimAddList(gsc->texanims);
+}
+
+extern int D_00633090;
+#define texanim_ix D_00633090
+
+union variptr_u {
+    void *voidptr;
+    char *charptr;
+};
+
+/* Near-match (stays asm): register allocation of the texanim fields and the
+   order gscn_bufferlimit is loaded in the inlined GScnBufferAlloc differ. */
+void ReadTexAnimSet(int fh)
+{
+    struct nutexanim_s *tex;
+    short *tidtab;
+    char *start;
+    union variptr_u buff;
+    void *prog;
+    int j;
+
+    NuDebugMsgProlog(nugscn_srcfile, 0xC2C)(texanimset_msg);
+    loading_scene->numtexanims = NuFileReadInt(fh);
+    NuFileReadInt(fh);
+    loading_scene->texanims = NuMemFileAddr(fh);
+    NuMemFileSeek(fh, loading_scene->numtexanims * sizeof(struct nutexanim_s), 1);
+    NuFileReadInt(fh);
+    tidtab = NuMemFileAddr(fh);
+
+    for (texanim_ix = 0; texanim_ix < loading_scene->numtexanims; texanim_ix++) {
+        tex = &loading_scene->texanims[texanim_ix];
+        tex->succ = 0;
+        tex->prev = 0;
+        tex->tids = tidtab + (int)tex->tids;
+        for (j = 0; j < tex->numtids; j++) {
+            tex->tids[j] = loading_scene->tids[tex->tids[j]];
+        }
+        tex->ntaname = loading_scene->nametable + (int)tex->ntaname;
+        tex->mtl = loading_scene->mtls[(int)tex->mtl];
+        tex->dynalloc = 0;
+        prog = NuTexAnimProgFind(loading_scene->nametable + (int)tex->scriptname);
+        start = buff.charptr = (char *)(((int)*gscn_buffer + 0xF) & ~0xF);
+        tex->env = NuTexAnimEnvCreate(&buff, tex->mtl, tex->tids, prog);
+        GScnBufferAlloc(buff.charptr - start, 0x10);
+    }
+
+    for (texanim_ix = 0; texanim_ix < loading_scene->numtexanims - 1; texanim_ix++) {
+        loading_scene->texanims[texanim_ix].succ = &loading_scene->texanims[texanim_ix] + 1;
+        loading_scene->texanims[texanim_ix + 1].prev = &loading_scene->texanims[texanim_ix];
+    }
+    NuTexAnimAddList(loading_scene->texanims);
+}
 
 int FindSplinePtSize(char *name)
 {

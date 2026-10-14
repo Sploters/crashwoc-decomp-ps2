@@ -21,7 +21,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0106:00237ff0:Update3DFontObjects"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0106:002380c8:InitFont3D"

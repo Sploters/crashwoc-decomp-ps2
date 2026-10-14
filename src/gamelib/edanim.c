@@ -526,6 +526,8 @@ extern int strncmp(const char *a, const char *b, int n);
 extern char *strncpy(char *dst, const char *src, unsigned int n);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);
+/* Defined as returning int (gamelib/edfile), but declared void here as in the
+ * original: with int, edanimFileLoad no longer matches. */
 extern void EdFileClose(void);
 extern void EdFileWrite(void *data, int size);
 extern void EdFileWriteInt(int data);

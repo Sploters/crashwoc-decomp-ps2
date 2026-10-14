@@ -37,7 +37,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0040:00120590:NuRndrFxBlueAndGreenData"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001207d0:NuRndrFxSpriteSet"
@@ -193,7 +193,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0040:00128f40:NuRndrGradRect2di"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001293c0:NuRndrRectUV2di"
@@ -353,7 +353,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:0012fc98:NuRndrRect"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:0012fdf0:NuRndrLine3dDbg"
@@ -433,7 +433,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001304e8:NuRndrFxBlueOrGreenData"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:00130638:NuRndrOTInsertItem"
@@ -453,7 +453,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:001307c0:RotateCyl"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0040:00130888:DeRotateVectorAngles"

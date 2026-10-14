@@ -8,9 +8,9 @@ sys.path.insert(0, str(ROOT / "tools"))
 from gen_hybrid import _sonyize_seg
 
 
-def _insns(seg):
+def _insns(seg, profile="default"):
     """Emitted lines minus comments/blanks, stripped -- what the assembler sees."""
-    return [l.strip() for l in _sonyize_seg(seg)
+    return [l.strip() for l in _sonyize_seg(seg, profile)
             if l.strip() and not l.strip().startswith("#")]
 
 
@@ -53,6 +53,34 @@ class TestHazardNop(unittest.TestCase):
         # reading $f1 (the mate of $f0) is padded like a compare.
         got = _insns(["\tmtc1\t$1,$f0", "\tadd.s\t$f4,$f1,$f12"])
         self.assertEqual(got, ["mtc1\t$1,$f0", "nop", "add.s\t$f4,$f1,$f12"])
+
+    def test_lis_before_aligned_loop_head_is_not_reordered(self):
+        # retail DrawZoffaUFOs: li.s $f21 then `.p2align 3` + the loop label.
+        # No hazard (the loop's first insn reads no FPR), but the alignment
+        # hides that from the decompals `as`, so the li.s and the alignment
+        # are assembled without reordering and no nop is written.
+        got = _insns(["\tli.s\t$f21,1.8e2", "\t.p2align 3", "$L295:",
+                      "\tlw\t$2,224($16)"])
+        self.assertEqual(got, [".set\tnoreorder", "li.s\t$f21,1.8e2",
+                               ".p2align 3", "$L295:", ".set\treorder",
+                               "lw\t$2,224($16)"])
+
+    def test_lis_before_aligned_loop_head_is_left_alone_for_sce(self):
+        # The sce retail assembler behaves like GNU `as`, so the decompals
+        # `as` padding is already right there.
+        seg = ["\tli.s\t$f21,1.8e2", "\t.p2align 3", "$L295:",
+               "\tlw\t$2,224($16)"]
+        self.assertEqual(_insns(seg, "sce"), [l.strip() for l in seg])
+
+    def test_lis_before_aligned_end_of_segment_is_left_alone(self):
+        seg = ["\tli.s\t$f21,1.8e2", "\t.p2align 3", "$L295:"]
+        self.assertEqual(_insns(seg), [l.strip() for l in seg])
+
+    def test_lis_hazard_across_aligned_loop_head_keeps_its_nop(self):
+        got = _insns(["\tli.s\t$f0,1.0", "\t.p2align 3", "$Lloop:",
+                      "\tadd.s\t$f2,$f0,$f1"])
+        self.assertEqual(got, ["li.s\t$f0,1.0", "nop", ".p2align 3", "$Lloop:",
+                               "add.s\t$f2,$f0,$f1"])
 
     def test_inline_lis_hazard_padding_precedes_join_label(self):
         # Incoming branches must skip the nop needed by the fall-through load.

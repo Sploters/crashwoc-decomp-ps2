@@ -64,6 +64,25 @@ def undefined_externals(nm_bin, obj):
             if re.match(r"\s+U ", line)}
 
 
+class ToolError(subprocess.CalledProcessError):
+    """CalledProcessError whose message carries the tool's stderr.
+
+    The base class prints only the command and exit status, which turns every
+    ld failure into an opaque "returned non-zero exit status 1". Subclassing
+    keeps existing `except CalledProcessError` handlers working unchanged."""
+
+    def __str__(self):
+        err = (self.stderr or "").strip()
+        return super().__str__() + (f"\n{err}" if err else "")
+
+
+def _run_tool(cmd):
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise ToolError(proc.returncode, cmd, proc.stdout, proc.stderr)
+    return proc
+
+
 def link_text_at(obj, base_addr, defsyms, tmp):
     """Link obj's .text at base_addr (externals defsym'd) and return raw bytes."""
     ld_bin, objcopy_bin = tool_path(LD), tool_path(OBJCOPY)
@@ -76,8 +95,7 @@ def link_text_at(obj, base_addr, defsyms, tmp):
     ld = tmp / "link.ld"
     ld.write_text(script)
     elf_out, bin_out = tmp / "linked.elf", tmp / "linked.bin"
-    subprocess.run([ld_bin, "-EL", "-T", str(ld), "-o", str(elf_out), str(obj)],
-                   check=True, capture_output=True, text=True)
-    subprocess.run([objcopy_bin, "-O", "binary", "--only-section=.text",
-                    str(elf_out), str(bin_out)], check=True, capture_output=True)
+    _run_tool([ld_bin, "-EL", "-T", str(ld), "-o", str(elf_out), str(obj)])
+    _run_tool([objcopy_bin, "-O", "binary", "--only-section=.text",
+               str(elf_out), str(bin_out)])
     return bin_out.read_bytes()

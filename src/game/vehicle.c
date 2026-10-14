@@ -235,6 +235,21 @@
 extern s32 Level;
 extern struct numtx_s mTEMP;
 
+/* The game pad (creature.h forward-declares the tag). */
+struct pad_s {
+    char pad_000[0x55C];
+    u32 paddata;               /* 0x55C held buttons */
+    char pad_560[0x57E - 0x560];
+    u8 l_alg_x;                /* 0x57E left stick */
+    u8 l_alg_y;                /* 0x57F */
+};
+
+/* paddata d-pad bits (libpad SCE_PADLup/right/down/left). */
+#define PAD_UP    0x1000
+#define PAD_RIGHT 0x2000
+#define PAD_DOWN  0x4000
+#define PAD_LEFT  0x8000
+
 /* gp-relative angle scale constants used to convert the glider's float roll/
  * pitch/yaw into NuMtx integer rotation units. */
 extern float D_0062D91C;
@@ -268,6 +283,17 @@ void NuQuatToMtx(struct nuquat_s *q, struct numtx_s *m);
 void NuHGobjRndr(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                  short *layer);
 
+struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
+void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
+f32 NuVecMag(struct nuvec_s *v);
+void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
+void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
+s32 NuAtan2D(f32 x, f32 z);
+void NuMtxPreRotateY(struct numtx_s *m, s32 r);
+f32 frand(void);
+s32 ProcessTimer(f32 *timer);
+
 /* Faithful full-C near-match (state=asm): structure/frame/reg-mask exact, but
  * ee-gcc rematerializes %hi(mTEMP) in each of the Level==0x1A/else blocks and
  * fills the `bne` delay slot with a speculative scale load, where retail shares
@@ -275,30 +301,30 @@ void NuHGobjRndr(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
  * no_progress blocker. */
 void DrawGlider(struct creature_s *c)
 {
-    struct NEWBUGGY *b;
+    struct glider_s *g;
     float lift;
     float scale;
     s8 idx;
 
-    b = c->Buggy;
+    g = (struct glider_s *)c->Buggy;
     lift = ((Level != 0xD) && (Level != 0x1A)) ? 15.0f : 0.0f;
 
-    if (b->enable && (Level == 0xD)) {
+    if (g->AutoPilot && (Level == 0xD)) {
         NuMtxSetRotationX(&mTEMP, lift * D_0062D91C);
         NuMtxRotateY(&mTEMP, 0);
         NuMtxTranslate(&mTEMP, &D_006B75A0);
     } else if (Level == 0x1A) {
         scale = D_0062D920;
-        NuMtxSetRotationZ(&mTEMP, b->roll * scale);
-        NuMtxRotateX(&mTEMP, (b->pitch + b->pitch) * scale);
-        NuMtxRotateY(&mTEMP, b->yaw * scale);
-        NuMtxTranslate(&mTEMP, &b->pos);
+        NuMtxSetRotationZ(&mTEMP, g->TiltZ * scale);
+        NuMtxRotateX(&mTEMP, (g->TiltX + g->TiltX) * scale);
+        NuMtxRotateY(&mTEMP, g->AngleY * scale);
+        NuMtxTranslate(&mTEMP, &g->Position);
     } else {
         scale = D_0062D924;
-        NuMtxSetRotationZ(&mTEMP, b->roll * scale);
-        NuMtxRotateX(&mTEMP, (b->pitch + lift) * scale);
-        NuMtxRotateY(&mTEMP, b->yaw * scale);
-        NuMtxTranslate(&mTEMP, &b->pos);
+        NuMtxSetRotationZ(&mTEMP, g->TiltZ * scale);
+        NuMtxRotateX(&mTEMP, (g->TiltX + lift) * scale);
+        NuMtxRotateY(&mTEMP, g->AngleY * scale);
+        NuMtxTranslate(&mTEMP, &g->Position);
     }
 
     if (Level == 0x12) {
@@ -332,7 +358,7 @@ void DrawAtlas(struct creature_s *c)
     }
 }
 
-/* Seeds the ball (atlasphere) NEWBUGGY transform from a character's object:
+/* Seeds the atlasphere (struct NEWBUGGY) transform from a character's object:
  * ball_pos <- obj->pos (+ vertical lift), ball_vel <- obj->mom / divisor.
  * Faithful near-match (state=asm): first half byte-exact; the mom/divisor FP
  * load order and the `boing` beql delay-slot differ (scheduling). */
@@ -364,25 +390,19 @@ extern s32 D_005B7CA0[];   /* current rumble objectives (far) */
 extern struct nuvec_s D_005B44F8[]; /* weather boss position (far) */
 extern struct spline_s D_005B4548;  /* weather boss spline (far) */
 extern struct nuvec_s D_006B75B0;   /* weather start pos temp (far) */
-extern struct NEWBUGGY PlayerGlider;
+extern struct glider_s PlayerGlider;   /* struct glider_s: creature.h */
 extern struct nuvec_s v000;
 
 extern void ProcessFireFlyIntro(void);
 extern void InitWeatherBoss_a(void);
 extern void ProcessWeatherBoss_a(struct weatherboss_s *wb);
 extern void DrawWeatherBoss_a(struct weatherboss_s *wb);
-extern void AddRockVel(struct nuvec_s *pos, struct nuvec_s *vel, s32 owner);
+extern struct jeeprock_s *AddRockVel(struct nuvec_s *pos, struct nuvec_s *vel, f32 radius, s32 owner);
 extern void *memset(void *dst, s32 val, s32 len);
 extern char *best_cRPos;
 
-/* EarthBoss state block (far). */
-struct earthboss_s {
-    char pad_000[0x10];
-    s32 health;                /* 0x10 */
-    char pad_014[0x2C - 0x14];
-    s32 action;                /* 0x2C */
-};
-extern struct earthboss_s EarthBoss;
+/* The earth boss is an atlasphere, like PlayerAtlas (far). */
+extern struct NEWBUGGY EarthBoss;
 
 struct MYDRAW {
     struct anim_s anim;            /* 0x00 */
@@ -435,14 +455,105 @@ struct vehmask_s {
     f32 drawscale;             /* 0x16C */
     s32 seen;                  /* 0x170 */
 };
-extern struct vehmask_s VehicleMask[];
+extern struct vehmask_s VehicleMask[2];
 
 /* HovaBlimp array, stride 0x134, 6 entries. */
 struct hovablimp_s {
     s32 active;                /* 0x00 */
-    char pad_04[0x134 - 0x04];
+    struct MYDRAW draw;        /* 0x04 */
+    char pad_draw[0xE4 - 0x04 - sizeof(struct MYDRAW)];
+    struct nuvec_s pos;        /* 0xE4 */
+    struct nuvec_s startpos;   /* 0xF0 */
+    struct nuvec_s vel;        /* 0xFC */
+    f32 angy;                  /* 0x108 */
+    char pad_10C[0x110 - 0x10C];
+    f32 thrustoff;             /* 0x110 */
+    char pad_114[0x11C - 0x114];
+    s32 hitpoints;             /* 0x11C */
+    char pad_120[0x134 - 0x120];
 };
-extern struct hovablimp_s HovaBlimp[];
+extern struct hovablimp_s HovaBlimp[6];
+
+/* Tornado under each blimp, stride 0x110, 6 entries. */
+struct tornado_s {
+    s32 active;                /* 0x000 */
+    struct nuvec_s pos;        /* 0x004 */
+    struct nuvec_s startpos;   /* 0x010 */
+    char pad_01C[0xFC - 0x01C];
+    f32 scale;                 /* 0x0FC */
+    f32 yang;                  /* 0x100 degrees */
+    f32 yanginc;               /* 0x104 degrees per second */
+    char pad_108[0x110 - 0x108];
+};
+extern struct tornado_s TornadoList[6];
+extern s32 ACTIVEBLIMPCOUNT;
+extern void ProcessHovaBlimp(struct hovablimp_s *hova);
+extern f32 Rationalise360f(f32 a);
+
+/* Spin the tornado and keep it under its blimp, or retire it with it. */
+static inline void ProcessTornado(struct tornado_s *tornado, struct hovablimp_s *hova)
+{
+    tornado->yang += tornado->yanginc * 0.02f;
+    tornado->yang = Rationalise360f(tornado->yang);
+    if (hova->active != 0) {
+        tornado->pos = hova->pos;
+        tornado->pos.y = 27.0f;
+        tornado->startpos = tornado->pos;
+    } else {
+        tornado->active = 0;
+    }
+}
+
+/* Returns whether any blimp was active this frame. */
+s32 ProcessAllHovaBlimps(void)
+{
+    s32 i;
+    s32 ret;
+
+    ret = 0;
+    ACTIVEBLIMPCOUNT = 0;
+    for (i = 0; i < 6; i++) {
+        if (HovaBlimp[i].active != 0) {
+            ret = 1;
+            ProcessHovaBlimp(&HovaBlimp[i]);
+            if (HovaBlimp[i].active != 0) {
+                ACTIVEBLIMPCOUNT++;
+            }
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        if (TornadoList[i].active != 0) {
+            ProcessTornado(&TornadoList[i], &HovaBlimp[i]);
+        }
+    }
+    return ret;
+}
+
+extern void InitHova(struct nuvec_s *pos, f32 angle);
+extern void DebFree(s32 *key);
+extern s32 jontorn[20];
+extern s32 jonfirst;
+
+void InitialiseHovaBlimps(void)
+{
+    s32 i;
+
+    memset(HovaBlimp, 0, sizeof(HovaBlimp));
+    memset(TornadoList, 0, sizeof(TornadoList));
+    InitHova(SetNuVecPntr(0.0f, 50.0f, 0.0f), 0.0f);
+    InitHova(SetNuVecPntr(0.0f, 50.0f, 160.0f), 0.0f);
+    InitHova(SetNuVecPntr(152.0f, 50.0f, 49.0f), 0.0f);
+    InitHova(SetNuVecPntr(94.0f, 50.0f, -129.0f), 0.0f);
+    InitHova(SetNuVecPntr(-94.0f, 50.0f, -129.0f), 0.0f);
+    InitHova(SetNuVecPntr(-152.0f, 50.0f, 49.0f), 0.0f);
+    for (i = 0; i < 20; i++) {
+        if (jontorn[i] != -1 && jonfirst != 0) {
+            DebFree(&jontorn[i]);
+        }
+        jontorn[i] = -1;
+    }
+    jonfirst = 1;
+}
 
 /* JeepRock array, stride 0x3D4, 6 entries. */
 struct jeeprock_s {
@@ -450,16 +561,10 @@ struct jeeprock_s {
     struct nuvec_s vel;        /* 0x00C */
     s32 exists;                /* 0x018 */
     s32 seen;                  /* 0x01C */
-    char pad_020[0x06C - 0x020];
-    s32 grounded;              /* 0x06C */
-    char pad_070[0x23C - 0x070];
-    struct nuvec_s holdpos;    /* 0x23C */
-    struct nuvec_s oldholdpos; /* 0x248 */
-    char pad_254[0x26C - 0x254];
-    struct nuvec_s holdvel;    /* 0x26C */
-    char pad_278[0x2B4 - 0x278];
-    struct nuquat_s quat;      /* 0x2B4 */
-    char pad_2C4[0x3B4 - 0x2C4];
+    char pad_020[0x024 - 0x020];
+    s32 explode;               /* 0x024 set when something hits the rock */
+    char pad_028[0x030 - 0x028];
+    struct NEWBUGGY atlas;     /* 0x030 the rock rolls as an atlasphere */
     s32 held;                  /* 0x3B4 */
     s32 owner;                 /* 0x3B8 */
     f32 size;                  /* 0x3BC */
@@ -488,9 +593,9 @@ void ShootRoksSkyward(void)
     ShootRockSound = 1;
     for (i = 0; i < 6; i++) {
         if (JeepRock[i].exists != 0) {
-            JeepRock[i].holdvel = SetNuVec(0.0f, 13.0f, 0.0f);
+            JeepRock[i].atlas.ball_vel = SetNuVec(0.0f, 13.0f, 0.0f);
             JeepRock[i].owner = 20;
-            JeepRock[i].grounded = 0;
+            JeepRock[i].atlas.ball_beenhit = 0;
             JeepRock[i].size = 10.0f;
         }
     }
@@ -505,7 +610,7 @@ s32 AllRoksSkyward(void)
     for (i = 0; i < 6; i++) {
         if (JeepRock[i].exists != 0) {
             if (JeepRock[i].pos.y < 10.0f) {
-                if (JeepRock[i].owner != 20 || JeepRock[i].holdvel.y < 5.0f) {
+                if (JeepRock[i].owner != 20 || JeepRock[i].atlas.ball_vel.y < 5.0f) {
                     JeepRock[i].exists = 0;
                 }
                 done = 0;
@@ -579,11 +684,11 @@ s32 GetRumbleTotalRoks(void)
 
 void AddGliderHitPoints(void)
 {
-    struct NEWBUGGY *b = player->Buggy;
+    struct glider_s *g = (struct glider_s *)player->Buggy;
 
-    b->health += 25;
-    if (b->health > 100) {
-        b->health = 100;
+    g->HitPoints += 25;
+    if (g->HitPoints > 100) {
+        g->HitPoints = 100;
     }
 }
 
@@ -595,7 +700,7 @@ void VehicleSetup(void)
 void SetWeatherStartPos(void *x)
 {
     D_006B75B0 = *(struct nuvec_s *)((char *)x + 0x6C);
-    PlayerGlider.pos = D_006B75B0;
+    PlayerGlider.Position = D_006B75B0;
 }
 
 s32 GetRumblePlayerHealthPercentage(void)
@@ -605,16 +710,15 @@ s32 GetRumblePlayerHealthPercentage(void)
 
 s32 GetGliderHealthPercentage(struct creature_s *c)
 {
-    struct NEWBUGGY *b = c->Buggy;
+    struct glider_s *g = (struct glider_s *)c->Buggy;
 
-    if (b != 0) {
-        return b->health;
+    if (g != 0) {
+        return g->HitPoints;
     }
     return 100;
 }
 
 extern void LoadWesternArenaData(void);
-extern s32 jonfirst;
 
 void LoadVehicleStuff(void)
 {
@@ -630,7 +734,7 @@ void LoadVehicleStuff(void)
 
 void InitVehMasks(void)
 {
-    memset(VehicleMask, 0, 0x2E8);
+    memset(VehicleMask, 0, sizeof(VehicleMask));
 }
 
 extern s32 MyInitModelNew(struct MYDRAW *draw, s32 id, s32 action, s32 numjoints,
@@ -714,7 +818,7 @@ inline s32 PickGliderTarget(struct nuvec_s **pos, struct nuvec_s **vel, s32 *typ
 {
     f32 best;
 
-    if (PlayerGlider.enable != 0 || FlyingLevelExtro != 0) {
+    if (PlayerGlider.AutoPilot != 0 || FlyingLevelExtro != 0) {
         return 0;
     }
     if (Level == 0x24) {
@@ -829,13 +933,10 @@ void DrawFarmLevelExtra(void)
 }
 
 extern struct nuvec_s BazookaTokenPos;
-extern struct nuvec_s D_005A73E8;
-#define bazooka_token_dest D_005A73E8
-extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void NuVecScaleAccum(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void MyAnimateModelNew(struct MYDRAW *draw, f32 dt);
 
-void ProcessBazookaToken(void)
+inline void ProcessBazookaToken(void)
 {
     struct nuvec_s pos;
     f32 t;
@@ -844,7 +945,7 @@ void ProcessBazookaToken(void)
         t = WeatherBoss.draw.anim.anim_time /
             WeatherBoss.draw.model->anmdata[WeatherBoss.draw.anim.action]->time;
         NuVecScale(&pos, &BazookaTokenPos, 1.0f - t);
-        NuVecScaleAccum(&pos, &bazooka_token_dest, t);
+        NuVecScaleAccum(&pos, &PlayerGlider.Position, t);
         pos.y += t * 0.75f;
         BazookaTokenCurrentPos = pos;
         MyAnimateModelNew(&IconMainDraw, 0.59999996f);
@@ -852,7 +953,7 @@ void ProcessBazookaToken(void)
 }
 
 
-void DrawBazookaToken(void)
+inline void DrawBazookaToken(void)
 {
     if (BazookaIconOn) {
         NuMtxSetTranslation(&mTEMP, &BazookaTokenCurrentPos);
@@ -902,18 +1003,52 @@ s32 GetCurrentWeatherBossObjectives(void)
     return 0;
 }
 
-void ProcessWeatherBoss(void)
+inline void ProcessWeatherBoss(void)
 {
     if (WeatherBoss.active != 0) {
         ProcessWeatherBoss_a(&WeatherBoss);
     }
 }
 
-void DrawWeatherBoss(void)
+inline void DrawWeatherBoss(void)
 {
     if (WeatherBoss.active != 0) {
         DrawWeatherBoss_a(&WeatherBoss);
     }
+}
+
+extern void ProcessWBIntro(void);
+extern void ProcessGliderBullets(void);
+extern void ProcessLighteningHail(void);
+extern void ProcessWBBolts(void);
+extern void ProcessVehMasks(void);
+extern f32 AtmosphericPressureHackedZ;
+extern struct nuvec_s WBIntroGliderPos;
+extern s32 WBIntroOn;
+
+void ProcessWeatherBossLevel(struct pad_s *pad)
+{
+    ProcessWBIntro();
+    if (WBIntroOn == 0) {
+        AtmosphericPressureHackedZ -= 1.92f;
+        if (AtmosphericPressureHackedZ < -1200.0f) {
+            AtmosphericPressureHackedZ += 1200.0f;
+        }
+    } else {
+        AtmosphericPressureHackedZ = WBIntroGliderPos.z;
+        if (WBIntroGliderPos.z < -1200.0f) {
+            AtmosphericPressureHackedZ += 1200.0f;
+        }
+        if (AtmosphericPressureHackedZ > 0.0f) {
+            AtmosphericPressureHackedZ -= 1200.0f;
+        }
+    }
+    ProcessGliderBullets();
+    ProcessWeatherBoss();
+    ProcessLighteningHail();
+    ProcessWBBolts();
+    ProcessVehMasks();
+    ProcessBazookaToken();
 }
 
 s32 GetCurrentRumbleObjectives(void)
@@ -949,7 +1084,7 @@ void UpdateRumbleCamTween(void)
             RumbleCamTween = RumbleCamTweenDest;
         }
     }
-    if (EarthBoss.action != 7 || EarthBoss.health > 0) {
+    if (EarthBoss.ball_action != 7 || EarthBoss.ball_health > 0) {
         RumbleCamTweenInterest = (RumbleCamTween - 0.25f) * RUMZOOM;
     }
     if (RumbleCamTweenInterest < 0.0f) {
@@ -957,14 +1092,33 @@ void UpdateRumbleCamTween(void)
     }
 }
 
+/* Replace a rock with two smaller ones flying apart. */
+void SmashRockIntoTwo(struct jeeprock_s *rock)
+{
+    struct nuvec_s vel;
+    struct nuvec_s pos;
+    f32 radius;
+
+    radius = rock->atlas.ball_radius / 1.2599f; /* half the volume each */
+    vel = rock->vel;
+    pos = rock->pos;
+    pos.x -= radius * 0.5f;
+    vel.x -= 2.0f;
+    AddRockVel(&pos, &vel, radius, 0);
+    pos.x += radius * 1.01f;
+    vel.x += 4.0f;
+    AddRockVel(&pos, &vel, radius, 0);
+    rock->explode = 1;
+}
+
 void InitRumblePanel(void)
 {
     NumRockPanel = 0;
 }
 
-void AddRock(struct nuvec_s *pos, s32 owner)
+void AddRock(struct nuvec_s *pos, f32 radius, s32 owner)
 {
-    AddRockVel(pos, &v000, owner);
+    AddRockVel(pos, &v000, radius, owner);
 }
 
 
@@ -988,8 +1142,7 @@ struct nuspecial_s {
 };
 
 struct objtab_s {
-    struct nugscn_s *scene;          /* 0x00 */
-    struct nuspecial_s *special;     /* 0x04 */
+    struct nuhspecial_s obj;         /* 0x00 */
     char pad_08[0x20 - 0x08];
 };
 
@@ -997,15 +1150,207 @@ extern struct objtab_s ObjTab[];
 extern void NuMtxPreScale(struct numtx_s *m, struct nuvec_s *s);
 extern s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 
-void DrawJeepRock(struct jeeprock_s *rock)
+struct gliderbomb_s {
+    struct nuvec_s vel;        /* 0x00 */
+    struct nuvec_s pos;        /* 0x0C */
+    f32 angy;                  /* 0x18 */
+    s32 life;                  /* 0x1C */
+    f32 gravity;               /* 0x20 */
+    struct nuvec_s target;     /* 0x24 */
+    struct nuvec_s *targetpntr;    /* 0x30 */
+    struct nuvec_s *targetvelpntr; /* 0x34 */
+    s32 targetmoving;          /* 0x38 */
+    char pad_3C[0x40 - 0x3C];
+    f32 droptimer;             /* 0x40 */
+};
+extern struct gliderbomb_s GliderBombs[10];
+extern struct gliderbomb_s EnemyGliderBombs[30];
+
+static inline struct gliderbomb_s *GrabGliderBomb(s32 enemy)
+{
+    struct gliderbomb_s *bombs;
+    s32 count;
+    s32 i;
+
+    if (enemy) {
+        bombs = EnemyGliderBombs;
+        count = 30;
+    } else {
+        bombs = GliderBombs;
+        count = 10;
+    }
+    for (i = 0; i < count; i++) {
+        if (bombs[i].life == 0) {
+            return &bombs[i];
+        }
+    }
+    return 0;
+}
+
+s32 AddGliderBomb(struct nuvec_s *pos, struct nuvec_s *vel, f32 angy, s32 enemy,
+                  struct nuvec_s *targetpoint, struct nuvec_s *targetvel, s32 moving)
+{
+    struct gliderbomb_s *bomb;
+
+    bomb = GrabGliderBomb(enemy);
+    if (bomb != 0) {
+        bomb->life = 500;
+        bomb->pos = *pos;
+        bomb->vel = *vel;
+        NuVecScale(&bomb->vel, vel, 0.02f);
+        bomb->angy = angy;
+        if (enemy) {
+            bomb->gravity = -0.004f;
+        } else {
+            bomb->gravity = -0.004f;
+            if (Level == 0x24) {
+                bomb->targetpntr = targetpoint;
+                bomb->targetmoving = enemy;
+                bomb->droptimer = 0.0f;
+                bomb->targetvelpntr = &v000;
+            } else if (moving) {
+                bomb->targetmoving = 1;
+                bomb->targetpntr = targetpoint;
+                bomb->targetvelpntr = targetvel;
+                bomb->droptimer = 0.35f;
+            } else {
+                bomb->droptimer = 0.35f;
+                bomb->target = *targetpoint;
+                bomb->targetpntr = &bomb->target;
+                bomb->targetvelpntr = &v000;
+                bomb->targetmoving = moving;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+extern f32 NuFsqrt(f32 x);
+
+void DrawGliderBombs(void)
+{
+    struct numtx_s m;
+    struct gliderbomb_s *bombs;
+    s32 i;
+    s32 j;
+    s32 count;
+    s32 obj;
+    f32 horiz;
+
+    bombs = GliderBombs;
+    obj = 0x4D;
+    count = 10;
+    if (ObjTab[0x4D].obj.special == 0) {
+        return;
+    }
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < count; j++) {
+            if (bombs[j].life != 0) {
+                horiz = NuFsqrt(bombs[j].vel.x * bombs[j].vel.x + bombs[j].vel.z * bombs[j].vel.z);
+                NuMtxSetRotationX(&m, NuAtan2D(bombs[j].vel.y * 100.0f, horiz * 100.0f));
+                NuMtxRotateY(&m, bombs[j].angy * 182.04445f);
+                NuMtxTranslate(&m, &bombs[j].pos);
+                /* (ObjTab + obj), not ObjTab[obj]: the index form changes codegen. */
+                NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                              &m);
+            }
+        }
+        obj = 0x4D; /* retail reloads the (same) object id for the enemy pass */
+        bombs = EnemyGliderBombs;
+        count = 30;
+    }
+}
+
+extern struct nuvec_s GliderBombCollisionPos;
+
+/* Tests the live bombs against an ellipsoid of half-size Extent around Pos,
+   turned by Angle degrees; the first bomb inside is used up. */
+s32 CollideGliderBombs(struct nuvec_s *Pos, struct nuvec_s *Extent, s32 Enemy, f32 Angle)
+{
+    struct nuvec_s delta;
+    struct gliderbomb_s *bombs;
+    struct gliderbomb_s *bomb;
+    s32 numbombs;
+    s32 i;
+    f32 maxext;
+    f32 negmax;
+
+    maxext = (Extent->x > Extent->y) ? Extent->x : Extent->y;
+    if (Extent->z > maxext) {
+        maxext = Extent->z;
+    }
+    negmax = -maxext;
+
+    if (Enemy != 0) {
+        numbombs = 30;
+        bombs = EnemyGliderBombs;
+    } else {
+        numbombs = 10;
+        bombs = GliderBombs;
+    }
+
+    for (i = 0; i < numbombs; i++) {
+        bomb = &bombs[i];
+        if (bomb->life != 0) {
+            delta.x = bomb->pos.x - Pos->x;
+            if (delta.x <= maxext && delta.x >= negmax) {
+                delta.y = bomb->pos.y - Pos->y;
+                if (delta.y <= maxext && delta.y >= negmax) {
+                    delta.z = bomb->pos.z - Pos->z;
+                    if (delta.z <= maxext && delta.z >= negmax) {
+                        NuVecRotateY(&delta, &delta, (s32)(-Angle * 182.04445f));
+                        delta.x /= Extent->x;
+                        delta.y /= Extent->y;
+                        delta.z /= Extent->z;
+                        if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z <= 1.0f) {
+                            bomb->life = 0;
+                            GliderBombCollisionPos = bomb->pos;
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+extern f32 WeatherBossTargetAppearTimer;
+extern f32 WeatherBossTargetAppearTime;
+extern f32 WBTARGSCALE;
+extern struct numtx_s WeatherBossCamMtx;
+extern struct nuvec_s WeatherBossTargetPos;
+
+void DrawWeatherBossTarget(void)
+{
+    s32 obj;
+    f32 scale;
+
+    if (WBIntroOn == 0 && FlyingLevelExtro == 0) {
+        scale = (1.0f - WeatherBossTargetAppearTimer / WeatherBossTargetAppearTime) * WBTARGSCALE;
+        obj = 0x5A;
+        /* (ObjTab + obj), not ObjTab[obj]: the index form changes codegen. */
+        if ((ObjTab + obj)->obj.special != 0) {
+            mTEMP = WeatherBossCamMtx;
+            NuVecAdd((struct nuvec_s *)&mTEMP._30, (struct nuvec_s *)&mTEMP._30,
+                     &WeatherBossTargetPos);
+            NuMtxPreScale(&mTEMP, SetNuVecPntr(scale, scale, 0.05f));
+            NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                          &mTEMP);
+        }
+    }
+}
+
+inline void DrawJeepRock(struct jeeprock_s *rock)
 {
     struct objtab_s *entry;
     struct nuspecial_s *special;
     s32 obj;
 
-    NuQuatToMtx(&rock->quat, &mTEMP);
+    NuQuatToMtx(&rock->atlas.rotquat, &mTEMP);
     NuMtxPreScale(&mTEMP, &rock->scale);
-    NuMtxTranslate(&mTEMP, &rock->holdpos);
+    NuMtxTranslate(&mTEMP, &rock->atlas.ball_pos);
     if (Level == 0x16) {
         obj = 0x58;
     } else if (rock->owner == 20 || rock->owner == 1) {
@@ -1015,10 +1360,56 @@ void DrawJeepRock(struct jeeprock_s *rock)
     }
     rock->seen = 0;
     entry = &ObjTab[obj];
-    special = entry->special;
+    special = entry->obj.special;
     if (special != 0) {
-        rock->seen = NuRndrGScnObj(entry->scene->gobjs[special->instance->objid],
+        rock->seen = NuRndrGScnObj(entry->obj.scene->gobjs[special->instance->objid],
                                    &mTEMP);
+    }
+}
+
+void DrawJeepRocks(void)
+{
+    s32 i;
+
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0) {
+            DrawJeepRock(&JeepRock[i]);
+        }
+    }
+}
+
+extern void ProcessJeepRock(struct jeeprock_s *rock);
+extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *diff);
+
+void ProcessJeepRocks(void)
+{
+    s32 i;
+    f32 power;
+    f32 dist;
+
+    power = 0.0f;
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0) {
+            ProcessJeepRock(&JeepRock[i]);
+        }
+    }
+    if (Level == 0x16) {
+        for (i = 0; i < 6; i++) {
+            if (JeepRock[i].exists != 0 && JeepRock[i].atlas.ball_radius >= 0.3f &&
+                (JeepRock[i].atlas.onground & 3) != 0) {
+                dist = NuVecDist(&JeepRock[i].atlas.ball_pos, &player->obj.pos, 0) *
+                       JeepRock[i].atlas.ball_radius / 0.4f;
+                if (dist < 1.0f) {
+                    power = 255.0f;
+                } else {
+                    power += 255.0f / dist;
+                }
+            }
+        }
+        if (power > 255.0f) {
+            power = 255.0f;
+        }
+        NewRumble(&player->rumble, power);
     }
 }
 
@@ -1033,12 +1424,117 @@ struct battleship_s {
     f32 yaw;                   /* 0x4F0 */
     f32 pitch;                 /* 0x4F4 */
     f32 roll;                  /* 0x4F8 */
-    char pad_4FC[0x50C - 0x4FC];
+    f32 destpitch;             /* 0x4FC */
+    f32 destroll;              /* 0x500 */
+    f32 desty;                 /* 0x504 */
+    f32 seek;                  /* 0x508 */
     s32 seen;                  /* 0x50C */
-    s32 field510;              /* 0x510 */
-    char pad_514[0x554 - 0x514];
+    s32 hitpoints;             /* 0x510 */
+    f32 firetimer[2];          /* 0x514 */
+    struct nuvec_s gooscale;   /* 0x51C */
+    char pad_528[0x540 - 0x528];
+    f32 goospeed;              /* 0x540 */
+    struct nuvec_s gootimer;   /* 0x544 */
+    char pad_550[0x554 - 0x550];
 };
-extern struct battleship_s BattleShipList[];
+extern struct battleship_s BattleShipList[6];
+
+/* The game camera (full layout in game/camera.c). */
+struct cammtx_s {
+    struct numtx_s m;          /* 0x00 */
+    char pad_40[0xA4 - 0x40];
+    struct nuvec_s pos;        /* 0xA4 */
+    char pad_B0[0xF8 - 0xB0];
+    s32 yrot;                  /* 0xF8 */
+};
+extern struct cammtx_s GameCam;
+
+extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
+extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
+extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);
+extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 size);
+extern void InitBattleShip(struct nuvec_s *pos, f32 angle, s32 index);
+
+/* Whether `target` is still worth a lock-on: more than 10 units ahead of the
+ * camera, within ~25 degrees of its view and with a clear line to the glider.
+ * Near-match (state=asm): with NuVecSub prototyped (it used to be implicitly
+ * declared here) the instruction stream equals retail's apart from the two
+ * SN-as mtc1 hazard nops. */
+s32 StillLockedOnTarget(struct nuvec_s *target)
+{
+    struct nuvec_s *fwd;
+    struct nuvec_s view;
+    struct nuvec_s rel;
+    struct nuvec_s ray;
+    f32 dot;
+    f32 dist;
+
+    if (FlyingLevelExtro == 0) {
+        fwd = SetNuVecPntr(0.0f, 0.0f, 1.0f);
+        NuVecMtxRotate(&view, fwd, &GameCam.m);
+        NuVecSub(&rel, target, &GameCam.pos);
+        dist = NuVecMag(&rel);
+        if (10.0f < dist) {
+            NuVecScale(&rel, &rel, 1.0f / dist);
+            dot = DotProduct(&view, &rel);
+            if (0.9f < dot) {
+                NuVecSub(&ray, &PlayerGlider.Position, target);
+                NuVecNorm(&ray, &ray);
+                NuVecScale(&ray, &ray, 3.0f);
+                return NewRayCast(target, &ray, 0.0f) == 0;
+            }
+        }
+    }
+    return 0;
+}
+
+void InitBattleShip(struct nuvec_s *pos, f32 angle, s32 index)
+{
+    struct battleship_s *ship;
+
+    ship = &BattleShipList[index];
+    if (ship->active != 0) {
+        return;
+    }
+    memset(&BattleShipList[index], 0, sizeof(struct battleship_s));
+    if (MyInitModelNew(&ship->draw, 0x65, 0x22, 0, 0, &ship->pos) == 0) {
+        return;
+    }
+    ship->pos = *pos;
+    ship->desty = pos->y;
+    ship->yaw = angle;
+    ship->pitch = 0.0f;
+    ship->roll = 0.0f;
+    ship->destpitch = 0.0f;
+    ship->destroll = 0.0f;
+    ship->seek = 1.0f;
+    ship->active = 1;
+    ship->hitpoints = 3;
+    ship->firetimer[0] = frand() * 4.0f;
+    ship->firetimer[1] = frand() * 4.0f;
+    ship->gooscale = SetNuVec(0.0f, 0.0f, 0.0f);
+    ship->gootimer.x = (f32)index / 6.0f;
+    ship->gootimer.y = (f32)(index + 1) / 6.0f;
+    ship->goospeed = (ship->gootimer.x * 0.1f + 0.2f) * 0.02f;
+    if (1.0f <= ship->gootimer.y) {
+        ship->gootimer.y -= 1.0f;
+    }
+    ship->gootimer.z = (f32)(index + 2) / 6.0f;
+    if (1.0f <= ship->gootimer.z) {
+        ship->gootimer.z -= 1.0f;
+    }
+}
+
+void InitBattleShips(void)
+{
+    memset(BattleShipList, 0, sizeof(BattleShipList));
+    InitBattleShip(SetNuVecPntr(-7.0f, 0.0f, 15.0f), -150.0f, 0);
+    InitBattleShip(SetNuVecPntr(-7.33f, 0.0f, 73.5f), -45.0f, 1);
+    InitBattleShip(SetNuVecPntr(31.0f, 0.0f, 109.0f), -35.0f, 2);
+    InitBattleShip(SetNuVecPntr(94.0f, 0.0f, 54.0f), 90.0f, 3);
+    InitBattleShip(SetNuVecPntr(60.0f, 0.0f, -6.0f), 160.0f, 4);
+    InitBattleShip(SetNuVecPntr(20.0f, 0.0f, -3.0f), -150.0f, 5);
+}
 extern s32 CollideWithBattleShip(struct nuvec_s *pos, struct battleship_s *ship,
                                  f32 radius);
 
@@ -1056,7 +1552,7 @@ s32 CollideWithBattleShips(struct nuvec_s *pos, f32 radius)
 }
 
 
-void DrawBattleShip(struct battleship_s *ship)
+inline void DrawBattleShip(struct battleship_s *ship)
 {
     NuMtxSetRotationX(&mTEMP, ship->pitch * 182.04445f);
     NuMtxRotateZ(&mTEMP, ship->roll * 182.04445f);
@@ -1080,9 +1576,12 @@ struct biggun_s {
 };
 extern struct biggun_s BigGunList[];
 
+extern struct nuvec_s D_0061F460[];
+#define gun_scale D_0061F460 /* {1.5f, 1.5f, 1.5f}: big gun / gun boat model scale */
+
 inline void DrawBigGun(struct biggun_s *gun)
 {
-    struct nuvec_s scale = {1.5f, 1.5f, 1.5f};
+    struct nuvec_s scale = gun_scale[0];
 
     NuMtxSetScale(&mTEMP, &scale);
     NuMtxRotateX(&mTEMP, gun->pitch * 182.04445f);
@@ -1090,8 +1589,7 @@ inline void DrawBigGun(struct biggun_s *gun)
     NuMtxTranslate(&mTEMP, &gun->pos);
 }
 
-
-void DrawBigGuns(void)
+inline void DrawBigGuns(void)
 {
     s32 i;
 
@@ -1107,9 +1605,17 @@ struct spacestation_s {
     struct numtx_s mtx;
     s32 field40;               /* 0x40 */
     struct nuvec_s pos;
-    char pad_50[0xD0 - 0x50];
+    char pad_50[0x60 - 0x50];
+    s32 seen;                  /* 0x60 */
+    char pad_64[0x6C - 0x64];
+    f32 satelliteangle;        /* 0x6C */
+    char pad_70[0x7C - 0x70];
+    struct numtx_s shieldmtx;  /* 0x7C */
+    s32 shielddraw;            /* 0xBC frames left to show the shield */
+    s32 shieldgreen;           /* 0xC0 */
+    char pad_C4[0xD0 - 0xC4];
 };
-extern struct spacestation_s SpaceStationList[];
+extern struct spacestation_s SpaceStationList[3];
 
 /* trail array: stride 0x20, 128 entries. */
 struct trail_s {
@@ -1123,8 +1629,8 @@ extern f32 D_0062DF00;
 extern s32 trailpt;
 extern s32 trailair;
 
-extern u8 PlayerAtlas[];   /* far */
-extern void ProcessAtlasAtlasCollisions_a(void *atlas, struct earthboss_s *boss);
+extern struct NEWBUGGY PlayerAtlas;   /* far */
+extern void ProcessAtlasAtlasCollisions_a(struct NEWBUGGY *a, struct NEWBUGGY *b);
 extern void KillGameObject(struct obj_s *obj, s32 type);
 
 s32 GetCurrentFireFlyObjectives(void)
@@ -1133,12 +1639,42 @@ s32 GetCurrentFireFlyObjectives(void)
     s32 i;
 
     for (i = 0; i < 6; i++) {
-        struct battleship_s *bs = &BattleShipList[i];
-        if (bs->active != 0) {
-            count += bs->field510 > 0;
+        if (BattleShipList[i].active != 0 && BattleShipList[i].hitpoints > 0) {
+            count++;
         }
     }
     return count;
+}
+
+extern struct nuvec_s GliderTargetPos;
+
+void DrawGliderTarget(void)
+{
+    struct nuvec_s centre;
+    struct nuvec_s dir;
+    s32 obj = 0x72;
+
+    NuVecSub(&dir, &GliderTargetPos, &GameCam.pos);
+    NuVecScale(&centre, &dir, 5.0f / NuVecMag(&dir));
+    NuVecAdd(&centre, &centre, (struct nuvec_s *)&GameCam.m._30);
+    /* (ObjTab + obj), not ObjTab[obj]: the index form changes codegen. */
+    if ((ObjTab + obj)->obj.special != 0) {
+        mTEMP = GameCam.m;
+        NuMtxPreScale(&mTEMP, SetNuVecPntr(0.2f, 0.2f, 0.0f));
+        *(struct nuvec_s *)&mTEMP._30 = centre;
+        NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                      &mTEMP);
+    }
+}
+
+extern void DrawTorpedoTarget(void);
+
+void DrawWeatherResearchLevelExtra(void)
+{
+    DrawGliderBullets();
+    DrawBigGuns();
+    DrawGliderBombs();
+    DrawTorpedoTarget();
 }
 
 s32 GetCurrentWeatherResearchObjectives(void)
@@ -1175,7 +1711,7 @@ void KillAtlasphere(struct NEWBUGGY *b)
     struct creature_s *o;
 
     if (c != 0) {
-        b->fieldC = 1;
+        b->dead = 1;
         *((s8 *)c + 0x17E) = 0;
         b->ball_vel = v000;
         o = b->owner;
@@ -1196,23 +1732,425 @@ void InitTrail(void)
     trailair = 0;
 }
 
+extern struct nuquat_s SetNuQuat(f32 x, f32 y, f32 z, f32 w);
+extern CharacterData CData[];
+
+void InitAtlas(struct NEWBUGGY *Atlas, struct nuvec_s *Pos, f32 Radius, s32 Type)
+{
+    struct creature_s *cre;
+    CharacterData *cdata;
+
+    cre = Atlas->owner;
+    memset(Atlas, 0, sizeof(struct NEWBUGGY));
+    Atlas->type = Type;
+    Atlas->owner = cre;
+    Atlas->ball_pos = *Pos;
+    Atlas->ball_oldpos = Atlas->ball_pos;
+    Atlas->ball_radius = Radius;
+    Atlas->angley = 90.0f;
+    Atlas->rotquat = SetNuQuat(0.0f, 0.0f, 0.0f, 1.0f);
+    Atlas->framequat[0] = Atlas->rotquat;
+    Atlas->framequat[1] = Atlas->rotquat;
+    Atlas->framequat[2] = Atlas->rotquat;
+    Atlas->framequat[3] = Atlas->rotquat;
+    Atlas->lastquat = Atlas->rotquat;
+    Atlas->lastnormal = SetNuVec(0.0f, 1.0f, 0.0f);
+    Atlas->platformid = -1;
+    if (cre != 0) {
+        InitTrail();
+        Atlas->owner->obj.scale = Atlas->owner->obj.SCALE = 1.0f;
+        cdata = &CData[83];
+        Atlas->owner->obj.bot = cdata->min.y;
+        Atlas->owner->obj.top = cdata->max.y;
+        Atlas->owner->obj.vehicle = 0x53;
+    }
+}
+
+struct gametimer_s {
+    u32 frame;                 /* 0x00 */
+    char pad_04[0x18 - 0x04];
+};
+extern struct gametimer_s GameTimer;
+
+/* Turns the pad into the atlasphere's camera-relative steering input. */
+void ControlAtlas(struct NEWBUGGY *Atlas, struct pad_s *Pad, f32 DeltaTime)
+{
+    struct nuvec_s ctrl;
+    f32 anx;
+    f32 anz;
+    f32 scale;
+
+    anx = (f32)(Pad->l_alg_x - 0x7F);
+    anz = (f32)(Pad->l_alg_y - 0x7F);
+    if (Pad->paddata & PAD_DOWN) {
+        anz = 127.0f;
+    }
+    if (Pad->paddata & PAD_UP) {
+        anz = -127.0f;
+    }
+    if (Pad->paddata & PAD_RIGHT) {
+        anx = 127.0f;
+    }
+    if (Pad->paddata & PAD_LEFT) {
+        anx = -127.0f;
+    }
+    if (ProcessTimer(&Atlas->inhibitcontroltimer) == 0) {
+        if (Atlas->inhibitcontroltimer < 1.0f) {
+            scale = 1.0f - Atlas->inhibitcontroltimer;
+        } else {
+            scale = 0.0f;
+        }
+        anx *= scale;
+        anz *= scale;
+    }
+    if ((Atlas->onground & 3) == 0 && Level == 0x15) {
+        anx = 0.0f;
+        anz = 0.0f;
+    }
+    ctrl.x = anx;
+    ctrl.z = -anz;
+    ctrl.y = 0.0f;
+    if (GameTimer.frame < 50) {
+        ctrl.x = ctrl.z = 0.0f;
+    }
+    Atlas->inputmag = NuVecMag(&ctrl);
+    if (Atlas->inputmag >= 40.0f) {
+        Atlas->inputang = ((GameCam.yrot + NuAtan2D(ctrl.x, ctrl.z)) & 0xFFFF) / 182.04445f;
+        Atlas->inputmag = ((Atlas->inputmag - 40.0f) * 1.02f) / 88.0f;
+        if (Atlas->inputmag > 1.0f) {
+            Atlas->inputmag = 1.0f;
+        } else if (Atlas->inputmag < -1.0f) {
+            Atlas->inputmag = -1.0f;
+        }
+    } else {
+        Atlas->inputmag = 0.0f;
+    }
+}
+
+extern void ApplyFriction(f32 *val, f32 rate, f32 dt);
+extern void SeekHalfLife(f32 *dest, f32 target, f32 halflife, f32 dt);
+extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
+
+/* One physics step: friction, gravity tilted towards the stick, then the
+   new target position and velocity. */
+void ProcessMovementAtlas(struct NEWBUGGY *Atlas, f32 DeltaTime)
+{
+    struct nuvec_s resolved;
+    f32 time2;
+    f32 scale;
+    f32 newmag;
+    f32 mag;
+    f32 tilt;
+
+    time2 = DeltaTime * DeltaTime;
+    mag = NuVecMag(&Atlas->ball_vel);
+    if (mag > 0.0f) {
+        newmag = mag;
+        if (mag < 4.0f) {
+            scale = 0.05f;
+        } else {
+            scale = (mag - 4.0f) * 0.1f;
+        }
+        ApplyFriction(&newmag, scale, DeltaTime);
+        Atlas->ball_vel.x *= newmag / mag;
+        Atlas->ball_vel.y *= newmag / mag;
+        Atlas->ball_vel.z *= newmag / mag;
+    }
+    Atlas->ball_force = SetNuVec(0.0f, -10.0f, 0.0f);
+    NuVecRotateY(&resolved, &Atlas->ball_vel, (s32)(-Atlas->inputang * 182.04445f));
+    if (resolved.z < 0.0f) {
+        resolved.z = 0.0f;
+    }
+    if (Level == 0x15) {
+        tilt = -Atlas->inputmag * 89.0f;
+    } else {
+        tilt = -Atlas->inputmag * 53.0f;
+    }
+    /* The forward speed goes in as the time step, as in retail (and GC). */
+    SeekHalfLife(&tilt, 0.0f, 3.0f, resolved.z);
+    NuVecRotateX(&Atlas->ball_force, &Atlas->ball_force, (s32)(tilt * 182.04445f));
+    NuVecRotateY(&Atlas->ball_force, &Atlas->ball_force, (s32)(Atlas->inputang * 182.04445f));
+    Atlas->ball_target.x = Atlas->ball_pos.x + Atlas->ball_vel.x * DeltaTime + time2 * Atlas->ball_force.x * 0.5f;
+    Atlas->ball_target.y = Atlas->ball_pos.y + Atlas->ball_vel.y * DeltaTime + time2 * Atlas->ball_force.y * 0.5f;
+    Atlas->ball_target.z = Atlas->ball_pos.z + Atlas->ball_vel.z * DeltaTime + time2 * Atlas->ball_force.z * 0.5f;
+    Atlas->ball_vel.x += Atlas->ball_force.x * DeltaTime;
+    Atlas->ball_vel.y += Atlas->ball_force.y * DeltaTime;
+    Atlas->ball_vel.z += Atlas->ball_force.z * DeltaTime;
+}
+
 extern struct nuvec_s D_0061F750[]; /* fixed ray direction, far from $gp */
 extern f32 D_0062DF04;
 extern s32 TryUnembeddPointDirSimple(struct nuvec_s *pos, struct nuvec_s *dir,
                                      s16 *handle, s32 n, f32 x, f32 y);
 
+struct gdeb_s {
+    s32 i;                     /* 0x0 debris effect */
+    char *name;                /* 0x4 */
+    u64 levbits;               /* 0x8 */
+};
+extern struct gdeb_s GDeb[];
+
+extern s32 Paused;
+extern s32 FlyingLevelVictoryDance;
+extern void AddVariableShotDebrisEffect(s32 effect, struct nuvec_s *pos, s32 n,
+                                        short xrot, short yrot);
+extern f32 NuVecMagSqr(struct nuvec_s *v);
+
+/* On the jeep level, mark every rock within 0.75 of `pos + move` to explode.
+ * Returns whether any was hit. */
+s32 CheckAgainstRocks(struct nuvec_s *pos, struct nuvec_s *move)
+{
+    struct nuvec_s rel;
+    struct nuvec_s p;
+    s32 i;
+    s32 hit;
+
+    hit = 0;
+    if (Level != 0x16) {
+        return 0;
+    }
+    NuVecAdd(&p, pos, move);
+    for (i = 0; i < 6; i++) {
+        if (JeepRock[i].exists != 0) {
+            NuVecSub(&rel, &p, &JeepRock[i].pos);
+            if (NuVecMagSqr(&rel) < 0.5625f) {
+                JeepRock[i].explode = 1;
+                hit = 1;
+            }
+        }
+    }
+    return hit;
+}
+
+extern s32 JonnyOn;
+extern s32 ebgo;
+extern struct nuvec_s ebpos[3];
+extern f32 ebtime[3];
+extern void NuSpecialDrawAt(struct nuhspecial_s *obj, struct numtx_s *m);
+
+void DrawJonny(void)
+{
+    struct numtx_s m;
+    s32 i;
+
+    if (JonnyOn == 1 && ebgo != 0) {
+        for (i = 0; i < 3; i++) {
+            if (ebpos[i].x != 99999.0f) {
+                NuMtxSetRotationX(&m, ebtime[i] * 128.0f);
+                NuMtxRotateZ(&m, ebtime[i] * 200.0f);
+                NuMtxTranslate(&m, &ebpos[i]);
+                NuSpecialDrawAt(&ObjTab[0x58].obj, &m);
+            }
+        }
+    }
+}
+
+extern struct nuvec_s ShadNorm;
+extern s32 TryUnembeddPointDir(struct nuvec_s *pos, struct nuvec_s *norm, struct nuvec_s *dir,
+                               s16 *handle, f32 radius);
+extern s32 TryUnembeddPointSafe(struct nuvec_s *pos, struct nuvec_s *safe, s16 *handle,
+                                f32 radius);
+
+/* Push the atlasphere out of the terrain along the ground normal, or back to
+ * its last safe position if that fails. */
+void UnembedRayCastAtlas(struct NEWBUGGY *b, s16 *handle)
+{
+    struct nuvec_s up = D_0061F750[0];
+
+    if (!TryUnembeddPointDir(&b->ball_pos, &ShadNorm, &up, handle, b->ball_radius)) {
+        TryUnembeddPointSafe(&b->ball_pos, &b->ball_oldpos, handle, b->ball_radius);
+    }
+}
+
 void UnembedRayCastAtlasSimple(struct NEWBUGGY *b, s16 *handle)
 {
     struct nuvec_s dir = D_0061F750[0];
 
-    TryUnembeddPointDirSimple(&b->ball_pos, &dir, handle, 5, b->atlas_rotparam,
+    TryUnembeddPointDirSimple(&b->ball_pos, &dir, handle, 5, b->ball_radius,
                               D_0062DF04);
+}
+
+extern struct nuvec_s D_0061F8D0[];     /* vortex centre {0, -3.3, 0} */
+
+/* Pull the atlasphere towards the vortex when it is close to it.
+ * Inline: ProcessEarthBossVortex carries two copies of it in retail. */
+inline void CheckAtlasVortex(struct NEWBUGGY *b)
+{
+    struct nuvec_s vortex = D_0061F8D0[0];
+    struct nuvec_s rel;
+    f32 dist;
+
+    if (b->ball_pos.y < -3.0f) {
+        vortex.y = b->ball_pos.y - 0.3f;
+    }
+    NuVecSub(&rel, &vortex, &b->ball_pos);
+    dist = NuVecMag(&rel);
+    if (dist < 1.0f) {
+        /* Retail constant: one ulp below 0.1f. */
+        NuVecScaleAccum(&b->ball_vel, &rel, 0.099999994f / dist);
+    }
+}
+
+extern s32 DrawPanel3DObject(s32 object, f32 x, f32 y, f32 z, f32 scalex, f32 scaley,
+                             f32 scalez, u16 xrot, u16 yrot, u16 zrot,
+                             struct nugscn_s *scn, struct nuspecial_s *obj, s32 rot);
+
+/* Boss health bar: the frame, then the bar scaled to health / maxhealth. */
+void BossBar(f32 x, f32 y, f32 z, f32 xs, f32 ys, s32 health, s32 maxhealth)
+{
+    f32 scale;
+
+    scale = (f32)health / (f32)maxhealth;
+    if (1.0f < scale) {
+        scale = 1.0f;
+    }
+    if (scale < 0.0f) {
+        scale = 0.0f;
+    }
+    DrawPanel3DObject(0xB9, x, y, z, xs, ys, 0.1f, 0, 0, 0,
+                      ObjTab[0xB9].obj.scene, ObjTab[0xB9].obj.special, 1);
+    DrawPanel3DObject(0xBB, x, y, z, xs * scale, ys, 0.1f, 0, 0, 0,
+                      ObjTab[0xBB].obj.scene, ObjTab[0xBB].obj.special, 1);
+}
+
+extern s32 EarthBossVortexOpen;
+
+void ProcessEarthBossVortex(void)
+{
+    if (EarthBossVortexOpen != 0) {
+        CheckAtlasVortex(&EarthBoss);
+        CheckAtlasVortex(&PlayerAtlas);
+    }
 }
 
 void ProcessAtlasAtlasCollisions(void)
 {
-    if (EarthBoss.health > 0) {
-        ProcessAtlasAtlasCollisions_a(PlayerAtlas, &EarthBoss);
+    if (EarthBoss.ball_health > 0) {
+        ProcessAtlasAtlasCollisions_a(&PlayerAtlas, &EarthBoss);
+    }
+}
+
+/* Tests each edge of the closed polygon Points against an ellipsoid around
+   Centre (squashed by RadiusY on y) and returns a bit mask of the edges hit. */
+s32 LinesIntersectEllipse(struct nuvec_s *Points, s32 NumPoints, struct nuvec_s *Centre,
+                          f32 Radius, f32 RadiusY)
+{
+    struct nuvec_s ToCenter;
+    struct nuvec_s ToCenter2;
+    struct nuvec_s Edge;
+    struct nuvec_s ScaledPoints[16];
+    s32 result = 0;
+    s32 i;
+    f32 dot;
+    f32 Radius2;
+    f32 perpDist;
+
+    for (i = 0; i < NumPoints; i++) {
+        ScaledPoints[i].x = Points[i].x;
+        ScaledPoints[i].y = (Points[i].y - Centre->y) / RadiusY + Centre->y;
+        ScaledPoints[i].z = Points[i].z;
+    }
+    ScaledPoints[i] = ScaledPoints[0];
+
+    Radius2 = Radius * Radius;
+
+    for (i = 0; i < NumPoints; i++) {
+        NuVecSub(&Edge, &ScaledPoints[i + 1], &ScaledPoints[i]);
+        NuVecSub(&ToCenter, Centre, &ScaledPoints[i]);
+        dot = DotProduct(&ToCenter, &Edge);
+        if (dot < 0.0f) {
+            if (NuVecMagSqr(&ToCenter) < Radius2) {
+                result |= 1 << i;
+            }
+        } else {
+            NuVecSub(&ToCenter2, Centre, &ScaledPoints[i + 1]);
+            if (DotProduct(&ToCenter2, &Edge) > 0.0f) {
+                if (NuVecMagSqr(&ToCenter2) < Radius2) {
+                    result |= 1 << i;
+                }
+            } else {
+                perpDist = NuVecMagSqr(&ToCenter) - (dot * dot) / NuVecMagSqr(&Edge);
+                if (perpDist < Radius2) {
+                    result |= 1 << i;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+/* Returns 1 if two moving spheres will meet head-on within MaxTime, -1 if
+   they meet while travelling the same way, 0 if they miss. */
+s32 PossIntersect(struct nuvec_s *PosA, struct nuvec_s *VelA, struct nuvec_s *PosB,
+                  struct nuvec_s *VelB, f32 Radius, f32 MaxTime)
+{
+    struct nuvec_s A;
+    struct nuvec_s AV;
+    f32 MagA;
+    f32 MagVelA;
+    f32 Angle;
+    f32 Time;
+
+    A.x = PosA->x - PosB->x;
+    A.y = PosA->y - PosB->y;
+    A.z = PosA->z - PosB->z;
+    AV.x = VelB->x - VelA->x;
+    AV.y = VelB->y - VelA->y;
+    AV.z = VelB->z - VelA->z;
+
+    MagA = NuVecMag(&A);
+    if (MagA < Radius) {
+        if (DotProduct(VelA, VelB) <= 0.0f) {
+            return 1;
+        }
+        return -1;
+    }
+
+    MagVelA = NuVecMag(VelA);
+    NuVecMag(&AV); /* result unused, but retail makes the call */
+
+    Angle = -DotProduct(&A, VelA) / (MagA * MagVelA);
+    if (Angle < 0.866f) {
+        return 0;
+    }
+
+    Time = DotProduct(&A, &A) / DotProduct(&A, &AV);
+    if (Time > 0.0f && Time < MaxTime) {
+        if (DotProduct(VelA, VelB) <= 0.0f) {
+            return 1;
+        }
+        return -1;
+    }
+    return 0;
+}
+
+void ProcessRockRockCollisions(void)
+{
+    s32 i;
+    s32 j;
+
+    for (i = 1; i < 6; i++) {
+        if (JeepRock[i].exists != 0 && JeepRock[i].owner != 20) {
+            for (j = 0; j < i; j++) {
+                if (JeepRock[j].exists != 0) {
+                    if (JeepRock[j].owner != 20) {
+                        ProcessAtlasAtlasCollisions_a(&JeepRock[i].atlas, &JeepRock[j].atlas);
+                    }
+                }
+            }
+        }
+    }
+    if (Level == 0x15) {
+        for (i = 0; i < 6; i++) {
+            if (JeepRock[i].exists != 0) {
+                if (JeepRock[i].owner != 20) {
+                    ProcessAtlasAtlasCollisions_a(&JeepRock[i].atlas, &PlayerAtlas);
+                    if (EarthBoss.ball_health > 0) {
+                        ProcessAtlasAtlasCollisions_a(&JeepRock[i].atlas, &EarthBoss);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1249,15 +2187,81 @@ struct satellite_s {
     f32 angle;
     f32 tilt[2];
     f32 tiltdest[2];
-    char pad_110[0x114 - 0x110];
+    s32 seen;                  /* 0x110 */
     s32 hits;
     s32 destroyed;
     struct spacestation_s *station;
     char pad_120[0x124 - 0x120];
 };
-extern struct satellite_s SatelliteList[];
+extern struct satellite_s SatelliteList[9];
 
-extern s32 D_005A74C8[];   /* far scratch, zeroed each ProcessSpaceStations */
+extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
+extern s32 CollideGliderBullets(struct nuvec_s *pos, f32 radius, s32 enemy, f32 yscale,
+                                s32 a, s32 b);
+extern void AddScreenWumpa(f32 x, f32 y, f32 z, s32 n);
+extern void ClockOff(void);
+extern void AddGameDebris(s32 type, struct nuvec_s *pos);
+extern void SeekAngHalfLife360f(f32 *dest, f32 target, f32 halflife, f32 dt);
+extern void MyGameSfxLoop(s32 id, struct nuvec_s *pos, s32 vol);
+extern short CRASHTEROIDSSATELLITEVOL;
+
+void ProcessSatellite(struct satellite_s *sat)
+{
+    s32 id;
+    short vol;
+    struct nuvec_s vec;
+
+    MyAnimateModelNew(&sat->draw, 0.59999996f);
+    NuVecRotateY(&vec, SetNuVecPntr(0.0f, 0.0f, 18.0f),
+                 (sat->angle + sat->station->satelliteangle) * 182.04445f);
+    NuVecMtxTransform(&sat->pos, &vec, &sat->station->mtx);
+    CollideGliderBullets(&sat->pos, 3.0f, 1, 0.6666667f, 0, 1);
+    if (CollideGliderBullets(&sat->pos, 3.0f, 0, 0.6666667f, 0, 0) != 0) {
+        sat->hits--;
+        if (sat->hits > 0) {
+            MyGameSfx(0xD4, &sat->pos, 0x3FFF);
+        }
+        AddScreenWumpa(sat->pos.x, sat->pos.y, sat->pos.z, 1);
+        ClockOff();
+    }
+    if (sat->hits < 1 || sat->destroyed != 0) {
+        sat->active = 0;
+        AddGameDebris(0x17, &sat->pos);
+        MyGameSfx(0xCD, &sat->pos, 0x7FFF);
+    }
+    SeekAngHalfLife360f(&sat->tilt[0], sat->tiltdest[0], 1.0f, 0.02f);
+    SeekAngHalfLife360f(&sat->tilt[1], sat->tiltdest[1], 1.0f, 0.02f);
+    id = -1;
+    vol = 0;
+    if (Level == 0x1A) {
+        vol = CRASHTEROIDSSATELLITEVOL;
+        id = 0xD6;
+    }
+    if (id != -1) {
+        MyGameSfxLoop(id, &sat->pos, vol);
+    }
+}
+
+inline void DrawSatellite(struct satellite_s *sat)
+{
+    mTEMP = sat->station->mtx;
+    NuMtxPreRotateY(&mTEMP, sat->angle * 182.04445f);
+    NuMtxPreScale(&mTEMP, SetNuVecPntr(3.0f, 3.0f, 3.0f));
+    *(struct nuvec_s *)&mTEMP._30 = sat->pos;
+    sat->seen = MyDrawModelNew(&sat->draw, &mTEMP, 0);
+}
+
+inline void DrawSatellites(void)
+{
+    s32 i;
+
+    for (i = 0; i < 9; i++) {
+        if (SatelliteList[i].active != 0) {
+            DrawSatellite(&SatelliteList[i]);
+        }
+    }
+}
+
 extern void *app_fnt;
 
 extern void NuRndrTrail(s32 pt, struct trail_s *trail, s32 count);
@@ -1265,9 +2269,38 @@ extern void DrawJeepTrails(void);
 extern void NuFntSet(void *fnt);
 extern void NuFntSetPen(s32 col);
 extern void NuFntScale(s32 x, s32 y);
-extern void ProcessSatellite(struct satellite_s *s);
 extern void ProcessSpaceStation(struct spacestation_s *s);
-extern void DrawSpaceStation(struct spacestation_s *s);
+
+void DrawSpaceStation(struct spacestation_s *station)
+{
+    s32 obj;
+
+    station->seen = 0;
+    obj = 0x6D;
+    /* (ObjTab + obj), not ObjTab[obj]: the index form changes codegen. */
+    if ((ObjTab + obj)->obj.special != 0) {
+        mTEMP = station->mtx;
+        station->seen = NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                                      &mTEMP);
+    }
+    if (station->seen != 0) {
+        if (station->shielddraw == 0) {
+            return;
+        }
+        obj = 0x71;
+        if (station->shieldgreen != 0) {
+            obj = 0x70;
+        }
+        if ((ObjTab + obj)->obj.special != 0) {
+            mTEMP = station->shieldmtx;
+            NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid], &mTEMP);
+            NuMtxPreRotateY(&station->shieldmtx, 0x2000);
+        }
+    }
+    if (station->shielddraw != 0) {
+        station->shielddraw--;
+    }
+}
 
 void DrawVehicleTrail(void)
 {
@@ -1286,16 +2319,23 @@ void DrawGliderDebugStuff(void)
 
 struct zoffa_s {
     struct MYDRAW draw;
-    s32 active;
-    char pad_0E4[0xE8 - 0xE4];
-    struct nuvec_s pos;
+    s32 active;                /* 0x0E0 */
+    f32 respawntimer;          /* 0x0E4 */
+    struct nuvec_s pos;        /* 0x0E8 */
     char pad_0F4[0x10C - 0xF4];
-    f32 pitch;
-    f32 roll;
-    char pad_114[0x120 - 0x114];
-    f32 yaw;
-    char pad_124[0x168 - 0x124];
-    s32 seen;
+    f32 pitch;                 /* 0x10C */
+    f32 roll;                  /* 0x110 */
+    char pad_114[0x11C - 0x114];
+    f32 destyaw;               /* 0x11C */
+    f32 yaw;                   /* 0x120 */
+    char pad_124[0x128 - 0x124];
+    f32 temp[6];               /* 0x128 */
+    char pad_140[0x14C - 0x140];
+    f32 newaltitudetarget;     /* 0x14C */
+    char pad_150[0x158 - 0x150];
+    s32 hitpoints;             /* 0x158 */
+    char pad_15C[0x168 - 0x15C];
+    s32 seen;                  /* 0x168 */
     char pad_16C[0x170 - 0x16C];
     struct numtx_s locators[17];
 };
@@ -1309,7 +2349,130 @@ inline void DrawZoffa(struct zoffa_s *ufo)
     ufo->seen = MyDrawModelNew(&ufo->draw, &mTEMP, ufo->locators);
 }
 
-struct hovablimp_s *FindFreeHova(void)
+extern struct zoffa_s EnemyZoffa[4];
+
+struct zoffastart_s {
+    f32 x, y, z;
+    f32 angle;
+};
+
+static inline struct zoffa_s *FindFreeZoffa(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active == 0) {
+            memset(&EnemyZoffa[i], 0, sizeof(struct zoffa_s));
+            return &EnemyZoffa[i];
+        }
+    }
+    return 0;
+}
+
+/* Near-match (stays asm): retail places the inlined FindFreeZoffa hit block
+   and the model-id switch arms differently, so this overflows its extent. */
+struct zoffa_s *InitZoffa(struct zoffa_s *ufo, struct zoffastart_s *start)
+{
+    s32 index;
+    s32 id;
+
+    if (ufo == 0) {
+        ufo = FindFreeZoffa();
+        if (ufo == 0) {
+            return 0;
+        }
+    }
+    index = ufo - EnemyZoffa;
+    memset(ufo, 0, sizeof(struct zoffa_s));
+    ufo->pos.x = start->x;
+    ufo->pos.y = start->y;
+    ufo->pos.z = start->z;
+    ufo->yaw = start->angle;
+    ufo->active = 1;
+    ufo->destyaw = start->angle;
+    ufo->newaltitudetarget = -100.0f;
+    ufo->hitpoints = 2;
+    ufo->respawntimer = 10.0f;
+    if (Level == 0xD) {
+        switch (index) {
+        case 0: id = 0x5B; break;
+        case 1: id = 0x5E; break;
+        case 2: id = 0x5D; break;
+        default: id = 0x5C; break;
+        }
+    } else if (Level == 0x12) {
+        id = 0x5F;
+    } else {
+        switch (index) {
+        case 0: id = 0x82; break;
+        case 1: id = 0x83; break;
+        case 2: id = 0x84; break;
+        default: id = 0x85; break;
+        }
+    }
+    if (MyInitModelNew(&ufo->draw, id, 0x1D, 0, 0, &ufo->pos) == 0) {
+        return 0;
+    }
+    return ufo;
+}
+
+extern s32 SHEIGHT;
+extern char D_0061F420[]; /* "Action %d" */
+extern char D_0061F430[]; /* "Temp %1.3f   %1.3f" */
+extern void NuFntPrintEx(s32 x, s32 y, s32 flags, char *fmt, ...);
+
+void DrawZoffaDebugStuff(void)
+{
+    struct zoffa_s *ufo = &EnemyZoffa[0];
+
+    NuFntSet(app_fnt);
+    NuFntSetPen(0x7F7F7F7F);
+    NuFntScale(0x10, 0x10);
+    NuFntPrintEx(0x80, SHEIGHT * 3 / 2, 0, D_0061F420, ufo->active);
+    NuFntPrintEx(0x80, SHEIGHT * 2, 0, D_0061F430, ufo->temp[0], ufo->temp[1]);
+    NuFntPrintEx(0x80, SHEIGHT * 5 / 2, 0, D_0061F430, ufo->temp[2], ufo->temp[3]);
+    NuFntPrintEx(0x80, SHEIGHT * 3, 0, D_0061F430, ufo->temp[4], ufo->temp[5]);
+}
+
+void DrawZoffaUFOs(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0) {
+            DrawZoffa(&EnemyZoffa[i]);
+        }
+    }
+}
+
+/* Whether `a` and `b` are within `radius`, with the y distance scaled. */
+static inline s32 CheckSphereCollide(struct nuvec_s *a, struct nuvec_s *b, f32 radius, f32 yscale)
+{
+    struct nuvec_s rel;
+
+    rel.x = a->x - b->x;
+    rel.y = (a->y - b->y) * yscale;
+    rel.z = a->z - b->z;
+    return rel.x * rel.x + rel.y * rel.y + rel.z * rel.z <= radius * radius;
+}
+
+/* Whether `pos` is clear of the player's glider and every live UFO. */
+s32 SafeFromCollisions(struct nuvec_s *pos)
+{
+    s32 i;
+
+    if (CheckSphereCollide(pos, &PlayerGlider.Position, 3.0f, 1.0f)) {
+        return 0;
+    }
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0 && CheckSphereCollide(&EnemyZoffa[i].pos, pos, 3.0f, 1.0f)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+inline struct hovablimp_s *FindFreeHova(void)
 {
     s32 i;
 
@@ -1319,6 +2482,40 @@ struct hovablimp_s *FindFreeHova(void)
         }
     }
     return 0;
+}
+
+/* Near-match (stays asm): retail loads the 0.1f thrust constant into $f1,
+   ee-gcc picks $f0. */
+void InitHova(struct nuvec_s *pos, f32 angle)
+{
+    struct hovablimp_s *hova;
+    struct tornado_s *tornado;
+    struct nuvec_s vel;
+    s32 index;
+
+    hova = FindFreeHova();
+    if (hova == 0) {
+        return;
+    }
+    hova->active = 1;
+    hova->pos = *pos;
+    hova->startpos = *pos;
+    hova->pos.y += frand() - 0.5f;
+    vel = SetNuVec(0.0f, (frand() - 0.5) * 5.0, 0.5f);
+    index = hova - HovaBlimp;
+    hova->vel = vel;
+    hova->thrustoff = 0.1f;
+    hova->angy = angle;
+    tornado = &TornadoList[index];
+    hova->hitpoints = 10;
+    tornado->active = 1;
+    tornado->pos = hova->pos;
+    tornado->pos.y = 27.0f;
+    tornado->startpos = tornado->pos;
+    tornado->yang = frand() * 360.0f;
+    tornado->yanginc = frand() * 40.0f + 160.0f;
+    tornado->scale = 2.0f;
+    MyInitModelNew(&hova->draw, 0x43, 0x46, 0, 0, &hova->pos);
 }
 
 extern s32 SatelliteCharacterId;
@@ -1346,7 +2543,7 @@ struct satellite_s *InitSatellite(struct spacestation_s *station, f32 angle)
     return 0;
 }
 
-void ProcessSatellites(void)
+inline void ProcessSatellites(void)
 {
     s32 i;
 
@@ -1357,11 +2554,11 @@ void ProcessSatellites(void)
     }
 }
 
-void ProcessSpaceStations(void)
+inline void ProcessSpaceStations(void)
 {
     s32 i;
 
-    D_005A74C8[0] = 0;
+    PlayerGlider.InTornado = 0;
     for (i = 0; i < 3; i++) {
         if (SpaceStationList[i].field40 != 0) {
             ProcessSpaceStation(&SpaceStationList[i]);
@@ -1369,7 +2566,7 @@ void ProcessSpaceStations(void)
     }
 }
 
-void DrawSpaceStations(void)
+inline void DrawSpaceStations(void)
 {
     s32 i;
 
@@ -1418,6 +2615,19 @@ inline struct gliderbullet_s *GrabGliderBullet(s32 enemy)
         return b;
     }
     return 0;
+}
+
+extern void InitSpaceStation(struct nuvec_s *pos, f32 xrot, f32 yrot, f32 zrot, s32 type);
+
+void InitSpaceStations(void)
+{
+    memset(SpaceStationList, 0, sizeof(SpaceStationList));
+    memset(SatelliteList, 0, sizeof(SatelliteList));
+    SatelliteCharacterId = 0;
+    /* -0.0f is retail's literal (a negated zero), not a typo for 0.0f. */
+    InitSpaceStation(SetNuVecPntr(0.0f, 0.0f, 80.0f), -0.0f, 15.0f, 20.0f, 0);
+    InitSpaceStation(SetNuVecPntr(69.0f, 0.0f, -40.0f), -13.0f, -20.0f, 7.0f, 1);
+    InitSpaceStation(SetNuVecPntr(-69.0f, 0.0f, -40.0f), -26.0f, 15.0f, -20.0f, 2);
 }
 
 s32 AddGliderBullet(struct numtx_s *m, struct nuvec_s *pos, struct nuvec_s *vel,
@@ -1471,15 +2681,37 @@ void FreeGliderBullet(s32 index, s32 enemy)
 struct asteroid_s {
     s32 active;                /* 0x00 */
     struct nuvec_s pos;        /* 0x04 */
-    char pad_10[0x2C - 0x10];
-    f32 radius;                /* 0x2C */
-    char pad_30[0x38 - 0x30];
+    char pad_10[0x1C - 0x10];
+    f32 anglex;                /* 0x1C degrees */
+    f32 angley;                /* 0x20 degrees */
+    char pad_24[0x2C - 0x24];
+    struct nuvec_s scale;      /* 0x2C */
     s32 inview;                /* 0x38 */
     s32 age;                   /* 0x3C */
-    char pad_40[0x4C - 0x40];
+    char pad_40[0x44 - 0x40];
+    s32 stealth;               /* 0x44 drawn shrunk to nothing */
+    char pad_48[0x4C - 0x48];
 };
-extern struct asteroid_s AsteroidList[];   /* far; 100 entries, InitAsteroid's argument is always 0 */
+extern struct asteroid_s AsteroidList[100];   /* far; InitAsteroid's argument is always 0 */
 extern void InitAsteroid(s32 x);
+
+void DrawAsteroid(struct asteroid_s *asteroid)
+{
+    if (asteroid->stealth != 0) {
+        NuMtxSetScale(&mTEMP, SetNuVecPntr(0.0f, 0.0f, 0.0f));
+        NuMtxTranslate(&mTEMP, &asteroid->pos);
+    } else {
+        NuMtxSetScale(&mTEMP, &asteroid->scale);
+        NuMtxRotateY(&mTEMP, asteroid->angley * 182.04445f);
+        NuMtxRotateX(&mTEMP, asteroid->anglex * 182.04445f);
+        NuMtxTranslate(&mTEMP, &asteroid->pos);
+    }
+    asteroid->inview = 0;
+    if (ObjTab[0x50].obj.special != 0) {
+        asteroid->inview = NuRndrGScnObj(
+            ObjTab[0x50].obj.scene->gobjs[ObjTab[0x50].obj.special->instance->objid], &mTEMP);
+    }
+}
 
 struct asteroid_s *FindFreeAsteroid(s32 passes)
 {
@@ -1504,8 +2736,6 @@ struct asteroid_s *FindFreeAsteroid(s32 passes)
 extern f32 Level_GliderRadius;
 extern f32 Level_GliderFloor;
 extern f32 Level_GliderCeiling;
-extern f32 frand(void);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 
 struct nuvec_s GetRandomGliderLevelEdgePoint(void)
 {
@@ -1523,7 +2753,7 @@ inline s32 CountAsteroids(void)
 
     for (i = 0; i < 100; i++) {
         if (AsteroidList[i].active != 0) {
-            sum += AsteroidList[i].radius * AsteroidList[i].radius * 0.25f;
+            sum += AsteroidList[i].scale.x * AsteroidList[i].scale.x * 0.25f;
         }
     }
     return (s32)sum;
@@ -1539,11 +2769,11 @@ void RespawnAsteroids(void)
     }
 }
 
-void InitAsteroids(void)
+inline void InitAsteroids(void)
 {
     s32 i;
 
-    memset(AsteroidList, 0, 0x1DB0);
+    memset(AsteroidList, 0, sizeof(AsteroidList));
     for (i = 0x1D; i >= 0; i--) {
         InitAsteroid(0);
     }
@@ -1554,7 +2784,7 @@ extern s32 AsteroidDebug;
 extern void ProcessAsteroid(struct asteroid_s *asteroid);
 extern void DrawCross(struct nuvec_s *pos, s32 colour, f32 size);
 
-void ProcessAsteroids(void)
+inline void ProcessAsteroids(void)
 {
     s32 i;
 
@@ -1574,23 +2804,27 @@ void ProcessAsteroids(void)
 
 struct wbbolt_s {
     s32 active;                /* 0x00 */
-    char pad_04[0x24 - 0x04];
+    s32 owner;                 /* 0x04 */
+    struct nuvec_s pos;        /* 0x08 */
+    struct nuvec_s vel;        /* 0x14 */
+    f32 life;                  /* 0x20 */
     s32 type;                  /* 0x24 */
-    char pad_28[0x30 - 0x28];
+    f32 seekspeed;             /* 0x28 */
+    f32 scale;                 /* 0x2C */
 };
 extern struct wbbolt_s BoltList[120];
 
 struct hail_s {
-    s32 state;
-    char pad_04[0x0C - 0x04];
-    struct nuvec_s pos;
-    char pad_18[0x24 - 0x18];
+    s32 state;                 /* 0x00 */
+    f32 timer;                 /* 0x04 */
+    f32 fallx;                 /* 0x08 */
+    struct nuvec_s pos;        /* 0x0C */
+    struct nuvec_s vel;        /* 0x18 */
 };
 extern struct hail_s HailList[30];
 extern struct numtx_s BoltMtxA;
 extern struct numtx_s BoltMtxB;
 extern struct numtx_s BoltMtxC;
-extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
 
 void InitLighteningHail(void)
 {
@@ -1598,7 +2832,347 @@ void InitLighteningHail(void)
     NuMtxSetScale(&BoltMtxC, SetNuVecPntr(0.5f, 1.5f, 0.5f));
 }
 
-struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
+inline void DrawLighteningHail(void)
+{
+    struct hail_s *hail;
+    s32 i;
+
+    if (FlyingLevelVictoryDance != 0) {
+        return;
+    }
+    hail = HailList;
+    for (i = 0; i < 30; i++, hail++) {
+        if (hail->state != 0) {
+            if (hail->state == 1) {
+                if (Paused == 0) {
+                    AddVariableShotDebrisEffect(GDeb[0x93].i, &hail->pos, 1, 0, 0);
+                }
+            } else if (hail->state == 3) {
+                if (Paused == 0) {
+                    AddVariableShotDebrisEffect(GDeb[0x93].i, &hail->pos, 1, 0, 0);
+                }
+            }
+        }
+    }
+}
+
+extern f32 HAILFLYUPSPEED;
+extern f32 HAILTIMERANGE;
+extern f32 LighteningFallXMin;
+extern f32 LighteningFallXMax;
+extern struct nuvec_s LighteningHailVel;
+extern s32 SkipLeftA;
+extern s32 SkipLeftB;
+extern s32 SkipLeftC;
+extern s32 SkipNum;
+extern f32 Level_GliderSpeed;
+
+/* Fires the 30 hailstones of attack `attnum` in a fan, leaving a gap of
+   SkipNum stones after stone SkipLeft[attnum].
+   Near-match (stays asm): retail hoists the LighteningFallXMin load above
+   the switch and allocates the three step registers differently. */
+void UnleashLighteningHail(struct nuvec_s *pos, s32 attnum)
+{
+    struct hail_s *hail;
+    struct nuvec_s vel;
+    f32 upspeed;
+    f32 timer;
+    f32 fallx;
+    f32 timeinc;
+    f32 xinc;
+    f32 fallxinc;
+    f32 count;
+    s32 skipleft;
+    s32 i;
+
+    upspeed = HAILFLYUPSPEED * 0.02f;
+    memset(HailList, 0, sizeof(HailList));
+    NuVecScale(&vel, &LighteningHailVel, 0.02f);
+    timer = 2.0f;
+    fallx = LighteningFallXMax;
+    switch (attnum) {
+    case 0:
+        skipleft = SkipLeftA;
+        break;
+    case 1:
+        skipleft = SkipLeftB;
+        break;
+    default:
+        skipleft = SkipLeftC;
+        break;
+    }
+    count = (f32)(SkipNum + 29);
+    LighteningHailVel.z = -Level_GliderSpeed;
+    timeinc = HAILTIMERANGE / count;
+    xinc = -vel.x * 2.0f / count;
+    fallxinc = (LighteningFallXMin - LighteningFallXMax) / count;
+    hail = HailList;
+    for (i = 0; i < 30; i++, hail++) {
+        hail->state = 1;
+        hail->timer = timer;
+        hail->pos = *pos;
+        hail->vel = vel;
+        NuVecNorm(&hail->vel, &hail->vel);
+        NuVecScale(&hail->vel, &hail->vel, upspeed);
+        hail->fallx = fallx;
+        if (i != skipleft) {
+            vel.x += xinc;
+            timer += timeinc;
+            fallx += fallxinc;
+        } else {
+            vel.x += xinc * SkipNum;
+            timer += timeinc * SkipNum;
+            fallx += fallxinc * SkipNum;
+        }
+    }
+}
+
+extern f32 HAILHIDDENTIME;
+extern f32 HailFallSpeed;
+extern f32 HAILCOLLRAD;
+extern f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
+extern s32 InvincibilityCHEAT;
+extern s32 VehicleLevelImmune;
+extern s32 BEENHITBIGBUZZTIME;
+extern s32 BEENHITBIGRUMTIME;
+extern f32 GLIDERHITSOUNDFREQUENCY;
+extern s32 GLIDERHITSOUNDOTHERID;
+extern f32 Level_DeadTime;
+
+/* Damages the player's glider by `hits` if it is within sqrt(rad2) of `pos`;
+   returns whether it was hit. */
+s32 CollidePlayerPoint(struct nuvec_s *pos, f32 rad2, s32 hits)
+{
+    s32 oldhits;
+    f32 timerinc;
+
+    oldhits = PlayerGlider.HitPoints;
+    if (NuVecDistSqr(pos, &PlayerGlider.Position, 0) <= rad2) {
+        timerinc = (f32)hits * 0.125f;
+        if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+            PlayerGlider.HitPoints -= hits;
+        }
+        PlayerGlider.HitTimer += timerinc;
+        if (hits != 0) {
+            NewBuzz(&player->rumble, (BEENHITBIGBUZZTIME * 25) / hits);
+            NewRumble(&player->rumble, (BEENHITBIGRUMTIME * 25) / hits);
+        }
+        if (4.5f <= PlayerGlider.HitTimer) {
+            PlayerGlider.HitTimer = 4.5f;
+        }
+        if (PlayerGlider.NextHitSoundTimer == 0.0f
+            || (PlayerGlider.HitPoints < 1 && oldhits > 0) || hits > 4) {
+            MyGameSfx(0x5A, &PlayerGlider.Position, 0x7FFF);
+            PlayerGlider.NextHitSoundTimer = GLIDERHITSOUNDFREQUENCY;
+        } else {
+            MyGameSfx(GLIDERHITSOUNDOTHERID, &PlayerGlider.Position, 0x4FFF);
+        }
+        if (PlayerGlider.HitPoints < 1) {
+            PlayerGlider.HitPoints = 0;
+            PlayerGlider.TerminalDive = 1;
+            PlayerGlider.HitTimer = Level_DeadTime;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+void ProcessLighteningHail(void)
+{
+    struct hail_s *hail;
+    s32 i;
+
+    if (FlyingLevelVictoryDance != 0) {
+        return;
+    }
+    hail = HailList;
+    for (i = 0; i < 30; i++, hail++) {
+        if (hail->state != 0) {
+            if (ProcessTimer(&hail->timer) != 0) {
+                hail->timer = HAILHIDDENTIME;
+                hail->state++;
+                if (hail->state == 3) {
+                    hail->pos.x = hail->fallx;
+                    hail->pos.y = 46.0f;
+                    hail->pos.z = PlayerGlider.Position.z;
+                    hail->timer = 1.5f;
+                    hail->vel.x = 0.0f;
+                    hail->vel.y = -HailFallSpeed * 0.02f;
+                    hail->vel.z = -Level_GliderSpeed * 0.02f;
+                } else if (hail->state == 4) {
+                    hail->state = 0;
+                }
+            } else if (hail->state == 3) {
+                if (CollidePlayerPoint(&hail->pos, HAILCOLLRAD, 5) != 0) {
+                    hail->state = 0;
+                }
+            }
+            NuVecAdd(&hail->pos, &hail->pos, &hail->vel);
+        }
+    }
+}
+
+extern f32 BOLTHOMESEEKTIME;
+extern void SeekHalfLifeNUVEC(struct nuvec_s *cur, struct nuvec_s *target, f32 halflife, f32 dt);
+
+void ProcessWBBolts(void)
+{
+    struct wbbolt_s *bolt;
+    struct nuvec_s temp;
+    f32 dist;
+    s32 i;
+
+    bolt = BoltList;
+    for (i = 0; i < 120; i++, bolt++) {
+        if (bolt->active != 0) {
+            if (ProcessTimer(&bolt->life) != 0) {
+                bolt->active = 0;
+            }
+            if (bolt->seekspeed != 0.0f) {
+                NuVecSub(&temp, &PlayerGlider.Position, &bolt->pos);
+                temp.z = 0.0f;
+                dist = NuVecMag(&temp);
+                if (dist <= bolt->seekspeed) {
+                    bolt->pos.x = PlayerGlider.Position.x;
+                    bolt->pos.y = PlayerGlider.Position.y;
+                    bolt->vel.x = 0.0f;
+                    bolt->vel.y = 0.0f;
+                } else {
+                    NuVecScale(&temp, &temp, bolt->seekspeed / dist);
+                    temp.z = bolt->vel.z;
+                    SeekHalfLifeNUVEC(&bolt->vel, &temp, BOLTHOMESEEKTIME, 0.02f);
+                }
+            }
+            NuVecAdd(&bolt->pos, &bolt->pos, &bolt->vel);
+            switch (bolt->type) {
+            case 2:
+                if (CollidePlayerPoint(&bolt->pos, 9.0f, 0x19) != 0) {
+                    bolt->active = 0;
+                }
+                break;
+            default:
+                if (bolt->type < 2) {
+                    if (CollidePlayerPoint(&bolt->pos, 2.25f, 5) != 0) {
+                        bolt->active = 0;
+                    }
+                } else {
+                    if (CollidePlayerPoint(&bolt->pos, 2.25f, 1) != 0) {
+                        bolt->active = 0;
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
+
+extern void DrawWBBolts(void);
+extern void DrawVehMasks(void);
+
+void DrawWeatherBossLevelExtra(void)
+{
+    DrawGliderBullets();
+    DrawWeatherBoss();
+    DrawWeatherBossTarget();
+    DrawLighteningHail();
+    DrawWBBolts();
+    DrawVehMasks();
+    DrawBazookaToken();
+}
+
+/* Type-2 bolts are drawn as growing balls; the others as a debris trail,
+   with a model added for the weather boss's own (owner 2) bolts. */
+void DrawWBBolts(void)
+{
+    struct wbbolt_s *bolt;
+    s32 obj;
+    s32 deb;
+    s32 i;
+    f32 scale;
+
+    /* (ObjTab + obj), not ObjTab[obj]: the index form changes codegen. */
+    obj = 0xBD;
+    bolt = BoltList;
+    for (i = 0; i < 0x78; i++, bolt++) {
+        if (bolt->active == 0) {
+            continue;
+        }
+        if (bolt->type == 2) {
+            if (Paused == 0) {
+                AddVariableShotDebrisEffect(GDeb[0x91].i, &bolt->pos, 1, 0, 0);
+            }
+            scale = bolt->scale * 8.0f;
+            NuMtxSetScale(&BoltMtxB, SetNuVecPntr(scale, scale, scale));
+            if ((ObjTab + obj)->obj.special != 0) {
+                *(struct nuvec_s *)&BoltMtxB._30 = bolt->pos;
+                NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                              &BoltMtxB);
+            }
+        } else {
+            if (Paused == 0) {
+                deb = 0x92;
+                if (bolt->owner == 2) {
+                    deb = 0x94;
+                }
+                AddVariableShotDebrisEffect(GDeb[deb].i, &bolt->pos, 1, 0, 0);
+            }
+            if (bolt->owner == 2 && (ObjTab + obj)->obj.special != 0) {
+                *(struct nuvec_s *)&BoltMtxA._30 = bolt->pos;
+                NuRndrGScnObj((ObjTab + obj)->obj.scene->gobjs[(ObjTab + obj)->obj.special->instance->objid],
+                              &BoltMtxA);
+            }
+        }
+    }
+}
+
+extern void NuMtxSetRotationY(struct numtx_s *m, s32 angle);
+extern void NuMtxScale(struct numtx_s *m, struct nuvec_s *s);
+
+void DrawVehMasks(void)
+{
+    struct vehmask_s *mask;
+    struct nuvec_s pos;
+    s32 deb;
+    s32 i;
+
+    mask = VehicleMask;
+    for (i = 0; i < 2; i++, mask++) {
+        if (mask->active == 0) {
+            continue;
+        }
+        if (Level == 0x17) {
+            NuMtxSetRotationY(&mTEMP, NuAtan2D(GameCam.pos.x - mask->pos.x,
+                                               GameCam.pos.z - mask->pos.z) + 0x8000);
+        } else {
+            NuMtxSetRotationY(&mTEMP, (s32)(mask->drawangy * 182.04445f));
+        }
+        NuMtxScale(&mTEMP, SetNuVecPntr(mask->drawscale, mask->drawscale, mask->drawscale));
+        NuMtxTranslate(&mTEMP, &mask->pos);
+        mask->seen = MyDrawModelNew(&mask->draw, &mTEMP, 0);
+        pos = mask->pos;
+        pos.y += 0.2f;
+        deb = 0x7E;
+        switch (mask->id) {
+        case 0x57:
+            deb = 0x7F;
+            break;
+        case 0x56:
+            deb = 0x80;
+            break;
+        case 0x58:
+            deb = 0x81;
+            break;
+        case 3:
+            deb = 0xA3;
+            break;
+        }
+        if (Paused == 0) {
+            AddVariableShotDebrisEffect(GDeb[deb].i, &pos, 1, 0, 0);
+        }
+    }
+}
+
+inline struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
 {
     struct wbbolt_s *b;
     s32 i;
@@ -1615,7 +3189,7 @@ struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
     return 0;
 }
 
-struct wbbolt_s *FindFreeWBBolt(void)
+inline struct wbbolt_s *FindFreeWBBolt(void)
 {
     struct wbbolt_s *b;
     s32 i;
@@ -1630,6 +3204,55 @@ struct wbbolt_s *FindFreeWBBolt(void)
     return 0;
 }
 
+extern f32 BOLTHOMESEEKSPEED;
+extern f32 WBTYPE2SCALETIME;
+
+struct nuvec_s *FireWBBolt(struct nuvec_s *pos, struct nuvec_s *vel, s32 type, f32 life,
+                           s32 owner)
+{
+    struct wbbolt_s *bolt;
+    s32 given;
+    f32 oldscale;
+
+    bolt = 0;
+    given = 0;
+    if (type == 2) {
+        bolt = FindFreeWBBoltOfType(type);
+    }
+    if (bolt != 0) {
+        given = 1;
+    } else {
+        bolt = FindFreeWBBolt();
+    }
+    if (bolt != 0) {
+        if (given) {
+            oldscale = bolt->scale;
+        } else if (type == 2) {
+            oldscale = 0.0f;
+        } else {
+            oldscale = 1.0f;
+        }
+        memset(bolt, 0, sizeof(struct wbbolt_s));
+        bolt->owner = owner;
+        bolt->pos = *pos;
+        NuVecScale(&bolt->vel, vel, 0.02f);
+        bolt->life = life;
+        bolt->type = type;
+        bolt->active = 2;
+        bolt->scale = oldscale + 0.02f / WBTYPE2SCALETIME;
+        if (bolt->scale >= 1.0f) {
+            bolt->scale = 1.0f;
+        }
+        if (bolt->type == 0) {
+            bolt->seekspeed = BOLTHOMESEEKSPEED * 0.02f;
+        } else {
+            bolt->seekspeed = 0.0f;
+        }
+        return &bolt->pos;
+    }
+    return 0;
+}
+
 void InitWBBolts(void)
 {
     memset(BoltList, 0, sizeof(BoltList));
@@ -1638,8 +3261,6 @@ void InitWBBolts(void)
 }
 
 extern void DrawEarthBoss(void);
-extern void DrawJeepRocks(void);
-extern void DrawVehMasks(void);
 
 void DrawEarthBossLevelExtra(void)
 {
@@ -1651,7 +3272,6 @@ void DrawEarthBossLevelExtra(void)
 extern s32 EarthBossJustEntered;
 extern s32 EarthBossDeathEffect;
 extern f32 EarthBossDeathTimer;
-extern s32 EarthBossVortexOpen;
 extern s32 ChrisBigBossDead;
 extern void InitEarthBoss(void);
 
@@ -1721,9 +3341,6 @@ s32 PointsSame(struct nuvec_s *a, struct nuvec_s *b)
     return r;
 }
 
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern s32 NuAtan2D(f32 x, f32 z);
-
 u16 FindTrailAng(struct nuvec_s *a, struct nuvec_s *b)
 {
     struct nuvec_s d;
@@ -1748,10 +3365,10 @@ void KeepHoldOnRock(struct jeeprock_s *rock, struct nuvec_s *pos,
                     struct nuvec_s *vel)
 {
     rock->pos = *pos;
-    rock->holdpos = *pos;
-    rock->oldholdpos = rock->holdpos;
+    rock->atlas.ball_pos = *pos;
+    rock->atlas.ball_oldpos = rock->atlas.ball_pos;
     rock->vel = *vel;
-    rock->holdvel = *vel;
+    rock->atlas.ball_vel = *vel;
     rock->held = 1;
 }
 
@@ -1801,9 +3418,204 @@ void MoveVehicle(struct creature_s *c, struct pad_s *pad)
 }
 
 
-extern struct nuvec_s WeatherBossTargetPos;
+
+extern f32 FireFlyIntroTween;
+extern void edppRegisterPointerToGameCharLocation(struct nuvec_s *loc);
+
+inline void InitGlider(struct glider_s *Glider, struct nuvec_s *StartPos, f32 StartAng)
+{
+    CharacterData *cdata;
+    struct creature_s *cre;
+    s32 i;
+
+    WBIntroOn = 0;
+    memset(Glider, 0, sizeof(struct glider_s));
+    Glider->Cre = player;
+    if (StartPos != 0) {
+        Glider->Position = *StartPos;
+    }
+    Glider->AngleY = StartAng;
+    Glider->HitPoints = 100;
+    Glider->DestTiltX = Glider->TiltX = 0.0f;
+    Glider->DestTiltZ = Glider->TiltZ = 0.0f;
+    Glider->BarrelRoll = 0;
+    Glider->FireTimer = 0.0f;
+    Glider->RailAngle = 0.0f;
+    for (i = 0; i < 16; i++) {
+        Glider->LocatorList[i] = 0x7F;
+        Glider->LocatorTime[i] = 0.0f;
+    }
+    edppRegisterPointerToGameCharLocation(&Glider->Position);
+    if (Level == 0x1A) {
+        cdata = &CData[0x81];
+    } else {
+        cdata = &CData[0x36];
+    }
+    cre = Glider->Cre;
+    cre->obj.scale = cre->obj.SCALE = 1.0f;
+    Glider->Cre->obj.bot = cdata->min.y;
+    Glider->Cre->obj.top = cdata->max.y;
+    FireFlyIntroTween = 0.0f;
+}
+
+extern struct gliderbullet_s GliderBullet[64];
+extern struct gliderbullet_s EnemyGliderBullet[100];
+
+static inline void InitGliderBullets(void)
+{
+    s32 i;
+
+    for (i = 0; i < 64; i++) {
+        FreeGliderBulletList[i] = &GliderBullet[i];
+    }
+    for (i = 0; i < 100; i++) {
+        FreeEnemyGliderBulletList[i] = &EnemyGliderBullet[i];
+    }
+    FreeGliderBulletNum = 64;
+    FreeEnemyGliderBulletNum = 100;
+    UsedGliderBulletNum = 0;
+    UsedEnemyGliderBulletNum = 0;
+}
+
+static inline void InitGliderBombs(void)
+{
+    memset(GliderBombs, 0, sizeof(GliderBombs));
+    memset(EnemyGliderBombs, 0, sizeof(EnemyGliderBombs));
+}
+
+extern struct zoffastart_s D_005A6C30[4];
+#define ZoffaStartPoints D_005A6C30
+extern s32 D_006332A0;
+extern s32 D_006332A4;
+extern s32 D_006332A8;
+#define ZoffaCollisionCounter D_006332A0
+#define ZoffaTeleportIndx D_006332A4
+#define CurrentAggressor D_006332A8
+
+static inline void InitZoffaUFOs(void)
+{
+    s32 i;
+
+    memset(EnemyZoffa, 0, sizeof(EnemyZoffa));
+    ZoffaTeleportIndx = 0;
+    for (i = 0; i < 4; i++) {
+        InitZoffa(0, &ZoffaStartPoints[i]);
+    }
+    CurrentAggressor = 0;
+    ZoffaCollisionCounter = 0;
+}
+
+extern s32 D_006332AC;
+#define LevelResetTimer D_006332AC
+extern f32 Level_GliderCurrentCeiling;
+extern f32 Level_GliderCentreX;
+extern f32 Level_GliderCentreZ;
+extern f32 Level_TargetTime;
+extern f32 GliderCamHighTimer;
+extern s32 FireFlyIntroOn;
+extern s32 FireFlyIntroAction;
+extern s32 FireFlyIntroOldAction;
+extern struct nuvec_s WRStartPos;
+extern f32 WRStartAng;
+extern struct nuvec_s CrashteroidsStart;
+extern f32 CrashteroidsStartAngle;
+extern void ResetGameCameras(struct cammtx_s *cam, s32 n);
+extern void InitBigGuns(void);
+
+void WeatherResearchReset(void)
+{
+    struct nuvec_s start;
+
+    start = WRStartPos;
+    LevelResetTimer = 0;
+    Level_GliderSpeed = 16.0f;
+    Level_GliderCeiling = 60.0f;
+    Level_GliderFloor = -60.0f;
+    Level_GliderCurrentCeiling = 60.0f;
+    Level_GliderRadius = 100.0f;
+    Level_GliderCentreX = 0.32f;
+    Level_GliderCentreZ = 0.09f;
+    Level_DeadTime = 8.0f;
+    Level_TargetTime = 0.7f;
+    InitGlider(&PlayerGlider, &start, WRStartAng);
+    GliderCamHighTimer = 0.0f;
+    GameCam.m._30 = start.x + 0.0f;
+    GameCam.m._31 = start.y + 2.0f;
+    GameCam.m._32 = start.z + 5.0f;
+    ResetGameCameras(&GameCam, 1);
+    InitGliderBullets();
+    InitBigGuns();
+    InitGliderBombs();
+}
+
+/* Near-match (state=asm): only the scheduling of the opening level-limit
+   stores differs from retail (44 bytes); no statement order found matches. */
+void SpaceArenaReset(s32 PlayerDead)
+{
+    Level_DeadTime = 8.0f;
+    Level_GliderFloor = -30.0f;
+    Level_GliderCurrentCeiling = 35.0f;
+    Level_GliderRadius = 180.0f;
+    Level_GliderCentreX = 0.0f;
+    Level_GliderCentreZ = 0.0f;
+    FireFlyIntroOn = 0;
+    LevelResetTimer = 0;
+    FireFlyIntroAction = 0;
+    FireFlyIntroOldAction = -1;
+    Level_GliderSpeed = 8.0f;
+    Level_GliderCeiling = 35.0f;
+    InitGlider(&PlayerGlider, &CrashteroidsStart, CrashteroidsStartAngle);
+    GliderCamHighTimer = 0.0f;
+    GameCam.m._30 = CrashteroidsStart.x + 0.0f;
+    GameCam.m._31 = CrashteroidsStart.y + 2.0f;
+    GameCam.m._32 = CrashteroidsStart.z + 5.0f;
+    ResetGameCameras(&GameCam, 1);
+    InitZoffaUFOs();
+    InitSpaceStations();
+    InitAsteroids();
+    InitGliderBullets();
+}
+
+extern s32 GliderFrameCounter;
+extern f32 FlyingLevelVictoryDanceTimer;
+extern f32 FIREFLYVICDANCETIME;
+extern struct nuvec_s FireFlyStart;
+extern f32 FireFlyStartAngle;
+extern void InitGunBoats(void);
+
+/* Near-match (state=asm): like SpaceArenaReset, the opening level-limit stores
+   are scheduled differently from retail (84 bytes). */
+void FireFlyReset(s32 PlayerDead)
+{
+    Level_DeadTime = 8.0f;
+    Level_GliderSpeed = 8.0f;
+    Level_GliderFloor = 3.0f;
+    Level_GliderCurrentCeiling = 25.0f;
+    Level_GliderCeiling = 25.0f;
+    Level_GliderRadius = 90.0f;
+    Level_GliderCentreX = 40.32f;
+    Level_GliderCentreZ = 52.09f;
+    Level_TargetTime = 1.3f;
+    GliderFrameCounter = 0;
+    FireFlyIntroOn = 0;
+    FireFlyIntroAction = 0;
+    LevelResetTimer = 0;
+    FlyingLevelVictoryDanceTimer = FIREFLYVICDANCETIME;
+    FireFlyIntroOldAction = -1;
+    InitGlider(&PlayerGlider, &FireFlyStart, FireFlyStartAngle);
+    GameCam.m._30 = FireFlyStart.x + 0.0f;
+    GameCam.m._31 = FireFlyStart.y + 2.0f;
+    GameCam.m._32 = FireFlyStart.z + 5.0f;
+    GliderCamHighTimer = 0.0f;
+    ResetGameCameras(&GameCam, 1);
+    InitZoffaUFOs();
+    InitGunBoats();
+    InitBattleShips();
+    InitGliderBullets();
+    InitGliderBombs();
+}
+
 extern struct nuvec_s WeatherBossTargetVel;
-extern f32 WeatherBossTargetAppearTimer;
 
 void InitWeatherBossTarget(void)
 {
@@ -1817,8 +3629,6 @@ extern f32 WBMINY;
 extern f32 WBTARGLIMX;
 extern f32 WBTARGLIMY;
 extern f32 WBLIMX;
-extern s32 WBIntroOn;
-extern s32 ProcessTimer(f32 *timer);
 
 void ProcessWeatherBossTarget(void)
 {
@@ -1828,9 +3638,9 @@ void ProcessWeatherBossTarget(void)
     if (WBIntroOn == 0 && FlyingLevelExtro == 0) {
         ProcessTimer(&WeatherBossTargetAppearTimer);
     }
-    WeatherBossTargetPos.x = (PlayerGlider.pos.x * WBTARGLIMX) / WBLIMX;
+    WeatherBossTargetPos.x = (PlayerGlider.Position.x * WBTARGLIMX) / WBLIMX;
     WeatherBossTargetPos.y =
-        ((PlayerGlider.pos.y - mid) * WBTARGLIMY) / (range * 0.5f) + 1.0f;
+        ((PlayerGlider.Position.y - mid) * WBTARGLIMY) / (range * 0.5f) + 1.0f;
 }
 
 
@@ -1852,9 +3662,7 @@ struct splinepath_s {
 
 extern struct spltab_s SplTab[];
 extern struct splinepath_s WeatherBossIntroSpline;
-extern struct nuvec_s WBIntroGliderPos;
 extern f32 WBBOSSINTRODIST;
-extern f32 WeatherBossTargetAppearTime;
 extern f32 WBIntroTweenTime;
 extern f32 WBIntroTweenTimer;
 extern void PointAlongSpline(struct spline_s *spl, f32 ratio, struct nuvec_s *dst,
@@ -1894,15 +3702,8 @@ struct game_s {
     u8 pad_000[0x3FC];
     u8 lives;
 };
-struct gliderstate_s {
-    char pad_00[0x10];
-    s32 dead;
-};
 extern struct panelcount_s plr_lives;
 extern struct game_s Game;
-extern s32 BEENHITBIGBUZZTIME;
-extern s32 BEENHITBIGRUMTIME;
-extern s32 InvincibilityCHEAT;
 extern s32 TimeTrial;
 extern s32 Adventure;
 extern s32 LivesLost;
@@ -1912,7 +3713,7 @@ extern s32 new_level;
 extern s32 D_0063329C;
 #define glider_restart_timer D_0063329C
 
-inline void ExplodeGlider(struct gliderstate_s *glider)
+inline void ExplodeGlider(struct glider_s *glider)
 {
     NewBuzz(&player->rumble, BEENHITBIGBUZZTIME);
     NewRumble(&player->rumble, BEENHITBIGRUMTIME);
@@ -1922,7 +3723,7 @@ inline void ExplodeGlider(struct gliderstate_s *glider)
         MyGameSfx(0x56, 0, 0x3FFF);
     }
     if (InvincibilityCHEAT == 0) {
-        glider->dead = 1;
+        glider->Dead = 1;
         glider_restart_timer = 50;
         if (TimeTrial != 0) {
             new_mode = GameMode;
@@ -1940,17 +3741,15 @@ inline void ExplodeGlider(struct gliderstate_s *glider)
 }
 
 
-void DeadGliderWB(struct gliderstate_s *glider)
+void DeadGliderWB(struct glider_s *glider)
 {
-    if (glider->dead == 0) {
+    if (glider->Dead == 0) {
         ExplodeGlider(glider);
     }
 }
 
 
-extern void DrawAsteroid(struct asteroid_s *asteroid);
-
-void DrawAsteroids(void)
+inline void DrawAsteroids(void)
 {
     s32 i;
 
@@ -1961,11 +3760,21 @@ void DrawAsteroids(void)
     }
 }
 
+void DrawSpaceArenaLevelExtra(void)
+{
+    DrawGliderBullets();
+    DrawAsteroids();
+    DrawSatellites();
+    DrawSpaceStations();
+    DrawZoffaUFOs();
+    DrawGliderTarget();
+}
+
 
 /* GunBoatList: stride 0x134, 4 entries. */
 struct gunboat_s {
     s32 active;                /* 0x000 */
-    char pad_004[0x008 - 0x004];
+    s32 character;             /* 0x004 -1 if the model failed to load */
     struct MYDRAW draw;        /* 0x008 */
     struct nuvec_s pos;        /* 0x0E8 */
     f32 yaw;                   /* 0x0F4 */
@@ -1973,13 +3782,51 @@ struct gunboat_s {
     f32 yawwobble;             /* 0x0FC */
     char pad_100[0x118 - 0x100];
     s32 seen;                  /* 0x118 */
-    char pad_11C[0x134 - 0x11C];
+    s32 action;                /* 0x11C */
+    s32 lastaction;            /* 0x120 */
+    char pad_124[0x134 - 0x124];
 };
 extern struct gunboat_s GunBoatList[];
 
-void DrawGunBoat(struct gunboat_s *boat)
+void InitGunBoat(struct nuvec_s *pos, f32 yaw, s32 character)
 {
-    struct nuvec_s scale = {1.5f, 1.5f, 1.5f};
+    struct gunboat_s *boat;
+    s32 id;
+
+    boat = &GunBoatList[character];
+    if (boat->active != 0) {
+        return;
+    }
+    memset(&GunBoatList[character], 0, sizeof(struct gunboat_s));
+    boat->character = character;
+    boat->pos = *pos;
+    boat->yaw = yaw;
+    boat->action = 1;
+    boat->lastaction = -1;
+    boat->pitch = 45.0f;
+    switch (character) {
+    case 0:
+        id = 0x68;
+        break;
+    case 1:
+        id = 0x69;
+        break;
+    case 2:
+        id = 0x67;
+        break;
+    default:
+        id = 0x66;
+        break;
+    }
+    if (MyInitModelNew(&boat->draw, id, 0x22, 0, 0, &boat->pos) == 0) {
+        boat->character = -1;
+    }
+    boat->active = 1;
+}
+
+inline void DrawGunBoat(struct gunboat_s *boat)
+{
+    struct nuvec_s scale = gun_scale[0];
 
     NuMtxSetScale(&mTEMP, &scale);
     NuMtxRotateX(&mTEMP, boat->pitch * 182.04445f);
@@ -1987,9 +3834,29 @@ void DrawGunBoat(struct gunboat_s *boat)
     NuMtxTranslate(&mTEMP, &boat->pos);
     boat->seen = MyDrawModelNew(&boat->draw, &mTEMP, 0);
 }
+
+void DrawFireFlyLevelExtra(void)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (GunBoatList[i].active != 0) {
+            DrawGunBoat(&GunBoatList[i]);
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        if (BattleShipList[i].active != 0) {
+            DrawBattleShip(&BattleShipList[i]);
+        }
+    }
+    DrawGliderBombs();
+    DrawGliderBullets();
+    DrawZoffaUFOs();
+    DrawTorpedoTarget();
+}
 extern void ProcessGunBoat(struct gunboat_s *boat);
 
-void ProcessGunBoats(void)
+inline void ProcessGunBoats(void)
 {
     s32 i;
 
@@ -2017,7 +3884,7 @@ inline void ProcessBigGuns(void)
 
 extern void ProcessBattleShip(struct battleship_s *ship);
 
-void ProcessBattleShips(void)
+inline void ProcessBattleShips(void)
 {
     s32 i;
 
@@ -2029,8 +3896,125 @@ void ProcessBattleShips(void)
 }
 
 
-extern void ProcessGliderBullets(void);
 extern void ProcessGliderBombs(void);
+extern void TeleportManager(void);
+extern void MoveZoffaUFO(struct zoffa_s *ufo);
+extern struct zoffastart_s *FindZoffaRestartPoint(void);
+extern void CheckGliderCollisions(void);
+extern void CheckForPotentialMidAirCollisions(void);
+extern s32 NumZoffasFiring;
+extern s32 LastNumZoffasFiring;
+
+/* Flies the live UFOs and runs down the dead ones' respawn timers (paused
+ * while the glider is on autopilot). */
+static inline void MoveZoffaUFOs(void)
+{
+    s32 i;
+
+    LastNumZoffasFiring = NumZoffasFiring;
+    NumZoffasFiring = 0;
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active == 0) {
+            if (PlayerGlider.AutoPilot == 0) {
+                EnemyZoffa[i].respawntimer -= 0.02f;
+                if (EnemyZoffa[i].respawntimer < 0.0f) {
+                    EnemyZoffa[i].respawntimer = 0.0f;
+                }
+            }
+        } else {
+            MoveZoffaUFO(&EnemyZoffa[i]);
+        }
+    }
+}
+
+/* Brings one dead UFO back once its respawn timer has run out. */
+static inline void ZoffaUFORespawn(void)
+{
+    struct zoffastart_s *start;
+    s32 active;
+    s32 i;
+
+    active = 0;
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0) {
+            active++;
+        }
+    }
+    if (active < 4) {
+        for (i = 0; i < 4; i++) {
+            if (EnemyZoffa[i].active == 0 && EnemyZoffa[i].respawntimer == 0.0f) {
+                start = FindZoffaRestartPoint();
+                if (start == 0) {
+                    return;
+                }
+                InitZoffa(&EnemyZoffa[i], start);
+                return;
+            }
+        }
+    }
+}
+
+void ProcessFireFlyLevel(struct pad_s *pad)
+{
+    TeleportManager();
+    MoveZoffaUFOs();
+    ZoffaUFORespawn();
+    CheckGliderCollisions();
+    CheckForPotentialMidAirCollisions();
+    ProcessGliderBombs();
+    ProcessBattleShips();
+    ProcessGunBoats();
+    ProcessGliderBullets();
+    GliderFrameCounter++;
+}
+
+extern s32 FarmFrame;
+extern void FarmReset(s32 playerdead);
+extern void MovePlane(struct plane_s *plane);
+
+void ProcessFarmLevel(struct pad_s *pad)
+{
+    FarmFrame++;
+    if (GliderCamHighTimer > 0.0f) {
+        GliderCamHighTimer -= 0.02f;
+    } else {
+        GliderCamHighTimer = 0.0f;
+    }
+    if (glider_restart_timer != 0) {
+        glider_restart_timer--;
+        if (glider_restart_timer == 0) {
+            FarmReset(1);
+        }
+    }
+    TeleportManager();
+    MoveZoffaUFOs();
+    ZoffaUFORespawn();
+    ProcessAllHovaBlimps();
+    CheckGliderCollisions();
+    CheckForPotentialMidAirCollisions();
+    MovePlane(&PlayerPlane);
+    ProcessGliderBullets();
+}
+
+extern s32 CRASHTEROIDSAMBIENTVOL;
+extern s32 ActiveAsteroidListNum;
+
+void ProcessSpaceArenaLevel(struct pad_s *pad)
+{
+    if (CRASHTEROIDSAMBIENTVOL != 0) {
+        MyGameSfxLoop(0xDA, 0, CRASHTEROIDSAMBIENTVOL);
+    }
+    ActiveAsteroidListNum = 0;
+    TeleportManager();
+    MoveZoffaUFOs();
+    ZoffaUFORespawn();
+    ProcessGliderBullets();
+    ProcessAsteroids();
+    ProcessSatellites();
+    ProcessSpaceStations();
+    CheckGliderCollisions();
+    CheckForPotentialMidAirCollisions();
+}
 
 void ProcessWeatherResearchLevel(struct pad_s *pad)
 {

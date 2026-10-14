@@ -89,7 +89,8 @@ struct NUHGOBJ_s {
     char pad24[0x04];
     struct NUPOINTOFINTEREST_s *pois;
     u8 *poi_ixs;
-    char pad30[0x08];
+    char *string_table;             /* 0x30 */
+    int string_table_size;          /* 0x34 */
     f32 scale;
     char pad3C[0x04];
     f32 sphere_radius;
@@ -100,9 +101,10 @@ struct NUHGOBJ_s {
     f32 cyl_height;
     f32 cyl_radius;
     struct nuhcollide_s *collide;
-    char pad70[0x04];
-    void *texanims;
-    char pad78[0x05];
+    int numtexanims;                /* 0x70 */
+    void *texanims;                 /* 0x74 */
+    short *texanim_tids;            /* 0x78 */
+    char pad7C[0x01];
     u8 num_joint_ixs;
     char pad7E[0x02];
     u8 num_poi_ixs;
@@ -221,6 +223,36 @@ int NuHGobjJointMtxWithCheck(struct NUHGOBJ_s *hobj, u8 i, struct numtx_s *mC,
 }
 
 
+extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
+
+/* Whether the object's bounding sphere, placed by `wm`, touches the sphere
+   of `radius` at `pos`. */
+int NuHGobjBoundingSphereToSphere(struct NUHGOBJ_s *hobj, struct numtx_s *wm,
+                                  struct nuvec_s *pos, f32 radius) {
+    struct nuvec_s d;
+
+    if (hobj->sphere_y == 0.0f) {
+        d.x = wm->_30 - pos->x;
+        d.y = wm->_31 - pos->y;
+        d.z = wm->_32 - pos->z;
+        if ((radius + hobj->sphere_radius) * (radius + hobj->sphere_radius) < d.x * d.x + d.y * d.y + d.z * d.z) {
+            return 0;
+        }
+    } else {
+        d.x = d.z = 0.0f;
+        d.y = hobj->sphere_y;
+        NuVecMtxRotate(&d, &d, wm);
+        d.x = (wm->_30 + d.x) - pos->x;
+        d.y = (wm->_31 + d.y) - pos->y;
+        d.z = (wm->_32 + d.z) - pos->z;
+        if ((radius + hobj->sphere_radius) * (radius + hobj->sphere_radius) < d.x * d.x + d.y * d.y + d.z * d.z) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
 int NuHGobjBoundingBoxToSphere(struct NUHGOBJ_s *hobj, struct numtx_s *mtx, struct nuvec_s *pos,
                                f32 radius) {
     struct nuvec_s local;
@@ -293,13 +325,67 @@ int NuHGobjBoundingSphereToLine(struct NUHGOBJ_s *hobj, struct numtx_s *mtx, str
 }
 
 
-struct NUHGOBJ_s *NuHGobjReadForCutScene(int fh, struct NUHGOBJ_s *shared) {
+static inline struct NUHGOBJ_s *NuHGobjCreate(void) {
     struct NUHGOBJ_s *hobj;
 
     hobj = NuMemAllocFn(sizeof(struct NUHGOBJ_s), nuhgobj_file, 0xE5);
     memset(hobj, 0, sizeof(struct NUHGOBJ_s));
     hobj->type = 0;
     hobj->scale = 1.0f;
+    return hobj;
+}
+
+
+extern int NuFileSize(char *name);
+extern int NuFileLoadBuffer(char *name, void *buf, int size);
+extern int NuMemFileOpen(void *buf, int size, int mode);
+extern void NuFileClose(int fh);
+extern void NuMemFreeFn(void *ptr, char *file, int line);
+extern char *strlwr(char *s);
+typedef void (*NuErrorFunc)(const char *fmt, ...);
+extern NuErrorFunc NuErrorProlog(const char *file, int line);
+extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
+void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj);
+extern char D_006152B0[];
+extern char D_006152D0[];
+extern char D_006152F0[];
+#define msg_hgobj_loading D_006152B0
+#define msg_hgobj_open_failed D_006152D0
+#define msg_hgobj_alloc_failed D_006152F0
+
+struct NUHGOBJ_s *NuHGobjLoad(char *file) {
+    struct NUHGOBJ_s *hobj;
+    void *buf;
+    int size;
+    int fh;
+
+    hobj = 0;
+    size = NuFileSize(file);
+    buf = NuMemAllocFn(size, nuhgobj_file, 0x19F);
+    if (buf) {
+        fh = NuMemFileOpen(buf, NuFileLoadBuffer(file, buf, size), 0);
+        if (fh) {
+            NuDebugMsgProlog(nuhgobj_file, 0x1A8)(msg_hgobj_loading, strlwr(file));
+            NuFileBeginBlkRead(fh, 0x464F4748);
+            hobj = NuHGobjCreate();
+            ReadNuIFFHGobj(fh, hobj);
+            NuFileEndBlkRead(fh);
+            NuFileClose(fh);
+        } else {
+            NuDebugMsgProlog(nuhgobj_file, 0x1B2)(msg_hgobj_open_failed, strlwr(file));
+        }
+        NuMemFreeFn(buf, nuhgobj_file, 0x1B4);
+    } else {
+        NuErrorProlog(nuhgobj_file, 0x1B7)(msg_hgobj_alloc_failed, size);
+    }
+    return hobj;
+}
+
+
+struct NUHGOBJ_s *NuHGobjReadForCutScene(int fh, struct NUHGOBJ_s *shared) {
+    struct NUHGOBJ_s *hobj;
+
+    hobj = NuHGobjCreate();
     hobj->nummtl = shared->nummtl;
     hobj->mtls = shared->mtls;
     hobj->numtid = shared->numtid;
@@ -322,6 +408,92 @@ void ReadNuIFFCollideData(int fh, struct NUHGOBJ_s *hobj) {
     for (i = 0; i < hobj->collide->nentries; i++) {
         hobj->collide->entries[i].data = NU_RELPTR(hobj->collide->entries[i].data);
     }
+}
+
+
+/* Only the members the hierarchical-object reader fills in. */
+struct nuscene_s {
+    char pad00[0x10];
+    int numtids;                    /* 0x10 */
+    short *tids;                    /* 0x14 */
+    int nummtls;                    /* 0x18 */
+    struct numtl_s **mtls;          /* 0x1C */
+    char pad20[0x3C - 0x20];
+}; /* 0x3C */
+
+struct nugscn_s {
+    char pad00[0x08];
+    struct numtl_s **mtls;          /* 0x08 */
+    int nummtl;                     /* 0x0C */
+    char pad10[0x34 - 0x10];
+    char *nametable;                /* 0x34 */
+    char pad38[0x60 - 0x38];
+    int numtexanims;                /* 0x60 */
+    void *texanims;                 /* 0x64 */
+    short *texanim_tids;            /* 0x68 */
+}; /* 0x6C */
+
+extern char *ReadNuIFFNameTable(int fh, int *size);
+extern void ReadNuIFFTextureSet(int fh, struct nuscene_s *scene);
+extern void ReadNuIFFMaterialSet(int fh, struct nuscene_s *scene);
+extern void ReadNuIFFTexAnimSet(int fh, struct nugscn_s *gscene, short *tids);
+extern void ReadNuIFFUnknown(int fh, int blk);
+
+void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj) {
+    struct nuscene_s scene;
+    struct nugscn_s gscn;
+    int blk;
+    int i;
+
+    memset(&scene, 0, sizeof(struct nuscene_s));
+    memset(&gscn, 0, sizeof(struct nugscn_s));
+    scene.numtids = 0;
+    scene.tids = 0;
+    scene.nummtls = 0;
+    scene.mtls = 0;
+    while ((blk = NuFileBeginBlkRead(fh, 0)) != 0) {
+        switch (blk) {
+        case 0x4C42544E:
+            hobj->string_table = ReadNuIFFNameTable(fh, &hobj->string_table_size);
+            break;
+        case 0x30545354:
+            ReadNuIFFTextureSet(fh, &scene);
+            hobj->numtid = scene.numtids;
+            hobj->tids = NuMemAllocFn(scene.numtids << 2, nuhgobj_file, 0x1EB);
+            for (i = 0; i < scene.numtids; i++) {
+                hobj->tids[i] = scene.tids[i];
+            }
+            break;
+        case 0x3030534D:
+            ReadNuIFFMaterialSet(fh, &scene);
+            hobj->mtls = scene.mtls;
+            hobj->nummtl = scene.nummtls;
+            gscn.mtls = scene.mtls;
+            gscn.nummtl = scene.nummtls;
+            break;
+        case 0x304F4748:
+            ReadNuIFFHGobjSet(fh, hobj);
+            break;
+        case 0x4C4C4F43:
+            ReadNuIFFCollideData(fh, hobj);
+            break;
+        case 0x30534154:
+            gscn.nametable = hobj->string_table;
+            ReadNuIFFTexAnimSet(fh, &gscn, scene.tids);
+            hobj->texanim_tids = gscn.texanim_tids;
+            hobj->texanims = gscn.texanims;
+            hobj->numtexanims = gscn.numtexanims;
+            break;
+        default:
+            ReadNuIFFUnknown(fh, blk);
+            break;
+        }
+        NuFileEndBlkRead(fh);
+    }
+    if (scene.tids) {
+        NuMemFreeFn(scene.tids, nuhgobj_file, 0x20D);
+    }
+    scene.tids = 0;
 }
 
 

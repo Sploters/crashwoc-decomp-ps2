@@ -73,22 +73,12 @@
  *   0x001af030 instNuGCutCharSysRender
  */
 
-typedef struct NuMtx {
-    float m[4][4];
-} NuMtx;
+#include "creature.h"
+#include "gcutscn.h"
 
-typedef struct NuVec {
-    float x;
-    float y;
-    float z;
-} NuVec;
-
-typedef struct NuVec4 {
-    float x;
-    float y;
-    float z;
-    float w;
-} NuVec4;
+typedef struct numtx_s NuMtx;
+typedef struct nuvec_s NuVec;
+typedef struct nuvec4_s NuVec4;
 
 typedef struct NuInstance {
     NuMtx matrix;                 /* 0x00 */
@@ -109,72 +99,7 @@ typedef struct NuHSpecial {
 
 #define NUINSTANCE_VISIBLE 0x1
 
-typedef struct NuGCutScene NuGCutScene;
-typedef struct NuGCutSceneDef NuGCutSceneDef;
-typedef struct NuGCutCharDesc NuGCutCharDesc;
-typedef struct NuGCutCharDef NuGCutCharDef;
-typedef struct NuGCutChar NuGCutChar;
-typedef struct NuGCutRigid NuGCutRigid;
-typedef struct NuGCutCamSys NuGCutCamSys;
-typedef struct NuGCutCamDef NuGCutCamDef;
-typedef struct NuGCutRigidSys NuGCutRigidSys;
-typedef struct NuGCutRigidDef NuGCutRigidDef;
-typedef struct NuGCutCharSys NuGCutCharSys;
-typedef struct NuGCutLocator NuGCutLocator;
-typedef struct NuGCutLocatorData NuGCutLocatorData;
-typedef struct NuGCutLocatorDef NuGCutLocatorDef;
-typedef struct NuGCutLocatorSys NuGCutLocatorSys;
-typedef struct NuGCutTriggerDef NuGCutTriggerDef;
-typedef struct NuGCutTriggerSys NuGCutTriggerSys;
-
-typedef struct NuAnimTime NuAnimTime;
-
-typedef void (*NuGCutSceneEndFn)(NuGCutScene *scene);
-
-struct NuGCutScene {
-    NuGCutScene *next;              /* 0x00 */
-    NuGCutScene *prev;              /* 0x04 */
-    char name[16];                  /* 0x08 */
-    NuMtx mtx;                      /* 0x18 */
-    NuGCutSceneDef *def;            /* 0x58 */
-    NuVec centre;                   /* 0x5C */
-    char pad68[4];                  /* 0x68 */
-    int flags;                      /* 0x6C */
-    float time;                     /* 0x70 */
-    float speed;                    /* 0x74 */
-    NuGCutCamSys *camsys;           /* 0x78 */
-    NuGCutRigidSys *rigidsys;       /* 0x7C */
-    NuGCutCharSys *charsys;         /* 0x80 */
-    NuGCutLocatorSys *locatorsys;   /* 0x84 */
-    NuGCutTriggerSys *triggersys;   /* 0x88 */
-    NuGCutScene *chain;             /* 0x8C */
-    NuGCutSceneEndFn endcallback;   /* 0x90 */
-};                                  /* 0x94 */
-
-#define NUGCUTSCENE_STARTED   0x001
-#define NUGCUTSCENE_RUNNING   0x002
-#define NUGCUTSCENE_MATRIXSET 0x010
-#define NUGCUTSCENE_VISIBLE   0x080
-#define NUGCUTSCENE_DISABLED  0x100
-#define NUGCUTSCENE_UPDATED   0x200
-
-typedef void (*NuGCutLocatorUpdateFn)(NuGCutScene *scene, NuGCutLocatorDef *def,
-                                      NuGCutLocator *locator, NuGCutLocatorData *data,
-                                      NuMtx *mtx, float time);
-
-typedef struct NuGCutLocatorFn {
-    const char *name;
-    NuGCutLocatorUpdateFn func;
-} NuGCutLocatorFn;
-
-typedef void (*NuCutSceneCharacterRenderFn)(NuGCutScene *scene, NuGCutSceneDef *def,
-                                            NuGCutChar *character, NuGCutCharDesc *desc,
-                                            float time);
-typedef void (*NuCutSceneCharacterReleaseFn)(NuGCutChar *character);
-typedef void (*NuCutSceneFindCharactersFn)(void);
-typedef void (*NuCutSceneCharacterCreateDataFn)(NuGCutCharDesc *desc, NuGCutChar *character,
-                                                void *heap);
-typedef void (*NuCutSceneRigidCollisionCheckFn)(NuGCutRigid *rigid, NuMtx *mtx);
+typedef struct nuanimtime_s NuAnimTime;
 
 extern NuCutSceneCharacterRenderFn NuCutSceneCharacterRender;
 extern NuCutSceneCharacterReleaseFn NuCutSceneCharacterRelease;
@@ -193,11 +118,6 @@ extern int D_0062F7D4;
 #define cutscene_rndr_chars    D_0062F7D0
 #define cutscene_rndr_locators D_0062F7D4
 
-struct NuGCutLocator {
-    void *object;                 /* 0x00 */
-    int flags;                    /* 0x04 */
-};
-
 typedef struct StateAnim {
     int count;                    /* 0x00 */
     float *times;                 /* 0x04 */
@@ -208,38 +128,26 @@ typedef struct NuAnimCurve2 {
     int data;                     /* 0x00 */
 } NuAnimCurve2;
 
-typedef struct NuAnimData2 {
+struct NuAnimData2 {
     char pad[0xC];                /* 0x00 */
     NuAnimCurve2 *curves;         /* 0x0C */
     signed char *curveflags;      /* 0x10 */
-} NuAnimData2;
+};
 
 #define NUANIM_CURVE_VALUE   6
 #define NUANIM_CURVE_VISIBLE 7
 
-struct NuGCutLocatorData {
-    char pad[0x4C];               /* 0x00 */
-    float value;                  /* 0x4C */
-    NuAnimData2 *anim;            /* 0x50 */
-    char pad54[4];                /* 0x54 */
-    unsigned char flags;          /* 0x58 */
-    unsigned char type;           /* 0x59 */
-    char pad5A[0x64 - 0x5A];      /* 0x5A */
-};
-
-typedef struct NuGCutLocatorType {
+struct NuGCutLocatorType {
     char *name;                   /* 0x00 */
     unsigned char flags;          /* 0x04 */
     char pad5;                    /* 0x05 */
     unsigned short fn;            /* 0x06 */
     char pad8[4];                 /* 0x08 */
-} NuGCutLocatorType;
+};
 
 #define NUGCUTLOCATOR_DEBRIS 0x1
 #define NUGCUTLOCATOR_FUNC   0x2
 #define NUGCUTLOCATOR_NOFN   0xFFFF
-
-#define NUGCUTLOCATOR_VISIBLE 0x8
 
 struct NuGCutRigid {
     NuHSpecial obj;               /* 0x00 */
@@ -253,9 +161,11 @@ typedef struct NuGCutRigidData {
     NuHSpecial obj;               /* 0x44 */
     NuAnimData2 *anim;            /* 0x4C */
     StateAnim *stateanim;         /* 0x50 */
-    char pad54[4];                /* 0x54 */
+    NuGCutLocatorData *locators;  /* 0x54 index on disk until fixed up */
     unsigned char flags;          /* 0x58 */
-    char pad59[3];                /* 0x59 */
+    unsigned char nlocators;      /* 0x59 */
+    unsigned char first_locator;  /* 0x5A 0xFF = none */
+    char pad5B;                   /* 0x5B */
 } NuGCutRigidData;
 
 #define NUGCUTRIGID_VISIBLE  0x1
@@ -266,13 +176,6 @@ typedef struct NuGCutTrigger {
     unsigned char state;          /* 0x00 */
     char pad[3];                  /* 0x01 */
 } NuGCutTrigger;
-
-struct NuGCutLocatorDef {
-    NuGCutLocatorData *locators;  /* 0x00 */
-    NuGCutLocatorType *types;     /* 0x04 */
-    unsigned char count;          /* 0x08 */
-    unsigned char ntypes;         /* 0x09 */
-};
 
 struct NuGCutRigidDef {
     NuGCutRigidData *rigids;      /* 0x00 */
@@ -291,38 +194,14 @@ struct NuGCutTriggerDef {
     NuGCutTriggerData *triggers;  /* 0x04 */
 };
 
-struct NuGCutLocatorSys {
-    NuGCutLocator *locators;      /* 0x00 */
-};
-
 struct NuGCutRigidSys {
     NuGCutRigid *rigids;          /* 0x00 */
 };
 
-struct NuGCutChar {
-    void *data;                   /* 0x00 */
-    char pad4[0x18 - 0x4];        /* 0x04 */
-};
-
-struct NuGCutCharDesc {
-    char pad[0x5C];               /* 0x00 */
-    unsigned char flags;          /* 0x5C */
-    char pad5D[0x64 - 0x5D];      /* 0x5D */
-};
-
-struct NuGCutCharDef {
-    NuGCutCharDesc *chars;        /* 0x00 */
-    unsigned short count;         /* 0x04 */
-};
-
-struct NuGCutCharSys {
-    NuGCutChar *chars;            /* 0x00 */
-};
-
-typedef struct NuGCutBounds {
+struct NuGCutBounds {
     NuVec min;                    /* 0x00 */
     NuVec max;                    /* 0x0C */
-} NuGCutBounds;
+};
 
 typedef struct NuGCutTriggerTarget {
     char pad[2];                  /* 0x00 */
@@ -330,26 +209,14 @@ typedef struct NuGCutTriggerTarget {
     char pad3;                    /* 0x03 */
 } NuGCutTriggerTarget;
 
-typedef struct NuGCutTriggerList {
+struct NuGCutTriggerList {
     char pad[0xC];                /* 0x00 */
     NuGCutTriggerTarget *targets; /* 0x0C */
-} NuGCutTriggerList;
+};
 
 struct NuGCutTriggerSys {
     NuGCutTriggerList *list;      /* 0x00 */
     NuGCutTrigger *triggers;      /* 0x04 */
-};
-
-struct NuGCutSceneDef {
-    char pad0[8];                 /* 0x00 */
-    float duration;               /* 0x08 */
-    char *names;                  /* 0x0C */
-    NuGCutCamDef *camdef;         /* 0x10 */
-    NuGCutRigidDef *rigiddef;     /* 0x14 */
-    NuGCutCharDef *chardef;       /* 0x18 */
-    NuGCutLocatorDef *locatordef; /* 0x1C */
-    NuGCutBounds *bounds;         /* 0x20 */
-    NuGCutTriggerDef *triggerdef; /* 0x24 */
 };
 
 typedef struct NuGCutCamTgt {
@@ -385,6 +252,9 @@ struct NuGCutCamSys {
 };
 
 #define NuFixPtr(p, base) ((p) ? (void *)((char *)(p) + (base)) : 0)
+
+/* Round a heap pointer up to the next 16-byte boundary. */
+#define ALIGN16(p) ((char *)(((unsigned int)(p) + 15) & ~15))
 
 extern void NuMtxSetIdentity(NuMtx *mtx);
 extern void NuMtxSetTranslation(NuMtx *mtx, NuVec4 *pos);
@@ -473,6 +343,21 @@ void NuSetCutSceneRigidCollisionCheckFn(NuCutSceneRigidCollisionCheckFn fn) {
     NuCutSceneRigidCollisionCheck = fn;
 }
 
+
+int instNuGCutSceneCharGetStartMtx(NuGCutScene *scene, char *name, NuMtx *mtx) {
+    NuGCutCharDef *chardef = scene->def->chardef;
+    int i;
+
+    for (i = 0; i < chardef->count; i++) {
+        NuGCutCharDesc *desc = &chardef->chars[i];
+
+        if (strcasecmp(name, desc->name) == 0) {
+            *mtx = desc->mtx;
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void NuGCutSceneFixUp(NuGCutSceneDef *def, void *gscene, void *triggers) {
     if (def) {
@@ -575,7 +460,7 @@ void instNuGCutSceneCreateCamTgtArray(NuGCutScene *scene, int count, char **heap
 
     if (camsys && count) {
         camsys->max = count;
-        *heap = (char *)(((unsigned int)*heap + 15) & ~15);
+        *heap = ALIGN16(*heap);
         camsys->targets = (NuGCutCamTgt *)*heap;
         *heap += count * sizeof(NuGCutCamTgt);
         memset(camsys->targets, 0, count * sizeof(NuGCutCamTgt));
@@ -722,10 +607,10 @@ NuGCutCamSys *instNuCGutCamSysCreate(NuGCutCamDef *def, char **heap) {
     NuGCutCamSys *camsys = 0;
 
     if (def && def->count && heap) {
-        camsys = (NuGCutCamSys *)(((unsigned int)*heap + 15) & ~15);
+        camsys = (NuGCutCamSys *)ALIGN16(*heap);
         *heap = (char *)camsys + sizeof(NuGCutCamSys);
         memset(camsys, 0, sizeof(NuGCutCamSys));
-        *heap = (char *)(((unsigned int)*heap + 15) & ~15);
+        *heap = ALIGN16(*heap);
         camsys->cams = (NuGCutCam *)*heap;
         *heap += def->count * sizeof(NuGCutCam);
         memset(camsys->cams, 0, def->count * sizeof(NuGCutCam));
@@ -752,10 +637,10 @@ NuGCutLocatorSys *NuCGutLocatorSysCreateInst(NuGCutLocatorDef *def, char **heap)
     NuGCutLocatorSys *sys = 0;
 
     if (def && def->count && heap) {
-        sys = (NuGCutLocatorSys *)(((unsigned int)*heap + 15) & ~15);
+        sys = (NuGCutLocatorSys *)ALIGN16(*heap);
         *heap = (char *)sys + sizeof(NuGCutLocatorSys);
         memset(sys, 0, sizeof(NuGCutLocatorSys));
-        *heap = (char *)(((unsigned int)*heap + 15) & ~15);
+        *heap = ALIGN16(*heap);
         sys->locators = (NuGCutLocator *)*heap;
         *heap += def->count * sizeof(NuGCutLocator);
         memset(sys->locators, 0, def->count * sizeof(NuGCutLocator));
@@ -769,7 +654,7 @@ void instNuGCutLocatorSysEnd(NuGCutLocatorSys *sys, NuGCutLocatorDef *def, float
 
     for (i = 0; i < def->count; i++) {
         NuGCutLocator *loc = &sys->locators[i];
-        loc->object = 0;
+        loc->timer = 0.0f;
     }
 }
 
@@ -779,7 +664,7 @@ void instNuGCutLocatorSysStart(NuGCutLocatorSys *sys, NuGCutLocatorDef *def) {
 
     for (i = 0; i < def->count; i++) {
         NuGCutLocator *loc = &sys->locators[i];
-        loc->object = 0;
+        loc->timer = 0.0f;
     }
 }
 
@@ -808,6 +693,181 @@ void NuGCutRigidSysFixPtrs(NuGCutSceneDef *def, int base) {
     }
 }
 
+
+void NuGCutLocatorSysFixPtrs(NuGCutSceneDef *def, int base) {
+    NuGCutLocatorDef *locatordef;
+    int i;
+
+    if (def->locatordef) {
+        locatordef = (NuGCutLocatorDef *)((char *)def->locatordef + base);
+        def->locatordef = locatordef;
+        locatordef->locators = NuFixPtr(locatordef->locators, base);
+        if (locatordef->locators) {
+            for (i = 0; i < locatordef->count; i++) {
+                NuGCutLocatorData *locator = &locatordef->locators[i];
+
+                if (locator->anim) {
+                    locator->anim = NuAnimData2FixPtrs(locator->anim, base);
+                }
+            }
+        }
+        locatordef->types = NuFixPtr(locatordef->types, base);
+        if (locatordef->types) {
+            for (i = 0; i < locatordef->ntypes; i++) {
+                NuGCutLocatorType *type = &locatordef->types[i];
+
+                type->name = def->names + (int)type->name - 1;
+            }
+        }
+    }
+}
+
+typedef void (*nudebugmsg_fn)(char *fmt, ...);
+extern nudebugmsg_fn NuDebugMsgProlog(char *file, int line);
+extern int LookupDebrisEffect(char *name);
+
+/* Retail-owned (no Data-from-C yet). */
+extern char D_00619C50[];               /* source file name */
+extern char D_00619D90[];               /* debug message */
+#define gcutscn_srcfile D_00619C50
+#define nolocatorfn_msg D_00619D90
+
+/* Index of the locator function called `name`, or -1. */
+static inline int LookupLocatorFn(char *name) {
+    int ix = 0;
+
+    if (locatorfns != 0) {
+        while (locatorfns[ix].name) {
+            if (strcasecmp(name, locatorfns[ix].name) == 0) {
+                return ix;
+            }
+            ix++;
+        }
+    }
+    return -1;
+}
+
+/* Bind each locator type to its debris effect or update function. */
+void NuGCutLocatorSysFixUp(NuGCutLocatorDef *def) {
+    unsigned int i;
+
+    for (i = 0; i < def->ntypes; i++) {
+        NuGCutLocatorType *type = &def->types[i];
+
+        if (type->flags & NUGCUTLOCATOR_DEBRIS) {
+            type->fn = LookupDebrisEffect(type->name);
+        } else if (type->flags & NUGCUTLOCATOR_FUNC) {
+            type->fn = LookupLocatorFn(type->name);
+        }
+        if (type->fn == NUGCUTLOCATOR_NOFN) {
+            NuDebugMsgProlog(gcutscn_srcfile, 0x4FE)(nolocatorfn_msg, type->name);
+        }
+    }
+}
+
+extern int NuSpecialFind(void *scene, NuHSpecial *special, char *name);
+
+extern char D_00619DF8[];               /* debug message */
+#define norigid_msg D_00619DF8
+
+/* Find each rigid's object in the scene and point it at its locators. */
+void NuGCutRigidSysFixUp(NuGCutSceneDef *def, void *scene) {
+    NuGCutRigidDef *rigiddef;
+    NuGCutLocatorDef *locatordef;
+    int i;
+
+    rigiddef = def->rigiddef;
+    locatordef = def->locatordef;
+    if (scene != 0) {
+        for (i = 0; i < rigiddef->count; i++) {
+            NuGCutRigidData *rigid = &rigiddef->rigids[i];
+
+            if (NuSpecialFind(scene, &rigid->obj, rigid->name)) {
+                rigid->flags |= NUGCUTRIGID_FOUND;
+            } else {
+                NuDebugMsgProlog(gcutscn_srcfile, 0x5D9)(norigid_msg, rigid->name);
+            }
+            if (rigid->nlocators != 0 && (int)rigid->locators < 0xFF) {
+                rigid->first_locator = (int)rigid->locators;
+                rigid->locators = &locatordef->locators[(int)rigid->locators];
+            } else {
+                rigid->first_locator = 0xFF;
+            }
+        }
+    }
+}
+
+/* The scene's trigger definitions (full layout in gamelib/trigger.c). */
+typedef struct NuTriggerDef {
+    char *name;                   /* 0x00 */
+    char pad04[0x34 - 0x04];      /* 0x04 */
+} NuTriggerDef; /* 0x34 */
+
+typedef struct NuTriggerDefHdr {
+    int version;                  /* 0x00 */
+    int reloc;                    /* 0x04 */
+    int count;                    /* 0x08 */
+    NuTriggerDef *defs;           /* 0x0C */
+} NuTriggerDefHdr;
+
+typedef void (*nuerror_fn)(char *fmt, ...);
+extern nuerror_fn NuErrorProlog(char *file, int line);
+
+extern char D_00619E90[];               /* error message */
+#define notrigger_msg D_00619E90
+
+/* Point each cutscene trigger at the scene trigger with the same name. */
+void NuGCutTriggerSysFixUp(NuGCutSceneDef *def, void *triggers) {
+    NuTriggerDefHdr *triggersys = triggers;
+    NuGCutTriggerDef *triggerdef;
+    int i;
+    int j;
+
+    triggerdef = def->triggerdef;
+    for (i = 0; i < triggerdef->count; i++) {
+        NuGCutTriggerData *trigger = &triggerdef->triggers[i];
+
+        for (j = 0; j < triggersys->count; j++) {
+            trigger->target = -1;
+            if (strcasecmp(trigger->name, triggersys->defs[j].name) == 0) {
+                trigger->target = j;
+                break;
+            }
+        }
+        if (trigger->target == -1) {
+            NuErrorProlog(gcutscn_srcfile, 0x8A8)(notrigger_msg, trigger->name);
+        }
+    }
+}
+
+void NuGCutCharSysFixPtrs(NuGCutSceneDef *def, int base) {
+    NuGCutCharDef *chardef;
+    int i;
+
+    if (def->chardef) {
+        chardef = (NuGCutCharDef *)((char *)def->chardef + base);
+        def->chardef = chardef;
+        chardef->chars = NuFixPtr(chardef->chars, base);
+        if (chardef->chars) {
+            for (i = 0; i < chardef->count; i++) {
+                NuGCutCharDesc *desc = &chardef->chars[i];
+
+                if (desc->name) {
+                    desc->name = def->names + (int)desc->name - 1;
+                }
+                if (desc->char_anim) {
+                    desc->char_anim = NuAnimData2FixPtrs(desc->char_anim, base);
+                }
+                if (desc->joint_anim) {
+                    desc->joint_anim = NuAnimData2FixPtrs(desc->joint_anim, base);
+                }
+                if (desc->face_anim) {
+                    desc->face_anim = NuAnimData2FixPtrs(desc->face_anim, base);
+                }
+            }
+        }
+    }
+}
 
 void instNuGCutRigidSysReset(NuGCutRigidSys *sys, NuGCutRigidDef *def) {
     unsigned int i;
@@ -845,10 +905,47 @@ void instNuGCutRigidSysStart(NuGCutRigidSys *sys, NuGCutRigidDef *def) {
 
 void NuGCutCharSysFixUp(NuGCutSceneDef *def) {
     if (NuCutSceneFindCharacters) {
-        NuCutSceneFindCharacters();
+        NuCutSceneFindCharacters(def);
     }
 }
 
+
+extern void NuGCutRigidCalcMtx(NuGCutRigidData *rigid, float time, NuMtx *mtx);
+extern void NuMtxMul(NuMtx *dst, NuMtx *a, NuMtx *b);
+
+void instNuGCutRigidSysEnd(NuGCutScene *scene, float time) {
+    NuGCutRigidDef *rigiddef = scene->def->rigiddef;
+    NuGCutRigidSys *sys = scene->rigidsys;
+    NuMtx mtx;
+    signed char state;
+    int i;
+
+    for (i = 0; i < rigiddef->count; i++) {
+        NuGCutRigidData *data = &rigiddef->rigids[i];
+        NuGCutRigid *rigid = &sys->rigids[i];
+
+        if (!(data->flags & 0x4)) {
+            continue;
+        }
+        if (!(data->flags & 0x2)) {
+            if (data->stateanim && StateAnimEvaluate(data->stateanim, &rigid->state, (unsigned char *)&state, time)) {
+                if (state) {
+                    rigid->obj.special->instance->flags |= NUINSTANCE_VISIBLE;
+                } else {
+                    rigid->obj.special->instance->flags &= ~NUINSTANCE_VISIBLE;
+                }
+            }
+            /* The end matrix is computed but never applied (retail does the
+             * same). */
+            if (rigid->obj.special->instance->flags & NUINSTANCE_VISIBLE) {
+                NuGCutRigidCalcMtx(data, time, &mtx);
+                if (scene->flags & NUGCUTSCENE_MATRIXSET) {
+                    NuMtxMul(&mtx, &mtx, &scene->mtx);
+                }
+            }
+        }
+    }
+}
 
 void instNuGCutCharSysEnd(NuGCutScene *scene, float time) {
     NuGCutSceneDef *def = scene->def;
@@ -896,7 +993,7 @@ NuGCutTriggerSys *instNuCGutTriggerSysCreate(NuGCutSceneDef *def, NuGCutTriggerL
     NuGCutTriggerSys *sys;
     int count = def->triggerdef->count;
 
-    sys = (NuGCutTriggerSys *)(((unsigned int)*heap + 15) & ~15);
+    sys = (NuGCutTriggerSys *)ALIGN16(*heap);
     *heap = (char *)sys + sizeof(NuGCutTriggerSys);
     memset(sys, 0, sizeof(NuGCutTriggerSys));
     sys->list = list;
@@ -904,6 +1001,83 @@ NuGCutTriggerSys *instNuCGutTriggerSysCreate(NuGCutSceneDef *def, NuGCutTriggerL
     *heap += count * sizeof(NuGCutTrigger);
     memset(sys->triggers, 0, count * sizeof(NuGCutTrigger));
     return sys;
+}
+
+
+extern int sprintf(char *buf, const char *fmt, ...);
+extern NuGCutRigidSys *instNuCGutRigidSysCreate(NuGCutSceneDef *def, void *gscene, char **heap);
+
+NuGCutCharSys *instNuCGutCharSysCreate(NuGCutSceneDef *def, char **heap) {
+    NuGCutCharDef *chardef;
+    NuGCutCharSys *charsys;
+    NuGCutCharDesc *desc;
+    NuGCutChar *character;
+    int i;
+
+    charsys = 0;
+    chardef = def->chardef;
+    if (chardef && chardef->count && heap) {
+        charsys = (NuGCutCharSys *)(*heap = ALIGN16(*heap));
+        *heap = (char *)(charsys + 1);
+        charsys->chars = 0;
+        character = (NuGCutChar *)(*heap = ALIGN16(*heap));
+        charsys->chars = character;
+        *heap += chardef->count * sizeof(NuGCutChar);
+        memset(charsys->chars, 0, chardef->count * sizeof(NuGCutChar));
+        for (i = 0; i < chardef->count; i++) {
+            desc = &chardef->chars[i];
+            character = &charsys->chars[i];
+            character->current_animix = -1;
+            character->prev_animix = -1;
+            if (desc->flags & 0x2) {
+                if (NuCutSceneCharacterCreateData) {
+                    NuCutSceneCharacterCreateData(desc, character, heap);
+                }
+            } else {
+                character->data = desc->character;
+            }
+        }
+    }
+    return charsys;
+}
+
+NuGCutScene *instNuGCutSceneCreate(NuGCutSceneDef *def, void *gscene, NuGCutTriggerList *triggers,
+                                   char *name, char **heap) {
+    NuGCutScene *scene;
+
+    scene = 0;
+    if (def) {
+        scene = (NuGCutScene *)(*heap = ALIGN16(*heap));
+        *heap = (char *)(scene + 1);
+        memset(scene, 0, sizeof(NuGCutScene));
+        scene->next = cutscenelist;
+        if (cutscenelist) {
+            cutscenelist->prev = scene;
+        }
+        cutscenelist = scene;
+        scene->def = def;
+        if (name) {
+            sprintf(scene->name, name);
+        }
+        if (def->camdef) {
+            scene->camsys = instNuCGutCamSysCreate(def->camdef, heap);
+        }
+        if (def->rigiddef) {
+            scene->rigidsys = instNuCGutRigidSysCreate(def, gscene, heap);
+        }
+        if (def->chardef) {
+            scene->charsys = instNuCGutCharSysCreate(def, heap);
+        }
+        if (def->locatordef) {
+            scene->locatorsys = NuCGutLocatorSysCreateInst(def->locatordef, heap);
+        }
+        if (def->triggerdef && triggers) {
+            scene->triggersys = instNuCGutTriggerSysCreate(def, triggers, heap);
+        }
+        instNuGCutSceneCalculateCentre(scene, 0);
+        scene->speed = 1.0f;
+    }
+    return scene;
 }
 
 
@@ -1040,4 +1214,46 @@ void instNuGCutCharSysRender(NuGCutScene *scene, float time) {
             }
         }
     }
+}
+
+
+extern char D_00619C78[];               /* error message */
+extern char D_00619CD8[];               /* error message */
+#define loadfail_msg D_00619C78
+#define badversion_msg D_00619CD8
+extern int NuFileLoadBuffer(char *name, void *buf, int size);
+
+NuGCutSceneDef *NuGCutSceneLoad(char *name, char **heap, char **heapend) {
+    NuGCutSceneDef *def;
+    int size;
+
+    *heap = ALIGN16(*heap);
+    size = NuFileLoadBuffer(name, *heap, *heapend - *heap);
+    if (size == 0) {
+        NuErrorProlog(gcutscn_srcfile, 0x14C)(loadfail_msg);
+    }
+    def = (NuGCutSceneDef *)*heap;
+    *heap = (char *)def + size;
+    if (def->version != 1) {
+        NuErrorProlog(gcutscn_srcfile, 0x151)(badversion_msg, name, def->version);
+    }
+    def->base = (int)def - def->base;
+    def->names = def->names ? def->names + def->base : 0;
+    if (def->camdef) {
+        NuGCutCamsSysFixPtrs(def, def->base);
+    }
+    if (def->locatordef) {
+        NuGCutLocatorSysFixPtrs(def, def->base);
+    }
+    if (def->rigiddef) {
+        NuGCutRigidSysFixPtrs(def, def->base);
+    }
+    if (def->chardef) {
+        NuGCutCharSysFixPtrs(def, def->base);
+    }
+    if (def->triggerdef) {
+        NuGCutTriggerSysFixPtrs(def, def->base);
+    }
+    def->bounds = def->bounds ? (NuGCutBounds *)((char *)def->bounds + def->base) : 0;
+    return def;
 }

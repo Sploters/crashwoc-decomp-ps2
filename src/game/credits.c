@@ -40,7 +40,7 @@ extern float D_0062E96C; /* upper size cutoff (1.7f) */
 extern float D_0062E970; /* y factor for the SR. MANAGER credit */
 extern float D_0062E974; /* per-credit scroll step (0.1f) */
 
-extern char *NuStrCpy(char *dst, char *src);
+extern void NuStrCpy(char *dst, char *src);
 extern s32 strcmp(const char *a, const char *b);
 extern void AddSpacesIntoText(char *text, s32 flag);
 extern void Text3D(char *text, s32 a, s32 colour, float x, float y, float z,

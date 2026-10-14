@@ -281,7 +281,7 @@ extern char D_0061B2D8[];
 extern void NuStrCat(char *dst, char *src);
 extern void NuRndrInitWorld(void);
 extern void *visiLoadData(char *name, struct nugscn_s *scene, void **pptr);
-extern void BuildVisiTable(void);
+extern void BuildVisiTable(struct nugscn_s *gsc);
 extern void edobjRegisterBaseScene(struct nugscn_s *scene);
 extern void edbitsRegisterBaseScene(struct nugscn_s *scene);
 extern void NuBridgeRegisterBaseScene(struct nugscn_s *scene);
@@ -294,22 +294,22 @@ extern void NuLightFogClear(s32 a);
 extern s32 saveloadLoadIcon(char *name, void *buf);
 extern void noterraininit(void);
 extern void TerrainSetCur(void *buf);
-extern void terraininit(s32 level, void **pptr, void *end, s32 a, char *name,
+extern short *terraininit(s32 level, void **pptr, void *end, s32 a, char *name,
                         struct nugscn_s *scene, s32 b);
 extern void edppDestroyAllParticles(void);
 extern void edppDestroyAllEffects(void);
 extern s32 sprintf(char *buf, char *fmt, ...);
 extern s32 NuFileSize(char *name);
-extern void edppLoadEffects(char *name, s32 a);
-extern void edppMergeEffects(char *name, s32 a);
+extern int edppLoadEffects(char *name, s32 a);
+extern int edppMergeEffects(char *name, s32 a);
 extern void InitGameDebris(void);
 extern void edppRestartAllEffectsInLevel(void);
 extern void edobjObjectReset(void);
 extern void edobjFileLoadObjects(char *name);
 extern void edanimParamReset(void);
-extern void edanimFileLoad(char *name);
+extern int edanimFileLoad(char *name);
 extern void edgraClumpsReset(void);
-extern void edgraFileLoad(char *name);
+extern int edgraFileLoad(char *name);
 extern void edgraInitAllClumps(void);
 extern void LoadVehicleStuff(void);
 extern s32 LoadCutMovie(s32 movie);
@@ -367,7 +367,7 @@ void InitWorld(void)
             NuStrCat(tb, D_0062FA98);
             world_vd = visiLoadData(tb, world_scene[0], &superbuffer_ptr);
             if (world_scene[0] != 0 && world_vd == 0) {
-                BuildVisiTable();
+                BuildVisiTable(world_scene[0]);
             }
         }
 

@@ -29,7 +29,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0096:001fa998:GetTopBot"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0096:001fab20:CrateCollisions"
@@ -161,7 +161,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0096:002012a0:ScaleFlatShadow"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0096:00201320:ResetProjectiles"

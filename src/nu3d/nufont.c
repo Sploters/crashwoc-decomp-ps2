@@ -547,6 +547,47 @@ s32 NuFntPrint(char *fmt, ...)
 }
 
 
+inline s32 NuFntPrintLenV(char *fmt, va_list args)
+{
+    char buf[0x400];
+    char *s;
+    s32 len;
+
+    len = 0;
+    NuFntPrintHeight = NuFntHeight;
+    NuFntPrintLength = 0;
+    if (NuFntCur != 0) {
+        vsprintf(buf, fmt, args);
+        for (s = buf; *s != 0; s++) {
+            if (*s == '\n' || *s == '\r') {
+                NuFntPrintLength = (NuFntPrintLength < len) ? len
+                                                            : NuFntPrintLength;
+                NuFntPrintHeight += NuFntHeight;
+                len = 0;
+            } else {
+                len += (NuFntCur->chars[NuFntCur->map.index[(u8)*s]].width << 4)
+                     * font_xscale;
+            }
+        }
+        NuFntPrintLength = (NuFntPrintLength < len) ? len : NuFntPrintLength;
+    }
+    NuFntPrintLength >>= 4;
+    return NuFntPrintLength;
+}
+
+
+s32 NuFntPrintLen(char *fmt, ...)
+{
+    va_list args;
+    s32 len;
+
+    va_start(args, fmt);
+    len = NuFntPrintLenV(fmt, args);
+    va_end(args);
+    return len;
+}
+
+
 inline void NuFntSet(struct nufont_s *font)
 {
     if (font == 0) {
@@ -628,31 +669,3 @@ void NuFntSetPen(s32 colour)
     font_pen[3] = (colour >> 24) & 0xFF;
 }
 
-
-s32 NuFntPrintLenV(char *fmt, va_list args)
-{
-    char buf[0x400];
-    char *s;
-    s32 len;
-
-    len = 0;
-    NuFntPrintHeight = NuFntHeight;
-    NuFntPrintLength = 0;
-    if (NuFntCur != 0) {
-        vsprintf(buf, fmt, args);
-        for (s = buf; *s != 0; s++) {
-            if (*s == '\n' || *s == '\r') {
-                NuFntPrintLength = (NuFntPrintLength < len) ? len
-                                                            : NuFntPrintLength;
-                NuFntPrintHeight += NuFntHeight;
-                len = 0;
-            } else {
-                len += (NuFntCur->chars[NuFntCur->map.index[(u8)*s]].width << 4)
-                     * font_xscale;
-            }
-        }
-        NuFntPrintLength = (NuFntPrintLength < len) ? len : NuFntPrintLength;
-    }
-    NuFntPrintLength >>= 4;
-    return NuFntPrintLength;
-}

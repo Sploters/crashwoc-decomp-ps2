@@ -278,11 +278,11 @@ extern void NuBridgeOn(s32 on);
 extern void FireBossWaterFire(s32 on);
 extern s32 NuSpecialFind(struct nugscn_s *scene, struct nuhspecial_s *sp,
                          char *name);
-extern void StartHGobjAnim(struct nuhspecial_s *sp);
+extern s32 StartHGobjAnim(struct nuhspecial_s *sp);
 extern void DebrisEmitterOrientation(s32 key, s32 a, s32 hdg);
 extern void NewRumble(struct rumble_s *rumble, s32 power);
 extern void NewBuzz(struct rumble_s *rumble, s32 frames);
-extern s32 NuCameraClipTestPoints(struct nuvec_s *pos, s32 n, s32 mode);
+extern s32 NuCameraClipTestPoints(struct nuvec_s *pos, s32 n, struct numtx_s *wm);
 extern void PlayRandSFX(void);
 
 #define JONMASK(v, a) JonMaskFPS((v), (a))
@@ -1612,7 +1612,7 @@ void ProcDeb3(void) {
   }
 }
 
-static void DrawDeb3() {
+void DrawDeb3(void) {
   struct nuvec_s pos;
   struct deb3_s *deb;
   float r;

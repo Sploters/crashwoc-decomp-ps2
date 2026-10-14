@@ -132,8 +132,8 @@ struct nudatfile_s {
     int start;                /* 0x04 */
     int len;	              /* 0x08 */
     int fix;                  /* 0x0c */
-    int used;                 /* 0x10 */
-    int pos;                  /* 0x14 */
+    int pos;                  /* 0x10 */
+    int used;                 /* 0x14 cleared on close, tested by NuDatFileOpen */
     int ppack;                /* 0x18 */
 }; /* 0x1c */
 
@@ -175,6 +175,11 @@ extern char* iop_img_name;
 #define blk_level               D_0062E980
 
 int sceWrite(int fd, void *addr, int size);
+int sceLseek(int fd, int offset, int how);
+
+typedef void (*NuErrorFunc)(const char *fmt, ...);
+extern NuErrorFunc NuErrorProlog(const char *file, int line);
+extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 int sceIoctl(int fd, int req, void*);
 int NuFileRead(int fh, void *data, int size);
 
@@ -394,6 +399,131 @@ int NuFileSeek(int fh, int offset, int origin);
 #define addr_def_cnt            D_00633004
 
 
+int NuDatFilePos(int fh);
+
+
+inline int NuMemFilePos(int fh)
+{
+    if (fh >= 0x800) {
+        return NuDatFilePos(fh);
+    }
+    fh -= 0x400;
+    return (int)memfiles[fh].curr - (int)memfiles[fh].start;
+}
+
+extern char D_00613690[];
+#define msg_pos_seek_failed     D_00613690
+
+
+inline int NuFilePos(int fh)
+{
+    struct fileinfo_s *info;
+    int pos;
+
+    if (fh >= 0x400) {
+        return NuMemFilePos(fh);
+    }
+    fh--;
+    info = &file_info[fh];
+    if (info->use_buff != 0) {
+        return info->read_pos;
+    }
+    while ((pos = sceLseek(fh, 0, 1)) < 0) {
+        NuDebugMsgProlog(nufile_file, 0x30C)(msg_pos_seek_failed, pos);
+    }
+    return pos;
+}
+
+
+/* Pads the file with 0xFE bytes up to the next (mask + 1) boundary;
+   returns the number of bytes written.
+   Near-match (stays asm): retail hoists the loop's fh - 1 into a saved
+   register shared with the inlined NuFilePos; ee-gcc recomputes it. */
+int NuFileAlign(int fh, int mask)
+{
+    unsigned char pad;
+    int pos;
+    int written;
+
+    pad = 0xFE;
+    written = 0;
+    pos = NuFilePos(fh);
+    while (pos & mask) {
+        sceWrite(fh - 1, &pad, 1);
+        pos++;
+        written++;
+    }
+    return written;
+}
+
+
+extern char D_00613758[];
+#define msg_blk_overrun         D_00613758
+
+/* Leaves the current block, seeking to its end if the reader stopped short. */
+void NuFileEndBlkRead(int fh)
+{
+    int level;
+    int pos;
+
+    level = --blk_level;
+    pos = NuFilePos(fh);
+    if (pos != blk_stack[level].start + blk_stack[level].size) {
+        if (blk_stack[level].start + blk_stack[level].size < pos) {
+            NuDebugMsgProlog(nufile_file, 0x4A0)(msg_blk_overrun);
+        }
+        NuFileSeek(fh, blk_stack[level].start + blk_stack[level].size, 0);
+    }
+}
+
+
+extern char D_00613800[];
+#define msg_too_many_addr_refs  D_00613800
+extern int D_0062E9D4;
+#define addr_placeholder        D_0062E9D4
+
+/* Writes a placeholder dword for address `id`, remembering where it went so
+   it can be patched once the address is known. */
+void NuFileWriteAddress(int fh, int id)
+{
+    if (id) {
+        if (addr_ref_cnt >= addr_max) {
+            NuErrorProlog(nufile_file, 0x585)(msg_too_many_addr_refs);
+        }
+        addr_refs[addr_ref_cnt].id = id;
+        addr_refs[addr_ref_cnt].pos = NuFilePos(fh);
+        addr_ref_cnt++;
+    }
+    sceWrite(fh - 1, &addr_placeholder, 4);
+}
+
+
+extern char D_00613838[];
+#define msg_too_many_addr_defs  D_00613838
+
+/* Records the current file position as the definition of address `id`. */
+void NuFileSetAddress(int fh, int id)
+{
+    int i;
+
+    if (id) {
+        for (i = 0; i < addr_def_cnt; i++) {
+            if (addr_defs[i].id == id) {
+                break;
+            }
+        }
+        if (i >= addr_max) {
+            NuErrorProlog(nufile_file, 0x59A)(msg_too_many_addr_defs);
+        }
+        if (i == addr_def_cnt) {
+            addr_def_cnt = i + 1;
+        }
+        addr_defs[i].id = id;
+        addr_defs[i].pos = NuFilePos(fh);
+    }
+}
+
+
 void NuFileInitAddress(int max)
 {
     if (max != addr_max) {
@@ -487,18 +617,6 @@ void NuMemFileClose(int fh)
     memfiles[fh].used = 0;
 }
 
-
-int NuDatFilePos(int fh);
-
-
-inline int NuMemFilePos(int fh)
-{
-    if (fh >= 0x800) {
-        return NuDatFilePos(fh);
-    }
-    fh -= 0x400;
-    return (int)memfiles[fh].curr - (int)memfiles[fh].start;
-}
 
 
 void* NuMemFileAddr(int fh)
@@ -606,7 +724,7 @@ void NuDatFileClose(int fh)
     int ix = fh - 0x800;
 
     datfiles[ix].ndh->dfhandle = 0;
-    datfiles[ix].pos = 0;
+    datfiles[ix].used = 0;
 }
 
 
@@ -688,11 +806,6 @@ char* strcat(char* __dest, const char* __src);
 char* strcpy(char* __dest, const char* __src);
 int strlen(const char* __s);
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 
 extern void NuStrCpy(char * s1, char * s2);
 extern void NuStrCat (char * s1, char * s2);
@@ -883,6 +996,47 @@ extern char RO_62BAB0[];
 extern char RO_62BC50[];
 extern char RO_62BC68[];
 extern char RO_62BC90[];
+
+extern char D_00613650[];
+extern char D_00613668[];
+#define msg_closing_file        D_00613650
+#define msg_close_failed        D_00613668
+
+
+/* Inline: retail carries a copy of it in every function that closes a file. */
+inline void NuFileClose(int fh)
+{
+    struct fileinfo_s *info;
+    struct filebuff_s *buff;
+
+    NuDebugMsgProlog(nufile_file, 0x24D)(msg_closing_file, fh);
+    if (fh >= 0x400) {
+        NuMemFileClose(fh);
+        return;
+    }
+    fh--;
+    while (sceClose(fh) < 0) {
+        NuDebugMsgProlog(nufile_file, 0x254)(msg_close_failed);
+    }
+    info = &file_info[fh];
+    buff = (struct filebuff_s *)info->start_lsn;
+    if (buff != 0) {
+        buff->info = 0;
+    }
+    memset(info, 0, sizeof(*info));
+}
+
+
+void NuDatClose(struct nudathdr_s *ndh)
+{
+    NuFileClose(ndh->fh);
+    if (ndh->dfhandle != 0) {
+        datfiles[ndh->dfhandle - 0x800].used = 0;
+    }
+    if (ndh->intalloc) {
+        NuMemFreeFn(ndh, nufile_file, 0x6AD);
+    }
+}
 
 int NuFileSize(char *fname) {
   int iVar1;
@@ -1303,33 +1457,6 @@ int NuFileOpenSize(int fh)
 }
 
 
-extern char D_00613650[];
-extern char D_00613668[];
-#define msg_closing_file        D_00613650
-#define msg_close_failed        D_00613668
-
-
-void NuFileClose(int fh)
-{
-    struct fileinfo_s *info;
-    struct filebuff_s *buff;
-
-    NuDebugMsgProlog(nufile_file, 0x24D)(msg_closing_file, fh);
-    if (fh >= 0x400) {
-        NuMemFileClose(fh);
-        return;
-    }
-    fh--;
-    while (sceClose(fh) < 0) {
-        NuDebugMsgProlog(nufile_file, 0x254)(msg_close_failed);
-    }
-    info = &file_info[fh];
-    buff = (struct filebuff_s *)info->start_lsn;
-    if (buff != 0) {
-        buff->info = 0;
-    }
-    memset(info, 0, sizeof(*info));
-}
 
 
 extern char D_0062E9C0[];
@@ -1348,26 +1475,3 @@ int NuFileStatus(int fh)
     return 0;
 }
 
-
-extern char D_00613690[];
-#define msg_pos_seek_failed     D_00613690
-
-
-int NuFilePos(int fh)
-{
-    struct fileinfo_s *info;
-    int pos;
-
-    if (fh >= 0x400) {
-        return NuMemFilePos(fh);
-    }
-    fh--;
-    info = &file_info[fh];
-    if (info->use_buff != 0) {
-        return info->read_pos;
-    }
-    while ((pos = sceLseek(fh, 0, 1)) < 0) {
-        NuDebugMsgProlog(nufile_file, 0x30C)(msg_pos_seek_failed, pos);
-    }
-    return pos;
-}

@@ -48,6 +48,13 @@ typedef struct NuVec3 {
     float z;
 } NuVec3;
 
+typedef struct NuVec4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} NuVec4;
+
 typedef struct NuMtx {
     float m[4][4];
 } NuMtx;
@@ -187,7 +194,7 @@ extern float NuVecDistSqr(NuVec3 *a, NuVec3 *b, NuVec3 *diff);
 extern int NuVecClipTestPointVU0(NuVec3 *pos, NuMtx *clipmtx);
 extern int NuAtan2D(float x, float z);
 extern void FaceYDirStream(int angle);
-extern void NuRndrSetViewMtx(NuMtx *vpcs, NuMtx *vpc, NuMtx *scissor);
+extern int NuRndrSetViewMtx(NuMtx *vpcs, NuMtx *vpc, NuMtx *scissor);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMtxSetIdentity(NuMtx *m);
 extern float NuVecDist(NuVec3 *a, NuVec3 *b, NuVec3 *diff);
@@ -204,6 +211,10 @@ extern void NuMtxInv(NuMtx *dst, NuMtx *src);
 extern void NuMtxInvVU0(NuMtx *dst, NuMtx *src);
 extern void NuMtxScaleVU0(NuMtx *m, NuVec3 *scale);
 extern void NuMtxMul(NuMtx *dst, NuMtx *a, NuMtx *b);
+extern void NuMtxMulH(NuMtx *dst, NuMtx *a, NuMtx *b);
+extern void NuVecMtxTransform(NuVec3 *dst, NuVec3 *src, NuMtx *m);
+extern void NuVecMtxTransformH(NuVec3 *dst, NuVec3 *src, NuMtx *m);
+extern void NuVec4MtxTransformHVU0(NuVec4 *dst, NuVec4 *src, NuMtx *m);
 extern int NuRndrSetSpecularLight(NuVec3 *dir, struct NuColour4 *colour);
 extern NuMtx numtx_identity;
 
@@ -505,6 +516,86 @@ void NuCameraGetClipMtx(NuMtx *vpc, NuMtx *scissor) {
 }
 
 
+/* Transform `n` points into view space. `w`, if given, is the world matrix to apply first. */
+void NuCameraTransformView(NuVec3 *dst, NuVec3 *src, int n, NuMtx *w) {
+    NuVec3 *end;
+    NuMtx m;
+
+    end = &src[n];
+    if (w != 0) {
+        NuMtxMul(&m, w, &view_mtx);
+    } else {
+        m = view_mtx;
+    }
+    for (; src < end; src++, dst++) {
+        NuVecMtxTransform(dst, src, &m);
+    }
+}
+
+/* Transform `n` points into clip space. `w`, if given, is the world matrix to apply first. */
+void NuCameraTransformPerspective(NuVec3 *dst, NuVec3 *src, int n, NuMtx *w) {
+    NuVec3 *end;
+    NuMtx m;
+
+    end = &src[n];
+    if (w != 0) {
+        NuMtxMulH(&m, w, &vport_clip_mtx);
+    } else {
+        m = vport_clip_mtx;
+    }
+    for (; src < end; src++, dst++) {
+        NuVecMtxTransformH(dst, src, &m);
+    }
+}
+
+/* Transform `n` points into viewport clip space. `w`, if given, is the world matrix to apply first. */
+void NuCameraTransformScreenClip(NuVec3 *dst, NuVec3 *src, int n, NuMtx *w) {
+    NuVec3 *end;
+    NuMtx m;
+
+    end = &src[n];
+    if (w != 0) {
+        NuMtxMulH(&m, w, &vpc_mtx);
+    } else {
+        m = vpc_mtx;
+    }
+    for (; src < end; src++, dst++) {
+        NuVecMtxTransformH(dst, src, &m);
+    }
+}
+
+/* Transform `n` points onto the screen. `w`, if given, is the world matrix to apply first. */
+void NuCameraTransformScreen(NuVec3 *dst, NuVec3 *src, int n, NuMtx *w) {
+    NuVec3 *end;
+    NuMtx m;
+
+    end = &src[n];
+    if (w != 0) {
+        NuMtxMulH(&m, w, &vpcs_mtx);
+    } else {
+        m = vpcs_mtx;
+    }
+    for (; src < end; src++, dst++) {
+        NuVecMtxTransformH(dst, src, &m);
+    }
+}
+
+/* Transform `n` points onto the screen on VU0. `w`, if given, is the world matrix to apply first. */
+void NuCameraTransformScreenVU0(NuVec4 *dst, NuVec4 *src, int n, NuMtx *w) {
+    NuVec4 *end;
+    NuMtx m;
+
+    end = &src[n];
+    if (w != 0) {
+        NuMtxMulVU0(&m, w, &vpcs_mtx);
+    } else {
+        m = vpcs_mtx;
+    }
+    for (; src < end; src++, dst++) {
+        NuVec4MtxTransformHVU0(dst, src, &m);
+    }
+}
+
 int NuCameraClipTestExtents(NuVec3 *min, NuVec3 *max) {
     int result;
 
@@ -516,6 +607,48 @@ int NuCameraClipTestExtents(NuVec3 *min, NuVec3 *max) {
     return 0;
 }
 
+
+/* Clip-test `cnt` points (after the world matrix `wm`, if given). Returns the
+ * clip flags every point shares: 0 unless all of them are off one side. */
+int NuCameraClipTestPoints(NuVec3 *pnts, int cnt, NuMtx *wm) {
+    NuMtx m;
+    NuVec3 v;
+    int c;
+    int out;
+    int i;
+
+    if (wm != 0) {
+        NuMtxMulH(&m, wm, &view_mtx);
+    } else {
+        m = view_mtx;
+    }
+    out = -1;
+    for (i = 0; i < cnt; i++) {
+        NuVecMtxTransform(&v, pnts, &m);
+        c = 0;
+        if (v.z < global_camera.nearclip) {
+            c = 0x20;
+        }
+        if (v.z > global_camera.farclip) {
+            c |= 0x10;
+        }
+        if (v.x < -v.z * clip_ratio_x) {
+            c |= 0x1;
+        }
+        if (v.x > v.z * clip_ratio_x) {
+            c |= 0x2;
+        }
+        if (v.y < -v.z * clip_ratio_y) {
+            c |= 0x8;
+        }
+        if (v.y > v.z * clip_ratio_y) {
+            c |= 0x4;
+        }
+        out &= c;
+        pnts++;
+    }
+    return out;
+}
 
 float NuCameraDistSqr(NuVec3 *pos) {
     return NuVecDistSqr(pos, &camera_trans, 0);
@@ -550,4 +683,20 @@ int NuCameraClipTestPointScissor(NuVec3 *pos) {
 
 void NuCameraGet(NuCamera *cam) {
     *cam = global_camera;
+}
+
+/* Transform `n` points into scissor clip space. `w`, if given, is the world matrix to apply first. */
+void NuCameraTransformScissorClip(NuVec3 *dst, NuVec3 *src, int n, NuMtx *w) {
+    NuVec3 *end;
+    NuMtx m;
+
+    end = &src[n];
+    if (w != 0) {
+        NuMtxMulH(&m, w, &scissor_clip_mtx);
+    } else {
+        m = scissor_clip_mtx;
+    }
+    for (; src < end; src++, dst++) {
+        NuVecMtxTransformH(dst, src, &m);
+    }
 }

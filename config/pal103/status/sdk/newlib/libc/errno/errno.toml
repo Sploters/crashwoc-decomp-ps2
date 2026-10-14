@@ -13,4 +13,4 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0193:002703d0:__errno"
-state = "asm"
+state = "matching"

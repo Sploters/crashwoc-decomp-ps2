@@ -24,7 +24,8 @@ typedef struct {
 
 extern objtemp_s Font3DObjTab[];
 extern f32 D_0062E350;
-extern f32 D_0062E354;
+extern f32 D_0062E354;                  /* animation frames per game frame */
+#define anim_step D_0062E354
 extern char D_005CD7B0[];   /* j_bd */
 extern char D_005CD808[];   /* j_bc */
 
@@ -98,7 +99,7 @@ extern f32 D_0062E358, D_0062E35C, D_0062E360;
 extern struct numtl_s **nurndr_forced_mtl_table;
 
 extern int strlen(const char *s);
-extern void DrawPanel3DObject(s32 i, f32 x, f32 y, f32 z, f32 sx, f32 sy,
+extern s32 DrawPanel3DObject(s32 i, f32 x, f32 y, f32 z, f32 sx, f32 sy,
                               f32 sz, s32 a1, s32 a2, s32 rot, void *scene,
                               void *special, s32 last);
 extern void DrawPanel3DCharacter(s32 i, f32 x, f32 y, f32 z, f32 sx, f32 sy,
@@ -322,6 +323,17 @@ void Reset3DFontObjects(void) {
     }
 }
 
+/* Clamp an animation clock that ran past the end of its data, or wrap it
+ * round for a looping animation. */
+#define WRAP_ANIM_TIME(t, ad, al)                                              \
+    do {                                                                       \
+        if ((al)->flags & 1) {                                                 \
+            (t) -= (ad)->time - 1.0f;                                          \
+        } else {                                                               \
+            (t) = (ad)->time;                                                  \
+        }                                                                      \
+    } while (0)
+
 void Update3DFontObjects(void) {
     objtemp_s *tab;
     struct CharacterModel *model;
@@ -329,11 +341,7 @@ void Update3DFontObjects(void) {
     struct animlist *al;
     s32 j;
     s32 i;
-    f32 rate;
-    f32 one;
 
-    rate = D_0062E354;
-    one = 1.0f;
     tab = Font3DObjTab;
     for (i = 0; i < 0x1a; i++, tab++) {
         if ((tab->flags & 1) != 0) {
@@ -344,14 +352,9 @@ void Update3DFontObjects(void) {
                     ad = model->anmdata[tab->action];
                     if (ad != 0) {
                         al = model->animlist[tab->action];
-                        tab->anim_time = tab->anim_time + al->speed * rate;
+                        tab->anim_time += al->speed * anim_step;
                         if (ad->time < tab->anim_time) {
-                            if ((al->flags & 1) != 0) {
-                                tab->anim_time =
-                                    tab->anim_time - (ad->time - one);
-                            } else {
-                                tab->anim_time = ad->time;
-                            }
+                            WRAP_ANIM_TIME(tab->anim_time, ad, al);
                         }
                     }
                 }

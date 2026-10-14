@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0044:001453b8:CvtNuIFFTexAnimSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00145508:CvtNuIFFTextureSet"
@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00145890:CvtNuIFFSplineSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00145998:CalcDimsAddFaceOn"
@@ -57,7 +57,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:001469e8:CvtNuIFFInstSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00146b50:CvtNuIFFAnimationLibrary"
@@ -85,7 +85,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00148528:ReadTextureSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:001486a0:ReadMaterialSet"
@@ -105,7 +105,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0044:00149918:ReadNuIFFTexAnimSet"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:00149b40:ReadAnimationLibrary"
@@ -225,7 +225,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c488:CvtNuIFFGeom"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c5f0:CvtNuIFFFaceOnGeom"

@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0042:001357e0:NuLightUpdate"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0042:00135948:NuLightFxSetup"

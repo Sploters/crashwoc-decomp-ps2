@@ -37,7 +37,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0041:00131990:NuFntPrintLen"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0041:00131ab8:NuFntPrintEx"

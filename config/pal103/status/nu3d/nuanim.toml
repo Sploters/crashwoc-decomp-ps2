@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0043:00140c00:NuAnimDataLoad"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0043:00140d40:NuAnimDataFixPtrs"
@@ -105,7 +105,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0043:001449e0:NuAnimCurveSetWrite"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0043:00144b68:NuAnimCurveCreate"
