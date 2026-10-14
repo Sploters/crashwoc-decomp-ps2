@@ -1295,6 +1295,61 @@ void DrawGliderBombs(void)
     }
 }
 
+extern struct nuvec_s GliderBombCollisionPos;
+extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
+
+/* Tests the live bombs against an ellipsoid of half-size Extent around Pos,
+   turned by Angle degrees; the first bomb inside is used up. */
+s32 CollideGliderBombs(struct nuvec_s *Pos, struct nuvec_s *Extent, s32 Enemy, f32 Angle)
+{
+    struct nuvec_s delta;
+    struct gliderbomb_s *bombs;
+    struct gliderbomb_s *bomb;
+    s32 numbombs;
+    s32 i;
+    f32 maxext;
+    f32 negmax;
+
+    maxext = (Extent->x > Extent->y) ? Extent->x : Extent->y;
+    if (Extent->z > maxext) {
+        maxext = Extent->z;
+    }
+    negmax = -maxext;
+
+    if (Enemy != 0) {
+        numbombs = 30;
+        bombs = EnemyGliderBombs;
+    } else {
+        numbombs = 10;
+        bombs = GliderBombs;
+    }
+
+    for (i = 0; i < numbombs; i++) {
+        bomb = &bombs[i];
+        if (bomb->life != 0) {
+            delta.x = bomb->pos.x - Pos->x;
+            if (delta.x <= maxext && delta.x >= negmax) {
+                delta.y = bomb->pos.y - Pos->y;
+                if (delta.y <= maxext && delta.y >= negmax) {
+                    delta.z = bomb->pos.z - Pos->z;
+                    if (delta.z <= maxext && delta.z >= negmax) {
+                        NuVecRotateY(&delta, &delta, (s32)(-Angle * 182.04445f));
+                        delta.x /= Extent->x;
+                        delta.y /= Extent->y;
+                        delta.z /= Extent->z;
+                        if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z <= 1.0f) {
+                            bomb->life = 0;
+                            GliderBombCollisionPos = bomb->pos;
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 extern s32 WBIntroOn;
 extern f32 WeatherBossTargetAppearTimer;
 extern f32 WeatherBossTargetAppearTime;
@@ -1711,6 +1766,43 @@ void InitTrail(void)
     }
     trailpt = 0;
     trailair = 0;
+}
+
+extern struct nuquat_s SetNuQuat(f32 x, f32 y, f32 z, f32 w);
+extern CharacterData CData[];
+
+void InitAtlas(struct NEWBUGGY *Atlas, struct nuvec_s *Pos, f32 Radius, s32 Type)
+{
+    struct creature_s *cre;
+    struct creature_s *cre2;
+    CharacterData *cdata;
+
+    cre = Atlas->owner;
+    memset(Atlas, 0, 900);
+    Atlas->type = Type;
+    Atlas->owner = cre;
+    Atlas->ball_pos = *Pos;
+    Atlas->ball_oldpos = Atlas->ball_pos;
+    Atlas->atlas_rotparam = Radius;
+    Atlas->angley = 90.0f;
+    Atlas->rotquat = SetNuQuat(0.0f, 0.0f, 0.0f, 1.0f);
+    Atlas->framequat[0] = Atlas->rotquat;
+    Atlas->framequat[1] = Atlas->rotquat;
+    Atlas->framequat[2] = Atlas->rotquat;
+    Atlas->framequat[3] = Atlas->rotquat;
+    Atlas->lastquat = Atlas->rotquat;
+    Atlas->lastnormal = SetNuVec(0.0f, 1.0f, 0.0f);
+    Atlas->platformid = -1;
+    if (cre != 0) {
+        InitTrail();
+        cre2 = Atlas->owner;
+        cre2->obj.SCALE = 1.0f;
+        cre2->obj.scale = 1.0f;
+        cdata = &CData[83];
+        Atlas->owner->obj.bot = cdata->min.y;
+        Atlas->owner->obj.top = cdata->max.y;
+        Atlas->owner->obj.vehicle = 0x53;
+    }
 }
 
 extern struct nuvec_s D_0061F750[]; /* fixed ray direction, far from $gp */

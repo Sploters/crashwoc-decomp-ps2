@@ -484,7 +484,8 @@ struct rumble_s {
  * Fields are filled in as the unit is decompiled; gaps are opaque padding. */
 struct NEWBUGGY {
     struct creature_s *owner;  /* 0x00  owning creature (KillAtlasphere) */
-    char pad_04[0x0C - 0x04];
+    char pad_04[0x08 - 0x04];
+    s32 type;                  /* 0x08  atlasphere type (InitAtlas) */
     s32 fieldC;                /* 0x0C  kill flag (KillAtlasphere) */
     char pad_10[0x28 - 0x10];
     float timer;               /* 0x28  ProcessTimer countdown (ProcessGliderMovement) */
@@ -512,9 +513,18 @@ struct NEWBUGGY {
     struct nuvec_s ball_vel;   /* 0x23C  atlasphere velocity (<-> obj->mom) */
     char pad_248[0x26C - 0x248];
     float atlas_rotparam;      /* 0x26C  rotation tuning float (AdjustAtlasRotations arg) */
-    char pad_270[0x284 - 0x270];
+    float anglex;              /* 0x270 */
+    float angley;              /* 0x274  atlasphere heading */
+    char pad_278[0x284 - 0x278];
     struct nuquat_s rotquat;   /* 0x284  atlasphere render orientation (NuQuatToMtx) */
     struct nuquat_s rotquat_delta; /* 0x294  rotation accumulator (NuQuatMul target) */
+    struct nuquat_s framequat[4];  /* 0x2A4  recent orientations */
+    struct nuquat_s lastquat;  /* 0x2E4 */
+    s32 lasthit;               /* 0x2F4 */
+    s32 axis;                  /* 0x2F8 */
+    struct nuvec_s lastnormal; /* 0x2FC  last ground normal */
+    char pad_308[0x33C - 0x308];
+    s32 platformid;            /* 0x33C  platform rolled on, -1 for none */
 };
 
 /* ------------------------------------------------------------------ */

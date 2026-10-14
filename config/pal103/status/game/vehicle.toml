@@ -205,7 +205,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0020dcc0:CollideGliderBombs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020ded8:InitGunBoats"
@@ -853,7 +853,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f5c8:InitAtlas"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021f7d8:DrawJonny"
