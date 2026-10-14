@@ -440,9 +440,65 @@ extern struct vehmask_s VehicleMask[];
 /* HovaBlimp array, stride 0x134, 6 entries. */
 struct hovablimp_s {
     s32 active;                /* 0x00 */
-    char pad_04[0x134 - 0x04];
+    char pad_04[0xE4 - 0x04];
+    struct nuvec_s pos;        /* 0xE4 */
+    char pad_F0[0x134 - 0xF0];
 };
 extern struct hovablimp_s HovaBlimp[];
+
+/* Tornado under each blimp, stride 0x110, 6 entries. */
+struct tornado_s {
+    s32 active;                /* 0x000 */
+    struct nuvec_s pos;        /* 0x004 */
+    struct nuvec_s startpos;   /* 0x010 */
+    char pad_01C[0x100 - 0x01C];
+    f32 yang;                  /* 0x100 degrees */
+    f32 yanginc;               /* 0x104 degrees per second */
+    char pad_108[0x110 - 0x108];
+};
+extern struct tornado_s TornadoList[6];
+extern s32 ACTIVEBLIMPCOUNT;
+extern void ProcessHovaBlimp(struct hovablimp_s *hova);
+extern f32 Rationalise360f(f32 a);
+
+/* Spin the tornado and keep it under its blimp, or retire it with it. */
+static inline void ProcessTornado(struct tornado_s *tornado, struct hovablimp_s *hova)
+{
+    tornado->yang += tornado->yanginc * 0.02f;
+    tornado->yang = Rationalise360f(tornado->yang);
+    if (hova->active != 0) {
+        tornado->pos = hova->pos;
+        tornado->pos.y = 27.0f;
+        tornado->startpos = tornado->pos;
+    } else {
+        tornado->active = 0;
+    }
+}
+
+/* Returns whether any blimp was active this frame. */
+s32 ProcessAllHovaBlimps(void)
+{
+    s32 i;
+    s32 ret;
+
+    ret = 0;
+    ACTIVEBLIMPCOUNT = 0;
+    for (i = 0; i < 6; i++) {
+        if (HovaBlimp[i].active != 0) {
+            ret = 1;
+            ProcessHovaBlimp(&HovaBlimp[i]);
+            if (HovaBlimp[i].active != 0) {
+                ACTIVEBLIMPCOUNT++;
+            }
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        if (TornadoList[i].active != 0) {
+            ProcessTornado(&TornadoList[i], &HovaBlimp[i]);
+        }
+    }
+    return ret;
+}
 
 /* JeepRock array, stride 0x3D4, 6 entries. */
 struct jeeprock_s {
@@ -1059,6 +1115,65 @@ struct battleship_s {
     char pad_514[0x554 - 0x514];
 };
 extern struct battleship_s BattleShipList[];
+
+/* The game camera (full layout in game/camera.c). */
+struct cammtx_s {
+    struct numtx_s m;          /* 0x00 */
+    char pad_40[0xA4 - 0x40];
+    struct nuvec_s pos;        /* 0xA4 */
+};
+extern struct cammtx_s GameCam;
+
+extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
+extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
+extern f32 NuVecMag(struct nuvec_s *v);
+extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);
+extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 size);
+extern void InitBattleShip(struct nuvec_s *pos, f32 angle, s32 index);
+
+/* Whether `target` is still worth a lock-on: more than 10 units ahead of the
+ * camera, within ~25 degrees of its view and with a clear line to the glider.
+ * Near-match (state=asm): retail sets up NuVecMtxRotate's a1 before a0;
+ * everything else is exact. */
+s32 StillLockedOnTarget(struct nuvec_s *target)
+{
+    struct nuvec_s *fwd;
+    struct nuvec_s view;
+    struct nuvec_s rel;
+    struct nuvec_s ray;
+    f32 dot;
+    f32 dist;
+
+    if (FlyingLevelExtro == 0) {
+        fwd = SetNuVecPntr(0.0f, 0.0f, 1.0f);
+        NuVecMtxRotate(&view, fwd, &GameCam.m);
+        NuVecSub(&rel, target, &GameCam.pos);
+        dist = NuVecMag(&rel);
+        if (10.0f < dist) {
+            NuVecScale(&rel, &rel, 1.0f / dist);
+            dot = DotProduct(&view, &rel);
+            if (0.9f < dot) {
+                NuVecSub(&ray, &PlayerGlider.pos, target);
+                NuVecNorm(&ray, &ray);
+                NuVecScale(&ray, &ray, 3.0f);
+                return NewRayCast(target, &ray, 0.0f) == 0;
+            }
+        }
+    }
+    return 0;
+}
+
+void InitBattleShips(void)
+{
+    memset(BattleShipList, 0, 0x1FF8);
+    InitBattleShip(SetNuVecPntr(-7.0f, 0.0f, 15.0f), -150.0f, 0);
+    InitBattleShip(SetNuVecPntr(-7.33f, 0.0f, 73.5f), -45.0f, 1);
+    InitBattleShip(SetNuVecPntr(31.0f, 0.0f, 109.0f), -35.0f, 2);
+    InitBattleShip(SetNuVecPntr(94.0f, 0.0f, 54.0f), 90.0f, 3);
+    InitBattleShip(SetNuVecPntr(60.0f, 0.0f, -6.0f), 160.0f, 4);
+    InitBattleShip(SetNuVecPntr(20.0f, 0.0f, -3.0f), -150.0f, 5);
+}
 extern s32 CollideWithBattleShip(struct nuvec_s *pos, struct battleship_s *ship,
                                  f32 radius);
 
