@@ -17,7 +17,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:002507d0:CheckPlayerEvents"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:00250908:UpdateChaseRunAnim"
@@ -117,7 +117,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:00257700:ResetRings"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:00257880:CheckRings"
@@ -125,7 +125,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:00257d70:DrawRings"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:00257e80:AnimateSWIMMING"

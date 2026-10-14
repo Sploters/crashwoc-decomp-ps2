@@ -81,7 +81,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00206f80:DrawZoffaDebugStuff"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002070d0:InitHova"
@@ -321,7 +321,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00214980:DrawWeatherBossLevelExtra"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00214ac8:ProcessWeatherBossLevel"
@@ -781,7 +781,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ee88:DrawWeatherResearchLevelExtra"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ef90:ProcessWeatherResearchLevel"

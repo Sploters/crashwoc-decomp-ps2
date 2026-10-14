@@ -910,7 +910,7 @@ void ProcessBazookaToken(void)
 }
 
 
-void DrawBazookaToken(void)
+inline void DrawBazookaToken(void)
 {
     if (BazookaIconOn) {
         NuMtxSetTranslation(&mTEMP, &BazookaTokenCurrentPos);
@@ -967,7 +967,7 @@ void ProcessWeatherBoss(void)
     }
 }
 
-void DrawWeatherBoss(void)
+inline void DrawWeatherBoss(void)
 {
     if (WeatherBoss.active != 0) {
         DrawWeatherBoss_a(&WeatherBoss);
@@ -1215,9 +1215,11 @@ struct biggun_s {
 };
 extern struct biggun_s BigGunList[];
 
+extern struct nuvec_s D_0061F460[]; /* {1.5f, 1.5f, 1.5f} */
+
 inline void DrawBigGun(struct biggun_s *gun)
 {
-    struct nuvec_s scale = {1.5f, 1.5f, 1.5f};
+    struct nuvec_s scale = D_0061F460[0];
 
     NuMtxSetScale(&mTEMP, &scale);
     NuMtxRotateX(&mTEMP, gun->pitch * 182.04445f);
@@ -1225,8 +1227,7 @@ inline void DrawBigGun(struct biggun_s *gun)
     NuMtxTranslate(&mTEMP, &gun->pos);
 }
 
-
-void DrawBigGuns(void)
+inline void DrawBigGuns(void)
 {
     s32 i;
 
@@ -1273,6 +1274,17 @@ s32 GetCurrentFireFlyObjectives(void)
         }
     }
     return count;
+}
+
+extern void DrawGliderBombs(void);
+extern void DrawTorpedoTarget(void);
+
+void DrawWeatherResearchLevelExtra(void)
+{
+    DrawGliderBullets();
+    DrawBigGuns();
+    DrawGliderBombs();
+    DrawTorpedoTarget();
 }
 
 s32 GetCurrentWeatherResearchObjectives(void)
@@ -1575,7 +1587,9 @@ struct zoffa_s {
     f32 roll;
     char pad_114[0x120 - 0x114];
     f32 yaw;
-    char pad_124[0x168 - 0x124];
+    char pad_124[0x128 - 0x124];
+    f32 temp[6];
+    char pad_140[0x168 - 0x140];
     s32 seen;
     char pad_16C[0x170 - 0x16C];
     struct numtx_s locators[17];
@@ -1591,6 +1605,24 @@ inline void DrawZoffa(struct zoffa_s *ufo)
 }
 
 extern struct zoffa_s EnemyZoffa[4];
+
+extern s32 SHEIGHT;
+extern char D_0061F420[]; /* "Action %d" */
+extern char D_0061F430[]; /* "Temp %1.3f   %1.3f" */
+extern void NuFntPrintEx(s32 x, s32 y, s32 flags, char *fmt, ...);
+
+void DrawZoffaDebugStuff(void)
+{
+    struct zoffa_s *ufo = &EnemyZoffa[0];
+
+    NuFntSet(app_fnt);
+    NuFntSetPen(0x7F7F7F7F);
+    NuFntScale(0x10, 0x10);
+    NuFntPrintEx(0x80, SHEIGHT * 3 / 2, 0, D_0061F420, ufo->active);
+    NuFntPrintEx(0x80, SHEIGHT * 2, 0, D_0061F430, ufo->temp[0], ufo->temp[1]);
+    NuFntPrintEx(0x80, SHEIGHT * 5 / 2, 0, D_0061F430, ufo->temp[2], ufo->temp[3]);
+    NuFntPrintEx(0x80, SHEIGHT * 3, 0, D_0061F430, ufo->temp[4], ufo->temp[5]);
+}
 
 void DrawZoffaUFOs(void)
 {
@@ -1944,7 +1976,7 @@ void InitLighteningHail(void)
     NuMtxSetScale(&BoltMtxC, SetNuVecPntr(0.5f, 1.5f, 0.5f));
 }
 
-void DrawLighteningHail(void)
+inline void DrawLighteningHail(void)
 {
     struct hail_s *hail;
     s32 i;
@@ -1966,6 +1998,21 @@ void DrawLighteningHail(void)
             }
         }
     }
+}
+
+extern void DrawWeatherBossTarget(void);
+extern void DrawWBBolts(void);
+extern void DrawVehMasks(void);
+
+void DrawWeatherBossLevelExtra(void)
+{
+    DrawGliderBullets();
+    DrawWeatherBoss();
+    DrawWeatherBossTarget();
+    DrawLighteningHail();
+    DrawWBBolts();
+    DrawVehMasks();
+    DrawBazookaToken();
 }
 
 struct wbbolt_s *FindFreeWBBoltOfType(s32 type)
