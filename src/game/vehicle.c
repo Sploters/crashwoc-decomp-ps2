@@ -958,7 +958,7 @@ extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void NuVecScaleAccum(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void MyAnimateModelNew(struct MYDRAW *draw, f32 dt);
 
-void ProcessBazookaToken(void)
+inline void ProcessBazookaToken(void)
 {
     struct nuvec_s pos;
     f32 t;
@@ -1025,7 +1025,7 @@ s32 GetCurrentWeatherBossObjectives(void)
     return 0;
 }
 
-void ProcessWeatherBoss(void)
+inline void ProcessWeatherBoss(void)
 {
     if (WeatherBoss.active != 0) {
         ProcessWeatherBoss_a(&WeatherBoss);
@@ -1037,6 +1037,41 @@ inline void DrawWeatherBoss(void)
     if (WeatherBoss.active != 0) {
         DrawWeatherBoss_a(&WeatherBoss);
     }
+}
+
+extern void ProcessWBIntro(void);
+extern void ProcessGliderBullets(void);
+extern void ProcessLighteningHail(void);
+extern void ProcessWBBolts(void);
+extern void ProcessVehMasks(void);
+extern f32 AtmosphericPressureHackedZ;
+extern struct nuvec_s WBIntroGliderPos;
+extern s32 WBIntroOn;
+struct nupad_s;
+
+void ProcessWeatherBossLevel(struct nupad_s *pad)
+{
+    ProcessWBIntro();
+    if (WBIntroOn == 0) {
+        AtmosphericPressureHackedZ -= 1.92f;
+        if (AtmosphericPressureHackedZ < -1200.0f) {
+            AtmosphericPressureHackedZ += 1200.0f;
+        }
+    } else {
+        AtmosphericPressureHackedZ = WBIntroGliderPos.z;
+        if (WBIntroGliderPos.z < -1200.0f) {
+            AtmosphericPressureHackedZ += 1200.0f;
+        }
+        if (AtmosphericPressureHackedZ > 0.0f) {
+            AtmosphericPressureHackedZ -= 1200.0f;
+        }
+    }
+    ProcessGliderBullets();
+    ProcessWeatherBoss();
+    ProcessLighteningHail();
+    ProcessWBBolts();
+    ProcessVehMasks();
+    ProcessBazookaToken();
 }
 
 s32 GetCurrentRumbleObjectives(void)
