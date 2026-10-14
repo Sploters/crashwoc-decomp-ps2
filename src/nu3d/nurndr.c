@@ -246,9 +246,12 @@ extern int NuRndrWaterRipCnt;
 
 
 typedef struct nurndrotitem_s {
-    char pad00[0xC];
+    void *dma;                      /* DMA chain to call */
+    NuMtx *mtx;
+    struct numtl_s *mtl;
     struct nurndrotitem_s *next;
     float depth;
+    int mtxmode;
 } nurndrotitem_s;
 
 typedef struct nurndrotbin_s {
@@ -1249,6 +1252,67 @@ void NuRndrDeformerWeightsArrayInit(void) {
     vpDmaTag_Close(p + 1);
 }
 
+
+/* Only the material's microprogram tag is needed here. */
+struct numtl_s {
+    char pad000[0x13C];
+    void *mpgtag;                   /* 0x13C */
+};
+
+typedef unsigned int u128 __attribute__((mode(TI)));
+
+extern struct RndrPacketStream *rndrstream_ot_sort;
+extern void NuRndrStreamSetViewMtx(struct RndrPacketStream *stream);
+extern u32 *vpDmaTag_Call(u32 *packet, void *addr);
+
+/* Near-match (stays asm): retail loads stream->cur before materialising the
+   ot_close_packet / bin addresses, so the quadword copy schedules differently. */
+void NuRndrOTFlush(void) {
+    struct RndrPacketStream *stream;
+    nurndrotbin_s *bin;
+    nurndrotitem_s *item;
+    struct numtl_s *mtl;
+    void *mpgtag;
+    NuMtx *mtx;
+    int mtxmode;
+
+    mtx = 0;
+    mpgtag = 0;
+    mtxmode = -1;
+    mtl = 0;
+    if (ot_batch_free == 0x400) {
+        return;
+    }
+    stream = rndrstream_ot_sort;
+    NuRndrStreamLink(stream);
+    NuRndrStreamSetMisc(stream);
+    NuRndrStreamSetViewMtx(stream);
+    *((u128 *)stream->cur)++ = *(u128 *)ot_close_packet;
+    bin = &ot_bins[0xFFF];
+    do {
+        for (item = bin->head; item != 0; item = item->next) {
+            if (item->mtl != mtl) {
+                mtl = item->mtl;
+                NuRndrStreamAddMtl(stream, mtl);
+                if (mtl->mpgtag != mpgtag) {
+                    mpgtag = mtl->mpgtag;
+                    stream->cur = vpDmaTag_Call(stream->cur, mpgtag);
+                }
+            }
+            if (item->mtx != mtx || item->mtxmode != mtxmode) {
+                mtx = item->mtx;
+                mtxmode = item->mtxmode;
+                NuRndrSetLocalMtx(mtx, mtxmode);
+                NuRndrStreamSetLocalMtx(stream);
+            }
+            stream->cur = vpDmaTag_Call(stream->cur, item->dma);
+        }
+        bin->head = 0;
+        bin--;
+    } while (bin >= ot_bins);
+    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    ot_batch_free = 0x400;
+}
 
 void NuRndrOTInsertItem(nurndrotitem_s *item) {
     nurndrotbin_s *bin;

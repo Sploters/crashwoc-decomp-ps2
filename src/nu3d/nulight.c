@@ -39,8 +39,16 @@ typedef struct nuvec_s {
     float z;
 } nuvec_s;
 
+typedef struct numtx_s {
+    float m[4][4];
+} numtx_s;
+
 typedef struct nulight_s {
-    char unknown_00[0x88];
+    char unknown_00[0x14];
+    nuvec_s diffuse;                /* 0x14 */
+    char unknown_20[0x20];
+    numtx_s mtx;                    /* 0x40 */
+    char unknown_80[0x8];
     int index;
     int used;
 } nulight_s;
@@ -78,6 +86,7 @@ typedef struct nulgtpolyhaze_s {
 
 extern int NuRndrFogClear;
 extern nulight_s D_006AD100[];
+extern nuvec_s D_006AD580[];
 extern nuvec_s D_006AD5A8[];
 extern nulight_s *D_006AD5D0[];
 extern float NuRndrFogNear;
@@ -112,6 +121,9 @@ extern void *vpDmaTag_Close(void *packet);
 extern void *vtBeginDirect(void *packet, u32 irq);
 extern void *vtCloseDirect(void *packet);
 extern int NuPower2(int value);
+extern void NuVecMtxRotate(nuvec_s *dst, nuvec_s *src, numtx_s *mtx);
+extern int NuRndrSetDirectionalLights(nuvec_s *d0, nuvec_s *c0, nuvec_s *d1, nuvec_s *c1,
+                                      nuvec_s *d2, nuvec_s *c2);
 
 extern int D_00633088;
 extern int D_006AD5E0[];
@@ -124,7 +136,8 @@ extern void *NuLgtFxFogCop;
 extern void *NuLgtFxFogClr;
 
 #define nulights D_006AD100
-#define nulight_dirs D_006AD5A8
+#define nulight_dirs D_006AD580
+#define nulight_colours D_006AD5A8
 #define nulight_current D_006AD5D0
 #define nulight_ambient D_006AD5F0
 #define nulgt_packet_buffer D_006AD600
@@ -137,7 +150,7 @@ void NuLightInit(void) {
     void *packet;
 
     for (i = 0; i < 3; i++) {
-        nulight_dirs[i].x = nulight_dirs[i].y = nulight_dirs[i].z = 0.0f;
+        nulight_colours[i].x = nulight_colours[i].y = nulight_colours[i].z = 0.0f;
         nulight_current[i] = 0;
         nulight_stamps[i] = 0;
     }
@@ -284,6 +297,44 @@ nulight_s *NuLightCreate(void) {
 }
 
 
+/* Puts the light in one of the three directional slots: its own slot when
+   slot 0 already holds it, otherwise the least recently used one. */
+void NuLightUpdate(nulight_s *light) {
+    nuvec_s dir;
+    nulight_s *l;
+    int oldest;
+    int best;
+    int i;
+
+    l = light;
+    for (i = 0; i < 3; i++) {
+        if (i == 0) {
+            oldest = nulight_stamps[0];
+            best = 0;
+            if (nulight_current[0] == light) {
+                break;
+            }
+        }
+        if (nulight_stamps[i] < oldest) {
+            oldest = nulight_stamps[i];
+            best = i;
+        }
+    }
+    if (i >= 3) {
+        i = best;
+    }
+    dir.x = 0.0f;
+    dir.y = 0.0f;
+    dir.z = -1.0f;
+    NuVecMtxRotate(&nulight_dirs[i], &dir, &light->mtx);
+    nulight_colours[i] = l->diffuse;
+    nulight_stamps[i] = ++nulight_stamp;
+    nulight_current[i] = light;
+    NuRndrSetDirectionalLights(&nulight_dirs[0], &nulight_colours[0],
+                               &nulight_dirs[1], &nulight_colours[1],
+                               &nulight_dirs[2], &nulight_colours[2]);
+}
+
 void NuLightDestroy(nulight_s *light) {
     int i;
 
@@ -291,7 +342,7 @@ void NuLightDestroy(nulight_s *light) {
     for (i = 0; i < 3; i++) {
         if (nulight_current[i] == light) {
             nulight_current[i] = 0;
-            nulight_dirs[i].x = nulight_dirs[i].y = nulight_dirs[i].z = 0.0f;
+            nulight_colours[i].x = nulight_colours[i].y = nulight_colours[i].z = 0.0f;
         }
     }
 }
