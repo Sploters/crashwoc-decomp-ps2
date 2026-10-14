@@ -1116,10 +1116,78 @@ struct gliderbomb_s {
     struct nuvec_s pos;        /* 0x0C */
     f32 angy;                  /* 0x18 */
     s32 life;                  /* 0x1C */
-    char pad_20[0x44 - 0x20];
+    f32 gravity;               /* 0x20 */
+    struct nuvec_s target;     /* 0x24 */
+    struct nuvec_s *targetpntr;    /* 0x30 */
+    struct nuvec_s *targetvelpntr; /* 0x34 */
+    s32 targetmoving;          /* 0x38 */
+    char pad_3C[0x40 - 0x3C];
+    f32 droptimer;             /* 0x40 */
 };
 extern struct gliderbomb_s GliderBombs[10];
 extern struct gliderbomb_s EnemyGliderBombs[30];
+
+static inline struct gliderbomb_s *GrabGliderBomb(s32 enemy)
+{
+    struct gliderbomb_s *bombs;
+    s32 count;
+    s32 i;
+
+    if (enemy) {
+        bombs = EnemyGliderBombs;
+        count = 30;
+    } else {
+        bombs = GliderBombs;
+        count = 10;
+    }
+    for (i = 0; i < count; i++) {
+        if (bombs[i].life == 0) {
+            return &bombs[i];
+        }
+    }
+    return 0;
+}
+
+extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
+
+s32 AddGliderBomb(struct nuvec_s *pos, struct nuvec_s *vel, f32 angy, s32 enemy,
+                  struct nuvec_s *targetpoint, struct nuvec_s *targetvel, s32 moving)
+{
+    struct gliderbomb_s *bomb;
+
+    bomb = GrabGliderBomb(enemy);
+    if (bomb != 0) {
+        bomb->life = 500;
+        bomb->pos = *pos;
+        bomb->vel = *vel;
+        NuVecScale(&bomb->vel, vel, 0.02f);
+        bomb->angy = angy;
+        if (enemy) {
+            bomb->gravity = -0.004f;
+        } else {
+            bomb->gravity = -0.004f;
+            if (Level == 0x24) {
+                bomb->targetpntr = targetpoint;
+                bomb->targetmoving = enemy;
+                bomb->droptimer = 0.0f;
+                bomb->targetvelpntr = &v000;
+            } else if (moving) {
+                bomb->targetmoving = 1;
+                bomb->targetpntr = targetpoint;
+                bomb->targetvelpntr = targetvel;
+                bomb->droptimer = 0.35f;
+            } else {
+                bomb->droptimer = 0.35f;
+                bomb->target = *targetpoint;
+                bomb->targetpntr = &bomb->target;
+                bomb->targetvelpntr = &v000;
+                bomb->targetmoving = moving;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
 extern f32 NuFsqrt(f32 x);
 extern s32 NuAtan2D(f32 x, f32 z);
