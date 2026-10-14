@@ -45,19 +45,19 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:0010f8d0:NuBezierCubicPatchPartialsVV"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:0010fa28:NuBezierCubicPatchPartialsVVV"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:0010fb68:NuBezierCubicPatchPartialsUU"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:0010fcc0:NuBezierCubicPatchPartialsUUU"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0027:0010fe00:NuBezierQuadraticTriangleEvaluateBarycentric"

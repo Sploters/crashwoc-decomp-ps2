@@ -161,6 +161,73 @@ void NuBezierCubicPatchPartialsV(struct nuvec_s *cp, struct nuvec_s *dv00, struc
 }
 
 
+/* The third u derivative is constant along each edge, so only one value per
+   pair of corners is evaluated and copied to the other. */
+void NuBezierCubicPatchPartialsUUU(struct nuvec_s *cp, struct nuvec_s *d00, struct nuvec_s *d01,
+                                   struct nuvec_s *d10, struct nuvec_s *d11)
+{
+    NuVecScale(d00, &cp[0], -6.0f);
+    NuVecScaleAccum(d00, &cp[1], 18.0f);
+    NuVecScaleAccum(d00, &cp[2], -18.0f);
+    NuVecScaleAccum(d00, &cp[3], 6.0f);
+    *d10 = *d00;
+    NuVecScale(d11, &cp[12], -6.0f);
+    NuVecScaleAccum(d11, &cp[13], 18.0f);
+    NuVecScaleAccum(d11, &cp[14], -18.0f);
+    NuVecScaleAccum(d11, &cp[15], 6.0f);
+    *d01 = *d11;
+}
+
+void NuBezierCubicPatchPartialsVVV(struct nuvec_s *cp, struct nuvec_s *d00, struct nuvec_s *d01,
+                                   struct nuvec_s *d10, struct nuvec_s *d11)
+{
+    NuVecScale(d00, &cp[0], -6.0f);
+    NuVecScaleAccum(d00, &cp[4], 18.0f);
+    NuVecScaleAccum(d00, &cp[8], -18.0f);
+    NuVecScaleAccum(d00, &cp[12], 6.0f);
+    *d01 = *d00;
+    NuVecScale(d11, &cp[3], -6.0f);
+    NuVecScaleAccum(d11, &cp[7], 18.0f);
+    NuVecScaleAccum(d11, &cp[11], -18.0f);
+    NuVecScaleAccum(d11, &cp[15], 6.0f);
+    *d10 = *d11;
+}
+
+void NuBezierCubicPatchPartialsUU(struct nuvec_s *cp, struct nuvec_s *d00, struct nuvec_s *d01,
+                                  struct nuvec_s *d10, struct nuvec_s *d11)
+{
+    NuVecScale(d00, &cp[0], 6.0f);
+    NuVecScaleAccum(d00, &cp[1], -12.0f);
+    NuVecScaleAccum(d00, &cp[2], 6.0f);
+    NuVecScale(d01, &cp[12], 6.0f);
+    NuVecScaleAccum(d01, &cp[13], -12.0f);
+    NuVecScaleAccum(d01, &cp[14], 6.0f);
+    NuVecScale(d10, &cp[1], 6.0f);
+    NuVecScaleAccum(d10, &cp[2], -12.0f);
+    NuVecScaleAccum(d10, &cp[3], 6.0f);
+    NuVecScale(d11, &cp[13], 6.0f);
+    NuVecScaleAccum(d11, &cp[14], -12.0f);
+    NuVecScaleAccum(d11, &cp[15], 6.0f);
+}
+
+
+void NuBezierCubicPatchPartialsVV(struct nuvec_s *cp, struct nuvec_s *d00, struct nuvec_s *d01,
+                                  struct nuvec_s *d10, struct nuvec_s *d11)
+{
+    NuVecScale(d00, &cp[0], 6.0f);
+    NuVecScaleAccum(d00, &cp[4], -12.0f);
+    NuVecScaleAccum(d00, &cp[8], 6.0f);
+    NuVecScale(d01, &cp[4], 6.0f);
+    NuVecScaleAccum(d01, &cp[8], -12.0f);
+    NuVecScaleAccum(d01, &cp[12], 6.0f);
+    NuVecScale(d10, &cp[3], 6.0f);
+    NuVecScaleAccum(d10, &cp[7], -12.0f);
+    NuVecScaleAccum(d10, &cp[11], 6.0f);
+    NuVecScale(d11, &cp[7], 6.0f);
+    NuVecScaleAccum(d11, &cp[11], -12.0f);
+    NuVecScaleAccum(d11, &cp[15], 6.0f);
+}
+
 struct nuvec_s *NuBezierQuadraticTriangleEvaluateBarycentric(struct nuvec_s *out, struct nuvec_s *cp,
                                                              float u, float v, float w)
 {
