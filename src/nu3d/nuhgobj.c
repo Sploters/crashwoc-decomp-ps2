@@ -89,7 +89,8 @@ struct NUHGOBJ_s {
     char pad24[0x04];
     struct NUPOINTOFINTEREST_s *pois;
     u8 *poi_ixs;
-    char pad30[0x08];
+    char *string_table;             /* 0x30 */
+    int string_table_size;          /* 0x34 */
     f32 scale;
     char pad3C[0x04];
     f32 sphere_radius;
@@ -100,9 +101,10 @@ struct NUHGOBJ_s {
     f32 cyl_height;
     f32 cyl_radius;
     struct nuhcollide_s *collide;
-    char pad70[0x04];
-    void *texanims;
-    char pad78[0x05];
+    int numtexanims;                /* 0x70 */
+    void *texanims;                 /* 0x74 */
+    short *texanim_tids;            /* 0x78 */
+    char pad7C[0x01];
     u8 num_joint_ixs;
     char pad7E[0x02];
     u8 num_poi_ixs;
@@ -343,7 +345,7 @@ extern char *strlwr(char *s);
 typedef void (*NuErrorFunc)(const char *fmt, ...);
 extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
-extern void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj);
+void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj);
 extern char D_006152B0[];
 extern char D_006152D0[];
 extern char D_006152F0[];
@@ -406,6 +408,92 @@ void ReadNuIFFCollideData(int fh, struct NUHGOBJ_s *hobj) {
     for (i = 0; i < hobj->collide->nentries; i++) {
         hobj->collide->entries[i].data = NU_RELPTR(hobj->collide->entries[i].data);
     }
+}
+
+
+/* Only the members the hierarchical-object reader fills in. */
+struct nuscene_s {
+    char pad00[0x10];
+    int numtids;                    /* 0x10 */
+    short *tids;                    /* 0x14 */
+    int nummtls;                    /* 0x18 */
+    struct numtl_s **mtls;          /* 0x1C */
+    char pad20[0x3C - 0x20];
+}; /* 0x3C */
+
+struct nugscn_s {
+    char pad00[0x08];
+    struct numtl_s **mtls;          /* 0x08 */
+    int nummtl;                     /* 0x0C */
+    char pad10[0x34 - 0x10];
+    char *nametable;                /* 0x34 */
+    char pad38[0x60 - 0x38];
+    int numtexanims;                /* 0x60 */
+    void *texanims;                 /* 0x64 */
+    short *texanim_tids;            /* 0x68 */
+}; /* 0x6C */
+
+extern char *ReadNuIFFNameTable(int fh, int *size);
+extern void ReadNuIFFTextureSet(int fh, struct nuscene_s *scene);
+extern void ReadNuIFFMaterialSet(int fh, struct nuscene_s *scene);
+extern void ReadNuIFFTexAnimSet(int fh, struct nugscn_s *gscene, short *tids);
+extern void ReadNuIFFUnknown(int fh, int blk);
+
+void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj) {
+    struct nuscene_s scene;
+    struct nugscn_s gscn;
+    int blk;
+    int i;
+
+    memset(&scene, 0, sizeof(struct nuscene_s));
+    memset(&gscn, 0, sizeof(struct nugscn_s));
+    scene.numtids = 0;
+    scene.tids = 0;
+    scene.nummtls = 0;
+    scene.mtls = 0;
+    while ((blk = NuFileBeginBlkRead(fh, 0)) != 0) {
+        switch (blk) {
+        case 0x4C42544E:
+            hobj->string_table = ReadNuIFFNameTable(fh, &hobj->string_table_size);
+            break;
+        case 0x30545354:
+            ReadNuIFFTextureSet(fh, &scene);
+            hobj->numtid = scene.numtids;
+            hobj->tids = NuMemAllocFn(scene.numtids << 2, nuhgobj_file, 0x1EB);
+            for (i = 0; i < scene.numtids; i++) {
+                hobj->tids[i] = scene.tids[i];
+            }
+            break;
+        case 0x3030534D:
+            ReadNuIFFMaterialSet(fh, &scene);
+            hobj->mtls = scene.mtls;
+            hobj->nummtl = scene.nummtls;
+            gscn.mtls = scene.mtls;
+            gscn.nummtl = scene.nummtls;
+            break;
+        case 0x304F4748:
+            ReadNuIFFHGobjSet(fh, hobj);
+            break;
+        case 0x4C4C4F43:
+            ReadNuIFFCollideData(fh, hobj);
+            break;
+        case 0x30534154:
+            gscn.nametable = hobj->string_table;
+            ReadNuIFFTexAnimSet(fh, &gscn, scene.tids);
+            hobj->texanim_tids = gscn.texanim_tids;
+            hobj->texanims = gscn.texanims;
+            hobj->numtexanims = gscn.numtexanims;
+            break;
+        default:
+            ReadNuIFFUnknown(fh, blk);
+            break;
+        }
+        NuFileEndBlkRead(fh);
+    }
+    if (scene.tids) {
+        NuMemFreeFn(scene.tids, nuhgobj_file, 0x20D);
+    }
+    scene.tids = 0;
 }
 
 

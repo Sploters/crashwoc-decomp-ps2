@@ -21,7 +21,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0048:0014ce70:ReadNuIFFHGobj"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0048:0014d0a0:ReadNuIFFHGobjSet"
