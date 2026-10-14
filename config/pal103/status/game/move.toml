@@ -97,7 +97,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0117:00255ca8:ResetTubs"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0117:00255ec8:MoveTub"

@@ -965,7 +965,7 @@ void AnimateDIVE(struct creature_s *plr, f32 ratio) {
     plr->obj.anim.newaction = 0x44;
 }
 
-void ResetTub(struct tubinfo_s *tub, struct creature_s *c) {
+inline void ResetTub(struct tubinfo_s *tub, struct creature_s *c) {
     tub->c = c;
     tub->track = -1;
     tub->count = -1;
@@ -974,4 +974,58 @@ void ResetTub(struct tubinfo_s *tub, struct creature_s *c) {
     tub->finished = 0;
     tub->stall = 0;
     tub->boost = 0;
+}
+
+extern struct tubinfo_s PlrTub;
+extern struct tubinfo_s OppTub;
+extern struct creature_s OppTubCreature;
+extern s8 CRemap[];
+extern struct CharacterModel CModel[];
+extern void ResetAnimPacket(struct anim_s *anim, s32 action);
+extern void ResetLights(struct Nearest_Light_s *lights);
+extern void *memset(void *dst, s32 val, u32 len);
+extern s32 opptub_action;
+extern s32 opptub_wait;
+
+/* Puts the player and the rival tub at the start, the rival halfway
+   between the two start splines. */
+void ResetTubs(void) {
+    CharacterData *cdata;
+    struct nuvec_s *p0;
+    struct nuvec_s *p1;
+    struct creature_s *c;
+    s32 i;
+
+    ResetTub(&PlrTub, player);
+    c = &OppTubCreature;
+    ResetTub(&OppTub, c);
+    memset(c, 0, sizeof(struct creature_s));
+    ResetAnimPacket(&c->obj.anim, 0x62);
+    c->obj.character = 0x7F;
+    c->obj.vehicle = (CRemap[0xA1] != -1) ? 0xA1 : -1;
+    c->obj.reflect_y = 2000000.0f;
+    c->obj.model = (CRemap[0x7F] != -1) ? &CModel[CRemap[0x7F]] : 0;
+    cdata = &CData[c->obj.character];
+    c->obj.RADIUS = cdata->radius;
+    c->obj.radius = cdata->radius;
+    c->obj.min = cdata->min;
+    c->obj.max = cdata->max;
+    c->obj.SCALE = 0.77f;
+    c->obj.scale = 0.77f;
+    c->obj.bot = c->obj.min.y;
+    c->obj.top = c->obj.max.y;
+    c->used = 1;
+    c->on = 1;
+    ResetLights(&c->lights);
+    OppTub.c = c;
+    if (SplTab[30].spl != 0 && SplTab[46].spl != 0) {
+        p0 = (struct nuvec_s *)SplTab[30].spl->pts;
+        p1 = (struct nuvec_s *)SplTab[46].spl->pts;
+        c->obj.pos.x = (p0->x + p1->x) * 0.5f;
+        c->obj.pos.y = (p0->y + p1->y) * 0.5f;
+        c->obj.pos.z = (p0->z + p1->z) * 0.5f;
+    }
+    opptub_action = 0x62;
+    i = qrand() * 50;
+    opptub_wait = i / 0x10000 + 50;
 }
