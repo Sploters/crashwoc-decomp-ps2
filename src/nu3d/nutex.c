@@ -58,7 +58,18 @@ typedef long long s64;
 typedef unsigned long long u64;
 
 typedef struct NuPs2Tex {
-    u8 unk000[0x10];
+    u8 unk000[0x8];
+    union {
+        struct {
+            u16 palend;
+            u16 gsbase;
+            u16 gsused;             /* VRAM blocks the upload takes */
+        };
+        struct {
+            u64 : 48;
+            u64 uploaded : 1;
+        };
+    };
     u16 p2w;
     u16 p2h;
     u8 unk014[0x1C];
@@ -162,6 +173,7 @@ extern NuTex *D_0062EBEC;
 #define TexList D_0062EBEC
 
 extern int gs_botfree;
+extern int txupload_on;
 extern int nurndr_pixel_width;
 extern int nurndr_pixel_height;
 extern int nurndr_pixel_p2w;
@@ -209,6 +221,8 @@ extern int D_002D3F40[4];
 
 extern char D_00614590[];
 #define nutex_srcfile D_00614590
+extern char D_00614660[];
+#define msg_accomodate_invalid D_00614660
 extern char D_00614690[];
 #define msg_tex_invalid D_00614690
 
@@ -221,6 +235,8 @@ extern void NuPs2ChangeTexPal(NuPs2Tex *ps2tex);
 extern void NuPs2ChangeTexPalStreamTemp(NuPs2Tex *ps2tex);
 extern void NuPs2TxDestroy(NuPs2Tex *ps2tex);
 extern int NuPs2TxCreate(NuTex *spec, NuPs2Tex *ps2tex);
+extern u8 *NuPs2TxGenUpload(u8 *dma, NuPs2Tex *ps2tex, int addr);
+extern u8 *NuPs2TxUploadPal(u8 *dma, NuPs2Tex *ps2tex, int addr);
 extern u64 Ps2TxGetTex0(NuPs2Tex *ps2tex);
 extern void NuRndrStreamSetZBState(int addr, int psm, int test);
 extern void *NuRndrStreamAddZBState(void *stream, int enable);
@@ -713,6 +729,47 @@ u8 *NuTexSetRenderTarget(u8 *cur, int tid) {
     }
     cur_rt = (addr >> 5) | ((u64)tex->ps2tex.tbw << 16) | ((u64)tex->ps2tex.psm << 24);
     return cur;
+}
+
+u8 *NuTexAccomodate(u8 *dma, int tid) {
+    NuTex *tex;
+    NuPs2Tex *ps2tex;
+
+    if (tid > 0) {
+        if (txupload_on) {
+            tex = &TexList[tid - 1];
+            if (tex->flags & NUTEX_VALID) {
+                if ((unsigned int)tex->type < 8) {
+                    ps2tex = &tex->ps2tex;
+                    if (gs_topfree - ps2tex->gsused < gs_botfree) {
+                        gs_topfree = gs_top;
+                        gs_wrap_frame = gs_frame;
+                    }
+                    dma = NuPs2TxGenUpload(dma, ps2tex, gs_topfree);
+                    ps2tex->uploaded = 1;
+                    gs_topfree -= ps2tex->gsused;
+                }
+            } else {
+                NuErrorProlog(nutex_srcfile, 0x530)(msg_accomodate_invalid);
+                return dma;
+            }
+        } else {
+            tex = &TexList[tid - 1];
+            if (tex->flags & NUTEX_VALID) {
+                if ((unsigned int)tex->type >= 0xB) {
+                    return dma;
+                }
+                ps2tex = &tex->ps2tex;
+                gs_wrap_frame = gs_frame;
+            }
+            /* NB: an invalid texture still falls through here with
+               ps2tex unset (retail behaviour). */
+            gs_topfree = gs_top;
+            dma = NuPs2TxUploadPal(dma, ps2tex, gs_topfree);
+            ps2tex->uploaded = 1;
+        }
+    }
+    return dma;
 }
 
 u8 *NuTexSet(u8 *cur, int tid, s8 mode) {
