@@ -3503,6 +3503,8 @@ void WeatherResearchReset(void)
     InitGliderBombs();
 }
 
+/* Near-match (state=asm): only the scheduling of the opening level-limit
+   stores differs from retail (44 bytes); no statement order found matches. */
 void SpaceArenaReset(s32 PlayerDead)
 {
     Level_DeadTime = 8.0f;
@@ -3527,6 +3529,45 @@ void SpaceArenaReset(s32 PlayerDead)
     InitSpaceStations();
     InitAsteroids();
     InitGliderBullets();
+}
+
+extern s32 GliderFrameCounter;
+extern f32 FlyingLevelVictoryDanceTimer;
+extern f32 FIREFLYVICDANCETIME;
+extern struct nuvec_s FireFlyStart;
+extern f32 FireFlyStartAngle;
+extern void InitGunBoats(void);
+
+/* Near-match (state=asm): like SpaceArenaReset, the opening level-limit stores
+   are scheduled differently from retail (84 bytes). */
+void FireFlyReset(s32 PlayerDead)
+{
+    Level_DeadTime = 8.0f;
+    Level_GliderSpeed = 8.0f;
+    Level_GliderFloor = 3.0f;
+    Level_GliderCurrentCeiling = 25.0f;
+    Level_GliderCeiling = 25.0f;
+    Level_GliderRadius = 90.0f;
+    Level_GliderCentreX = 40.32f;
+    Level_GliderCentreZ = 52.09f;
+    Level_TargetTime = 1.3f;
+    GliderFrameCounter = 0;
+    FireFlyIntroOn = 0;
+    FireFlyIntroAction = 0;
+    LevelResetTimer = 0;
+    FlyingLevelVictoryDanceTimer = FIREFLYVICDANCETIME;
+    FireFlyIntroOldAction = -1;
+    InitGlider(&PlayerGlider, &FireFlyStart, FireFlyStartAngle);
+    GameCam.m._30 = FireFlyStart.x + 0.0f;
+    GameCam.m._31 = FireFlyStart.y + 2.0f;
+    GameCam.m._32 = FireFlyStart.z + 5.0f;
+    GliderCamHighTimer = 0.0f;
+    ResetGameCameras(&GameCam, 1);
+    InitZoffaUFOs();
+    InitGunBoats();
+    InitBattleShips();
+    InitGliderBullets();
+    InitGliderBombs();
 }
 
 extern struct nuvec_s WeatherBossTargetPos;
