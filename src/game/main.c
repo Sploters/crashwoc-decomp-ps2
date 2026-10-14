@@ -367,7 +367,7 @@ void InitWorld(void)
             NuStrCat(tb, D_0062FA98);
             world_vd = visiLoadData(tb, world_scene[0], &superbuffer_ptr);
             if (world_scene[0] != 0 && world_vd == 0) {
-                BuildVisiTable();
+                BuildVisiTable(world_scene[0]);
             }
         }
 
