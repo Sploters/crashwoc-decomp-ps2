@@ -388,7 +388,8 @@ struct glider_s {
     s32 HitPoints;             /* 0xBC */
     char LocatorList[16];      /* 0xC0 */
     f32 LocatorTime[16];       /* 0xD0 */
-    char pad_110[0x43C - 0x110];
+    s32 InTornado;             /* 0x110 */
+    char pad_114[0x43C - 0x114];
     f32 NextHitSoundTimer;     /* 0x43C */
 };
 extern struct glider_s PlayerGlider;
@@ -1972,7 +1973,6 @@ inline void DrawSatellites(void)
     }
 }
 
-extern s32 D_005A74C8[];   /* far scratch, zeroed each ProcessSpaceStations */
 extern void *app_fnt;
 
 extern void NuRndrTrail(s32 pt, struct trail_s *trail, s32 count);
@@ -2257,7 +2257,7 @@ struct satellite_s *InitSatellite(struct spacestation_s *station, f32 angle)
     return 0;
 }
 
-void ProcessSatellites(void)
+inline void ProcessSatellites(void)
 {
     s32 i;
 
@@ -2268,11 +2268,11 @@ void ProcessSatellites(void)
     }
 }
 
-void ProcessSpaceStations(void)
+inline void ProcessSpaceStations(void)
 {
     s32 i;
 
-    D_005A74C8[0] = 0;
+    PlayerGlider.InTornado = 0;
     for (i = 0; i < 3; i++) {
         if (SpaceStationList[i].field40 != 0) {
             ProcessSpaceStation(&SpaceStationList[i]);
@@ -2502,7 +2502,7 @@ extern s32 AsteroidDebug;
 extern void ProcessAsteroid(struct asteroid_s *asteroid);
 extern void DrawCross(struct nuvec_s *pos, s32 colour, f32 size);
 
-void ProcessAsteroids(void)
+inline void ProcessAsteroids(void)
 {
     s32 i;
 
@@ -3448,7 +3448,7 @@ void DrawFireFlyLevelExtra(void)
 }
 extern void ProcessGunBoat(struct gunboat_s *boat);
 
-void ProcessGunBoats(void)
+inline void ProcessGunBoats(void)
 {
     s32 i;
 
@@ -3476,7 +3476,7 @@ inline void ProcessBigGuns(void)
 
 extern void ProcessBattleShip(struct battleship_s *ship);
 
-void ProcessBattleShips(void)
+inline void ProcessBattleShips(void)
 {
     s32 i;
 
@@ -3490,6 +3490,149 @@ void ProcessBattleShips(void)
 
 extern void ProcessGliderBullets(void);
 extern void ProcessGliderBombs(void);
+extern void TeleportManager(void);
+extern void MoveZoffaUFO(struct zoffa_s *ufo);
+extern struct zoffastart_s *FindZoffaRestartPoint(void);
+extern void CheckGliderCollisions(void);
+extern void CheckForPotentialMidAirCollisions(void);
+extern s32 NumZoffasFiring;
+extern s32 LastNumZoffasFiring;
+extern s32 GliderFrameCounter;
+
+/* Brings one dead UFO back once its respawn timer has run out. */
+static inline void ZoffaUFORespawn(void)
+{
+    struct zoffastart_s *start;
+    s32 active;
+    s32 i;
+
+    active = 0;
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0) {
+            active++;
+        }
+    }
+    if (active < 4) {
+        for (i = 0; i < 4; i++) {
+            if (EnemyZoffa[i].active == 0 && EnemyZoffa[i].respawntimer == 0.0f) {
+                start = FindZoffaRestartPoint();
+                if (start == 0) {
+                    return;
+                }
+                InitZoffa(&EnemyZoffa[i], start);
+                return;
+            }
+        }
+    }
+}
+
+void ProcessFireFlyLevel(struct nupad_s *pad)
+{
+    s32 i;
+
+    TeleportManager();
+    LastNumZoffasFiring = NumZoffasFiring;
+    NumZoffasFiring = 0;
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active == 0) {
+            if (PlayerGlider.AutoPilot == 0) {
+                EnemyZoffa[i].respawntimer -= 0.02f;
+                if (EnemyZoffa[i].respawntimer < 0.0f) {
+                    EnemyZoffa[i].respawntimer = 0.0f;
+                }
+            }
+        } else {
+            MoveZoffaUFO(&EnemyZoffa[i]);
+        }
+    }
+    ZoffaUFORespawn();
+    CheckGliderCollisions();
+    CheckForPotentialMidAirCollisions();
+    ProcessGliderBombs();
+    ProcessBattleShips();
+    ProcessGunBoats();
+    ProcessGliderBullets();
+    GliderFrameCounter++;
+}
+
+extern s32 FarmFrame;
+extern f32 GliderCamHighTimer;
+extern void FarmReset(s32 playerdead);
+extern void MovePlane(struct plane_s *plane);
+
+void ProcessFarmLevel(struct nupad_s *pad)
+{
+    s32 i;
+
+    FarmFrame++;
+    if (GliderCamHighTimer > 0.0f) {
+        GliderCamHighTimer -= 0.02f;
+    } else {
+        GliderCamHighTimer = 0.0f;
+    }
+    if (glider_restart_timer != 0) {
+        glider_restart_timer--;
+        if (glider_restart_timer == 0) {
+            FarmReset(1);
+        }
+    }
+    TeleportManager();
+    LastNumZoffasFiring = NumZoffasFiring;
+    NumZoffasFiring = 0;
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active == 0) {
+            if (PlayerGlider.AutoPilot == 0) {
+                EnemyZoffa[i].respawntimer -= 0.02f;
+                if (EnemyZoffa[i].respawntimer < 0.0f) {
+                    EnemyZoffa[i].respawntimer = 0.0f;
+                }
+            }
+        } else {
+            MoveZoffaUFO(&EnemyZoffa[i]);
+        }
+    }
+    ZoffaUFORespawn();
+    ProcessAllHovaBlimps();
+    CheckGliderCollisions();
+    CheckForPotentialMidAirCollisions();
+    MovePlane(&PlayerPlane);
+    ProcessGliderBullets();
+}
+
+extern s32 CRASHTEROIDSAMBIENTVOL;
+extern s32 ActiveAsteroidListNum;
+
+void ProcessSpaceArenaLevel(struct nupad_s *pad)
+{
+    s32 i;
+
+    if (CRASHTEROIDSAMBIENTVOL != 0) {
+        MyGameSfxLoop(0xDA, 0, CRASHTEROIDSAMBIENTVOL);
+    }
+    ActiveAsteroidListNum = 0;
+    TeleportManager();
+    LastNumZoffasFiring = NumZoffasFiring;
+    NumZoffasFiring = 0;
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active == 0) {
+            if (PlayerGlider.AutoPilot == 0) {
+                EnemyZoffa[i].respawntimer -= 0.02f;
+                if (EnemyZoffa[i].respawntimer < 0.0f) {
+                    EnemyZoffa[i].respawntimer = 0.0f;
+                }
+            }
+        } else {
+            MoveZoffaUFO(&EnemyZoffa[i]);
+        }
+    }
+    ZoffaUFORespawn();
+    ProcessGliderBullets();
+    ProcessAsteroids();
+    ProcessSatellites();
+    ProcessSpaceStations();
+    CheckGliderCollisions();
+    CheckForPotentialMidAirCollisions();
+}
 
 void ProcessWeatherResearchLevel(struct pad_s *pad)
 {

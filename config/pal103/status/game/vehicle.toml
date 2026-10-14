@@ -157,7 +157,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0020a118:ProcessFarmLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020a2f8:GliderCamWeatherBoss"
@@ -277,7 +277,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00213110:ProcessFireFlyLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213308:WeatherResearchReset"
@@ -293,7 +293,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213a70:ProcessSpaceArenaLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00213d10:CollidePlayerPoint"
