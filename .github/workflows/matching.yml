@@ -107,6 +107,9 @@ jobs:
       - name: Byte gates -- image identity and every promoted function
         run: ninja verify-loaded verify-promoted
 
+      - name: Header layout comments match the compiler
+        run: python tools/probe_layout.py --check
+
       - name: Generate and sanitize the report
         run: ninja report report-public
 

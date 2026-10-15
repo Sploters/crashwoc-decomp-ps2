@@ -20,6 +20,10 @@ can only go down:
   libc_prototypes        local prototypes of C library functions
   extern_conflicts       globals declared extern with different types
   prototype_conflicts    functions declared with different signatures
+  misplaced_headers      headers outside the include/ layout: the root holds
+                         only the platform headers (PLATFORM_HEADERS);
+                         include/<lib>/ holds <lib>types.h and one
+                         <module>.h per src/<lib>/<module>.c
 
 Scope: src/ and include/, except src/sdk/ (the Sony runtime keeps its own
 headers). Stdlib only, no game files: runs in validate.yml.
@@ -51,11 +55,15 @@ EXCLUDE = ("src/sdk/",)
 # Where the shared declarations will live; their own lines never count.
 SHARED_STDARG = "include/nu_stdarg.h"
 SHARED_LIBC = "include/nu_libc.h"
+# The only headers allowed in the root of include/: the platform layer.
+PLATFORM_HEADERS = frozenset((
+    "include/nu_types.h", "include/nu_port.h", SHARED_STDARG, SHARED_LIBC,
+))
 
 METRICS = (
     "struct_redefinitions", "typedef_redefinitions", "long_types",
     "varargs_hacks", "offset_casts", "sizeof_pads", "libc_prototypes",
-    "extern_conflicts", "prototype_conflicts",
+    "extern_conflicts", "prototype_conflicts", "misplaced_headers",
 )
 
 LIBC = frozenset("""
@@ -242,6 +250,22 @@ def typedef_aliases(texts):
     return {name: t for name, t in aliases.items() if t != name}
 
 
+def header_misplaced(header, sources):
+    """Why a header breaks the include/ layout, or None if it fits.
+
+    header: repo-relative POSIX path; sources: the census paths (src/*.c).
+    """
+    parts = header.split("/")
+    if len(parts) == 2:
+        return None if header in PLATFORM_HEADERS else "root holds platform headers only"
+    if len(parts) != 3:
+        return "nested deeper than include/<lib>/"
+    lib, name = parts[1], parts[2][:-len(".h")]
+    if name == f"{lib}types" or f"src/{lib}/{name}.c" in sources:
+        return None
+    return f"no src/{lib}/{name}.c and not {lib}types.h"
+
+
 def load_sources(repo=REPO):
     """{repo-relative path: text} for the census scope."""
     paths = [*sorted((repo / "src").rglob("*.c")),
@@ -356,8 +380,13 @@ def census(sources):
             value["prototype_conflicts"] += 1
             found["prototype_conflicts"].append(
                 (decls[0][0], decls[0][1], f"{name}: " + " | ".join(kinds)))
+    for path in sorted(sources):
+        if path.startswith("include/") and path.endswith(".h"):
+            why = header_misplaced(path, sources)
+            if why:
+                found["misplaced_headers"].append((path, 1, why))
     for name in ("long_types", "varargs_hacks", "offset_casts", "sizeof_pads",
-                 "libc_prototypes"):
+                 "libc_prototypes", "misplaced_headers"):
         value[name] = len(found[name])
     return {name: {"value": value[name],
                    "findings": sorted(found[name])} for name in METRICS}

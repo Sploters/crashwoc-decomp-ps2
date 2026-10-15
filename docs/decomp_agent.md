@@ -221,7 +221,21 @@ Types are moving from per-unit copies into shared headers in `include/`, with
 layouts that also hold on a 64-bit host. If a header in `include/` already
 defines a struct, include it instead of copying the struct into the unit.
 
-Two tools gate this work:
+Layout of `include/` (the engine's own module structure):
+
+| Path | Holds |
+|---|---|
+| `include/nu_types.h` (and later `nu_port.h`, `nu_stdarg.h`, `nu_libc.h`) | platform layer only: fixed-width types (`u8`..`s64`, `f32`, `nuintptr`), port seams, varargs, libc |
+| `include/<lib>/<lib>types.h` | structs shared by several modules of one library (`nu3d/nu3dtypes.h`) |
+| `include/<lib>/<module>.h` | one per `src/<lib>/<module>.c`: that module's structs, `extern` globals and prototypes |
+
+Include them by path (`#include "nu3d/nugscn.h"`, `#include "nu_types.h"`);
+tools/cc.py stages the tree and passes `-I.`. A module header is created when
+something needs it, not as an empty skeleton. `creature.h`, `gcutscn.h` and
+`nugscn.h` in the root are legacy: their types move to their proper headers
+and the files are deleted once empty.
+
+Three tools gate this work:
 
 - `python tools/check_types.py` counts duplicate structs and typedefs, `long`,
   varargs hacks, byte-offset casts, `sizeof` pads, local libc prototypes and
@@ -233,13 +247,21 @@ Two tools gate this work:
   `--build --compare` after the change, proves a refactor changed no code in
   any `current`, `matching`, `equivalent` or `report-current` object
   (`ninja check` only covers `matching` functions).
+- `python tools/dispatch.py python tools/probe_layout.py [--check] [header...]`
+  compiles `sizeof`/offset probes of every commented struct member with the
+  matching compiler and reports each `/* 0x.. */` (or `// Offset: 0x..`,
+  `}; /* size */`, `// Size: 0x..`) comment that disagrees, plus headers that
+  do not compile on their own. Legacy root headers are reported but do not
+  fail `--check`.
 
 Rules for type refactors:
 
 1. Moving or renaming types, externs or prototypes changes no code:
    `check_codegen.py --compare` ends at 0.
 2. Offsets and sizes of a struct moving into a shared header are measured with
-   the compiler, not taken from the `/* 0x.. */` comments.
+   the compiler (`probe_layout.py --check`), not taken from the comments. Every
+   header compiles on its own: it includes what it uses. New headers write
+   offsets as trailing `/* 0x.. */` and the size as `}; /* 0x.. */`.
 3. A unit's local copy of a tag is removed in the same commit that includes the
    header defining it.
 4. Merging two views of a struct is a type decision (`s16`/`u16`, pointer/`u32`,
