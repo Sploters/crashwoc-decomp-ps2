@@ -259,6 +259,17 @@ class TestVerifierFreshness(WorkflowCase):
 
 
 class TestBatch(WorkflowCase):
+    def test_non_record_files_in_the_ledger_are_ignored(self):
+        (workflow._dir(self.p) / "stray_report.json").write_text(
+            json.dumps({"accepted": [], "rejected": {}}))
+        self.f.exact[DOWORK] = True
+        workflow.submit(self.p, DOWORK, author="a",
+                        compile_diff=self.f.compile_diff)
+        out = workflow.status(self.p)
+        self.assertTrue(out["ok"])
+        self.assertEqual([r["function_id"] for r in out["functions"]],
+                         [DOWORK])
+
     def test_one_promotion_call_for_the_whole_queue(self):
         self.src.write_text(CLEAN_C)
         self.f.exact[DOWORK] = True
