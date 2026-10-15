@@ -42,6 +42,10 @@
  *   0x00114608 NuCameraTransformScissorClip
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 typedef struct NuVec3 {
     float x;
     float y;
@@ -95,8 +99,6 @@ typedef struct NuCameraReflect {
 } NuCameraReflect;
 
 struct NuColour4;
-
-typedef void (*NuErrorFunc)(const char *fmt, ...);
 
 /* The state-buffer stride is 0x2b4; the camera occupies its first 0x60 bytes. */
 typedef struct NuCameraState {
@@ -202,9 +204,6 @@ extern void NuCameraInitClipTestVU0(NuMtx *vpc, NuMtx *scissor);
 extern int NuCameraClipTestExtentsVU0(NuVec3 *min, NuVec3 *max);
 extern NuViewport *NuVpGetCurrentViewport(void);
 extern void NuMtxMulVU0(NuMtx *dst, NuMtx *a, NuMtx *b);
-extern void *memset(void *s, int c, int n);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern double fabs(double x);
 extern void NuVpUpdate(void);
 extern void NuVpGetScalingMtx(NuMtx *m);
 extern void NuMtxInv(NuMtx *dst, NuMtx *src);

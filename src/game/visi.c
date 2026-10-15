@@ -8,6 +8,8 @@
  *   0x00201a00 ReleaseVisiTable
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern void NuMemFreeFn(void *ptr, char *file, int line);
@@ -193,7 +195,6 @@ void ApplyVisiTable(struct nugscn_s *sc, struct nuvec_s *pos)
 }
 
 extern char D_00631318[];               /* "vis" */
-extern char *strstr(const char *s, const char *find);
 extern void *NuMemAllocFn(int size, char *file, int line);
 
 /* Builds a visidat_s for every spline whose name contains "vis", listing the

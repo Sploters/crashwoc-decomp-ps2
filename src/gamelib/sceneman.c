@@ -21,6 +21,10 @@
  *   0x001b2868 NuSceneManagerSetPtrToPlayerMtx
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 typedef struct NuMtx {
     float m[4][4];
 } NuMtx;
@@ -42,8 +46,6 @@ typedef struct NuFPar {
     char word[0x101];
     int line_num;
 } NuFPar;
-
-typedef void (*NuErrorFunc)(const char *fmt, ...);
 
 typedef struct NuGCutScene {
     struct NuGCutScene *next;       /* 0x00 */
@@ -89,13 +91,6 @@ typedef struct NuSceneInstance {
 } NuSceneInstance;
 
 #define NUSCENEINST_DISABLED 0x2
-
-extern int sprintf(char *buf, const char *fmt, ...);
-extern int strcasecmp(const char *a, const char *b);
-extern unsigned int strlen(const char *s);
-extern void *memset(void *dst, int value, unsigned int size);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 
 extern NuFPar *NuFParCreate(char *name);
 extern void NuFParDestroy(NuFPar *parser);

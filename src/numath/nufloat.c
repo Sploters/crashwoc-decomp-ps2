@@ -11,7 +11,8 @@
  *   0x0010b458 NuEquivTollerance
  */
 
-double pow(double x, double y);
+#include "nu_libc.h"
+
 extern float D_0062EA50;
 #define fetol D_0062EA50
 

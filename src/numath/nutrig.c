@@ -12,10 +12,9 @@
  *   0x0010b318 NuPower2
  */
 
-#include "creature.h"
+#include "nu_libc.h"
 
-double atan2(double y, double x);
-double sin(double x);
+#include "creature.h"
 
 extern f32 NuTrigTable[];
 extern u16 D_00293960[];

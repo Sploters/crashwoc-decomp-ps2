@@ -31,6 +31,8 @@
  */
 
 
+#include "nu_libc.h"
+
 struct nuvec_s {
     float x;
     float y;
@@ -235,10 +237,8 @@ extern void edcamSetPos(struct nuvec_s *pos);
 extern void edcamGetPosAng(struct nuvec_s *pos, float *ax, float *ay);
 extern void eduiMenuProcess(void *menu, struct pad_s *pad);
 extern void eduiCreateMessageMenu(void *menu, char *text, int flag);
-extern int sprintf(char *buf, const char *fmt, ...);
 extern int NuFileSize(char *name);
 extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern char *strncpy(char *dst, const char *src, unsigned int n);
 extern int edbitsLookupInstance(char *name);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);

@@ -13,6 +13,8 @@
  *   0x00223a70 FindSurfaceRotXZFromNormal
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct VEHICLE {
@@ -53,8 +55,6 @@ extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
 extern f32 NuVecMagSqr(struct nuvec_s *v);
 extern f32 NuVecMag(struct nuvec_s *v);
 extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
-
-extern void *memset(void *s, s32 c, s32 n);
 
 extern struct nuvec_s CrossProduct(struct nuvec_s *a, struct nuvec_s *b);
 extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);

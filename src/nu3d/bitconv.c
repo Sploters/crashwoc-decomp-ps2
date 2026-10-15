@@ -11,6 +11,8 @@
  *   0x00165f58 BlockConv8to32
  */
 
+#include "nu_libc.h"
+
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 
@@ -22,10 +24,6 @@ typedef struct NuTex {
     u_char *bits;
 } NuTex;
 
-extern void *malloc(u_int size);
-extern void free(void *ptr);
-extern void *memset(void *dst, int value, u_int size);
-extern void *memcpy(void *dst, const void *src, u_int size);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
 

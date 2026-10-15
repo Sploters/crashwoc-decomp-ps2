@@ -37,6 +37,8 @@
  *   0x00244580 cbCancelGlbMenu
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct numtlattrib_s {
@@ -284,7 +286,6 @@ extern void cbDoubleMenu(struct edmenu_s *menu, struct edsel_s *sel);
 extern void eduiMenuDestroy(struct edmenu_s *menu);
 extern void eduiCreateMessageMenu(void *menu, char *msg, s32 flag);
 extern void SaveLights(void);
-extern char *strcpy(char *dst, const char *src);
 extern char *strupr(char *s);
 extern void NuFntSetPen(s32 colour);
 extern void NuFntPrintEx(s32 x, s32 y, s32 colour, char *fmt, ...);
@@ -300,7 +301,6 @@ extern void eduiMenuRender(void *menu);
 extern void NuRndrLine3dDbg(s32 colour, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1,
                             f32 z1);
 extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
-extern double fabs(double x);
 extern void NuVecSub(struct nuvec_s *out, struct nuvec_s *a, struct nuvec_s *b);
 extern void edcamSetPosAng(struct nuvec_s *pos, s32 a, s32 b);
 extern void ResetCheckpoint(s32 a, s32 b, s32 c, f32 d);

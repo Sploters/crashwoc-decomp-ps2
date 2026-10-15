@@ -9,6 +9,8 @@
  *   0x0025b800 VBlankFn
  */
 
+#include "nucore/nuerror.h"
+
 #include "creature.h"
 
 /* Sony EE kernel parameter blocks (offsets verified against the retail
@@ -49,9 +51,6 @@ extern s32 iSignalSema(s32 sema_id);
 
 extern void NuIntAddVBlankS(void *handler);
 extern void NuPs2ScreenSwap(s32 mode);
-
-typedef void (*NuDebugMsgFn)();
-extern NuDebugMsgFn NuDebugMsgProlog(char *file, s32 line);
 
 /* Retail-owned data (data-from-C unsupported -> extern). */
 extern volatile s32 bgload_complete; /* written by the load thread */

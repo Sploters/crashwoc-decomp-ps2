@@ -20,10 +20,11 @@
  *   0x00168788 GetTexturePreLoad
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
-typedef unsigned int u128 __attribute__((mode(TI)));
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
+#include "nucore/nuerror.h"
+typedef unsigned int u128 __attribute__((mode(TI)));
 
 typedef struct NuTex {
     u32 type;
@@ -114,11 +115,8 @@ extern char D_006161C0[];
 extern char D_006161F0[];
 #define ps2txtr_preload_msg D_006161F0
 
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memcpy(void *dst, const void *src, unsigned int size);
 extern void *NuRndrStreamAlloc(int qwc);
 extern void NuPs2GetCurrentBackBuffer(u64 *frame);
 extern void NuPs2GetCurrentFrontBuffer(u64 *frame);

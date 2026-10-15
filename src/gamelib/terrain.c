@@ -104,6 +104,12 @@
  *   0x00182ca0 OffPlat
  */
 
+/* Retail called memset as a plain function here (terrainpickupinit). */
+#define NU_LIBC_MEMSET_NOT_BUILTIN
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 #include "creature.h"
 
 /* Terrain collision info structures (offsets verified against retail asm). */
@@ -424,10 +430,6 @@ extern void NuRndrLine3dDbg(f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1, u32 
 extern struct nuvec_s WallSplList[128];
 extern s32 WallSplCount;
 extern struct nucamera_s global_camera;
-typedef void (*NuDebugMsgFn)();
-extern NuDebugMsgFn NuDebugMsgProlog(char *file, s32 line);
-extern char *strcpy(char *dst, const char *src);
-extern char *strcat(char *dst, const char *src);
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
 extern char D_006178D0[];
 extern char D_006178F8[];
@@ -435,7 +437,6 @@ extern char D_0062F1F8[];
 #define terrain_source_file D_006178D0
 #define terrain_store_msg D_006178F8
 #define terrain_file_ext D_0062F1F8
-extern void *memset(void *s, s32 c, s32 n);
 extern s32 nufile_buffering_enabled;
 
 #define DABS(v) ({ double d_ = (v); if (d_ < 0.0) { d_ = -d_; } d_; })

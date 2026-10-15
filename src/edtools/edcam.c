@@ -16,6 +16,8 @@
  *   0x001c2288 edcamGetPosPointer
  */
 
+#include "nu_libc.h"
+
 struct nuvec_s {
     float x;
     float y;
@@ -76,7 +78,6 @@ extern int NuPs2ApplyDeadZone(int value, int deadzone);
 extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern double floor(double x);
 
 extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
 extern void NuMtxRotateX(struct numtx_s *m, int angle);

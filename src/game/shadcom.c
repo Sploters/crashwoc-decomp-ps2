@@ -9,6 +9,8 @@
  *   0x0024d020 ShadComInit
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct numtlattrib_s {
@@ -100,8 +102,6 @@ extern s32 NuFileSize(char *name);
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
 extern void *NuMemAllocFn(s32 size, char *file, s32 line);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
-extern void *memset(void *dst, s32 c, s32 n);
-extern s32 strcasecmp(char *a, char *b);
 extern s32 NuTexCreate(struct nutex_s *tex);
 extern s32 NuTexCreateNative(void *native);
 extern void NuTexDestroy(s32 tid);

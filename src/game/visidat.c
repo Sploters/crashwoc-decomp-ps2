@@ -7,7 +7,10 @@
  *   0x0024dc20 visiReset
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct nuvec_s {
     float x;
@@ -121,15 +124,9 @@ union variptr_u {
     u64 *u64ptr;
 };
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
 extern void *NuFileLoad(char *name);
-extern void *memset(void *dst, int value, unsigned int size);
-extern int strcmp(const char *a, const char *b);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern NuErrorFunc NuErrorProlog(char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(char *file, int line);
 extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
 extern int NuPlnLineVU0(struct nuplane_s *pln, struct nuvec_s *p0, struct nuvec_s *p1, struct nuvec_s *hit);
 

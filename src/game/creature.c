@@ -1,6 +1,10 @@
 /* .\creature.c -- creatures, the player, character models
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 #include "creature.h"
 
 /* --- externals ---------------------------------------------------- */
@@ -169,13 +173,9 @@ f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
 s32 qrand(void);
 s32 RotDiff(u16 a, u16 b);
 void GameSfx(s32 sfx, struct nuvec_s *pos);
-s32 abs(s32 x);
 
 /* NuDebugMsgProlog(file, line) returns the printf-style logger it prologues. */
-typedef void (*debugmsg_fn)(char *fmt, ...);
-debugmsg_fn NuDebugMsgProlog(char *file, s32 line);
 
-void *memset(void *s, int c, unsigned int n);
 void RemoveGameObject(struct obj_s *obj);
 s32 AddGameObject(struct obj_s *obj, struct creature_s *c);
 void NuHGobjDestroy(struct NUHGOBJ_s *hobj);
@@ -788,7 +788,6 @@ void *InstShadDataLoad(char *name);
 struct NUSHADOWDATA_s *ShadFindData(int *hdr, char *name);
 struct NUPOINTOFINTEREST_s *NuHGobjGetPOI(struct NUHGOBJ_s *hobj, u8 i);
 struct nuanimdata_s *InstAnimDataLoad(char *name);
-int sprintf(char *buf, const char *fmt, ...);
 
 
 void LoadCharacterModels(void)

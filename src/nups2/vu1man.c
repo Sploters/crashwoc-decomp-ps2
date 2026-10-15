@@ -8,9 +8,8 @@
  *   0x0016b948 VU1_LoadXD
  */
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
+#include "nucore/nuerror.h"
 
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern int FlushCache(int operation);
 extern void VU1_DmaWrite(void *tag, int wait);
 

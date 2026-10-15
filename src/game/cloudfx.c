@@ -14,6 +14,8 @@
  *   0x0024f2e0 CloudFxInit
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern s32 cloudreset;
@@ -36,7 +38,6 @@ extern void cloudInit();
 extern void NuMtlDestroy(void *mtl);
 extern void *NuRndrStreamAllocStream(void *a0, void *a1, s32 a2);
 extern f32 NuRandFloat(void);
-extern int rand(void);
 
 /* ---- cloudInit support ---- */
 

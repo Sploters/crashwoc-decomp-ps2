@@ -49,6 +49,8 @@
  *   0x002586d0 ResetTub
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern s32 FlyingLevelVictoryDance;
@@ -231,6 +233,7 @@ extern s32 LineCrossed(f32 xold, f32 zold, f32 xnew, f32 znew,
                        f32 x0, f32 z0, f32 x1, f32 z1);
 extern s32 StartHGobjAnim(struct nuhspecial_s *obj);
 extern void JudderGameCamera(struct cammtx_s *cam, f32 time, struct nuvec_s *pos);
+extern void GameSfx(s32 sfx, struct nuvec_s *pos);
 extern s32 temp_iRAIL;
 extern s32 temp_iALONG;
 extern f32 temp_fALONG;
@@ -246,7 +249,6 @@ f32 NuFsqrt(f32 x);
 s32 NuAtan2D(f32 x, f32 z);
 u16 SeekRot(u16 a, u16 target, s32 rate);
 s32 qrand(void);
-s32 abs(s32 x);
 s32 ResetHGobjAnim(struct nuhspecial_s *obj);
 void SetNearestLights(struct Nearest_Light_s *l);
 void SetLevelLights(void);
@@ -1118,7 +1120,6 @@ extern s8 CRemap[];
 extern struct CharacterModel CModel[];
 extern void ResetAnimPacket(struct anim_s *anim, s32 action);
 extern void ResetLights(struct Nearest_Light_s *lights);
-extern void *memset(void *dst, s32 val, u32 len);
 extern s32 opptub_action;
 extern s32 opptub_wait;
 

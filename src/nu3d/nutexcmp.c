@@ -9,6 +9,8 @@
  */
 
 
+#include "nu_libc.h"
+
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 
@@ -22,8 +24,6 @@ typedef struct NuTex {
 } NuTex;
 
 extern void *NuMemAllocFn(int size, char *file, int line);
-extern int printf(const char *format, ...);
-extern int abs(int value);
 
 extern char D_00616000[];
 #define nutexcmp_srcfile D_00616000

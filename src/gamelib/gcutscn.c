@@ -73,6 +73,10 @@
  *   0x001af030 instNuGCutCharSysRender
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 #include "creature.h"
 #include "gcutscn.h"
 
@@ -299,8 +303,6 @@ extern float NuAnimCurve2CalcVal(NuAnimCurve2 *curve, NuAnimTime *atime, int fla
 extern void NuVecMtxTransform(NuVec *dst, NuVec *src, NuMtx *mtx);
 extern void NuAnimData2CalcTime(NuAnimData2 *anim, float time, NuAnimTime *atime);
 extern void NuMtxMul(NuMtx *dst, NuMtx *a, NuMtx *b);
-extern int strcasecmp(const char *s1, const char *s2);
-extern void *memset(void *dst, int value, unsigned int size);
 
 void instNuGCutSceneUpdate(NuGCutScene *scene, int paused);
 void NuGCutRigidSysFixUp(NuGCutSceneDef *def, void *gscene);
@@ -1122,8 +1124,6 @@ void NuGCutLocatorSysFixPtrs(NuGCutSceneDef *def, int base) {
     }
 }
 
-typedef void (*nudebugmsg_fn)(char *fmt, ...);
-extern nudebugmsg_fn NuDebugMsgProlog(char *file, int line);
 extern int LookupDebrisEffect(char *name);
 
 /* Retail-owned (no Data-from-C yet). */
@@ -1209,9 +1209,6 @@ typedef struct NuTriggerDefHdr {
     int count;                    /* 0x08 */
     NuTriggerDef *defs;           /* 0x0C */
 } NuTriggerDefHdr;
-
-typedef void (*nuerror_fn)(char *fmt, ...);
-extern nuerror_fn NuErrorProlog(char *file, int line);
 
 extern char D_00619E90[];               /* error message */
 #define notrigger_msg D_00619E90
@@ -1649,7 +1646,6 @@ NuGCutTriggerSys *instNuCGutTriggerSysCreate(NuGCutSceneDef *def, NuGCutTriggerL
 }
 
 
-extern int sprintf(char *buf, const char *fmt, ...);
 extern char D_00619E38[];
 #define nospecial_msg D_00619E38
 

@@ -14,6 +14,7 @@
  *   0x001b50c8 NuBrdigeDrawRope
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 #define BRIDGE_MAX 8
@@ -136,9 +137,7 @@ extern struct nucamera_s global_camera;
 extern char D_0061A590[];
 #define bridge_sections_msg D_0061A590
 
-extern int printf(const char *fmt, ...);
 extern float NuFsqrt(float x);
-extern double fabs(double x);
 extern int NuAtan2D(float x, float z);
 extern void NuMtxSetIdentity(struct numtx_s *m);
 extern void NuMtxPreRotateY(struct numtx_s *m, int angle);

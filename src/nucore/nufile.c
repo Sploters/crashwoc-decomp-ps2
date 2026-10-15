@@ -66,7 +66,10 @@
  *   0x00103888 NuDatFileFindTree
  */
 
+#include "nu_libc.h"
 #include "nu_stdarg.h"
+
+#include "nucore/nuerror.h"
 
 enum nufilemode_e {
 	NUFILE_READ = 0,
@@ -179,9 +182,6 @@ extern char* iop_img_name;
 int sceWrite(int fd, void *addr, int size);
 int sceLseek(int fd, int offset, int how);
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 int sceIoctl(int fd, int req, void*);
 int NuFileRead(int fh, void *data, int size);
 
@@ -267,8 +267,6 @@ void NuFileWriteChar(int fh, char v)
 }
 
 
-int strlen(const char* __s);
-
 
 void NuFileWriteString(int fh, char* s)
 {
@@ -285,8 +283,6 @@ int NuFileGetBlkSize(void)
 }
 
 
-char* strcpy(char* __dest, const char* __src);
-
 
 int NuFileAppendPath(char *dest, char *s1, char *s2)
 {
@@ -301,9 +297,6 @@ int NuFileAppendPath(char *dest, char *s1, char *s2)
     return strlen(dest);
 }
 
-
-char* strrchr(const char* __s, int __c);
-int strncpy(char* __dest, const char* __src, unsigned long __n);
 
 
 int NuFileExtractPath(char *dest, char *path)
@@ -749,7 +742,7 @@ extern char D_0062E9B8[];
 #define path_sep                D_0062E9B8
 extern void NuStrCpy(char * s1, char * s2);
 extern char *NuStrStr(char *text, char *pattern);
-extern int strcasecmp(const char *s1, const char *s2);
+extern int NuStrLen(char *text);
 
 
 int NuDatFileFindTree(struct nudathdr_s *ndh, char *fname)
@@ -804,9 +797,6 @@ int NuFileSeek(int fh, int offset, int origin);
 int NuFileStatus(int fh);
 //void * memset (void * __s, int __c, unsigned long __n);
 int sceOpen(char * name, int flag, ...);
-char* strcat(char* __dest, const char* __src);
-char* strcpy(char* __dest, const char* __src);
-int strlen(const char* __s);
 
 
 extern void NuStrCpy(char * s1, char * s2);
@@ -1332,8 +1322,6 @@ int NuFileRead(int fh, void* data, int size) {
     return __n_00;
 }
 
-
-extern int vsprintf(char *buf, const char *fmt, va_list args);
 
 
 void NuFileWriteStringV(int fh, char *fmt, ...)

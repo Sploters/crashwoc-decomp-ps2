@@ -41,6 +41,10 @@
  *   0x00117de8 NuNodeResolveSkinNodes
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 typedef enum nunodetype_e {
     NUNODETYPE_NODE,
     NUNODETYPE_MESH,
@@ -108,19 +112,12 @@ typedef struct nusplinenode_s {
 } NuSplineNode;
 
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
 typedef void (*NuNodeDataFunc)(void *data);
 typedef void (*NuNodeIterFunc)(NuNode *node, void *data);
 
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void *NuMemReAllocFn(void *ptr, int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *s, int c, unsigned int n);
-extern int strcmp(const char *a, const char *b);
-extern unsigned int strlen(const char *s);
-extern char *strcpy(char *dst, const char *src);
-extern char *strcat(char *dst, const char *src);
 extern void NuMtxSetIdentity(NuMtx *m);
 extern void NuMtxInv(NuMtx *dst, NuMtx *src);
 extern void NuMtxMulVU0(NuMtx *dst, NuMtx *a, NuMtx *b);

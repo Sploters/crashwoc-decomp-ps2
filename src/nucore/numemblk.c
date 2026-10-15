@@ -10,7 +10,9 @@
  *   0x00105630 NuMemBlkCheckFreeList
  */
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
 
 typedef struct NuMemBlk {
     void **freelist;
@@ -19,11 +21,9 @@ typedef struct NuMemBlk {
     int nfree;
 } NuMemBlk;
 
-extern void *memset(void *dst, int c, unsigned int len);
 extern void *NuAllocHigh(int size);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 
 extern char D_00613CA0[];
 extern char D_0062EA20[];

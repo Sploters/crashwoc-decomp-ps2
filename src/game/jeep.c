@@ -76,6 +76,8 @@
  *   0x0022c3b8 BalloonHitFireBoss
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern struct nuvec_s BaseWheelPosition[];
@@ -129,12 +131,9 @@ extern void *app_fnt;
 extern void NuFntSet(void *fnt);
 extern void NuFntSetPen(u32 colour);
 extern f32 NuFsqrt(f32 x);
-extern double fabs(double x);
 extern f32 NuTrigTable[];
-extern int abs(int value);
 extern void SeekHalfLife(f32 *dest, f32 target, f32 halflife, f32 dt);
 extern f32 fsign(f32 x);
-extern double pow(double, double);
 extern f32 NewShadowMaskPlat(struct nuvec_s *pos, f32 y0, s32 flag);
 extern s32 ShadowInfo(void);
 
@@ -448,7 +447,6 @@ extern void ProcessJeepTrails(void);
 
 extern void NuVecSub(struct nuvec_s *dest, struct nuvec_s *a, struct nuvec_s *b);
 extern s32 NuAtan2D(f32 x, f32 z);
-extern void *memset(void *s, s32 c, s32 n);
 
 extern char LevelFileName[];
 extern struct BUGGYDATA *BuggyData[];

@@ -22,6 +22,8 @@
  *   0x001db078 AddCross
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 #define NULL ((void *)0)
@@ -109,8 +111,6 @@ extern f32 RatioBetweenEdges(struct nuvec_s *pos, struct nuvec_s *p0,
                              struct nuvec_s *p3);
 extern void RailInfo(struct RPos_s *rpos, struct nuvec_s *pos, u16 *angle,
                      u16 *cam_angle, u8 *mode);
-extern int abs(int value);
-extern double fabs(double x);
 extern f32 NuTrigTable[];
 extern s32 RotDiff(u16 a, u16 b);
 extern s32 NuAtan2D(f32 x, f32 z);
@@ -147,8 +147,6 @@ extern char D_00630A68[];
 extern char D_00630A60[];
 #define railext_gem D_00630A60
 
-extern s32 sprintf(char *buf, const char *fmt, ...);
-extern s32 strcmp(const char *a, const char *b);
 extern struct nugspline_s *NuSplineFind(struct nugscn_s *scene, char *name);
 extern f32 SplineDistance(struct nugspline_s *spl);
 
@@ -841,8 +839,6 @@ extern void JeepCamIntro(struct cammtx_s *cam);
 extern void NuCameraSet(struct nucam_s *cam);
 extern u16 TurnRot(u16 a, u16 b, s32 rate);
 extern u16 SeekRot(u16 a, u16 dist, s32 rate);
-extern double sqrt(double x);
-extern double fmod(double x, double y);
 extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern void NuVecNorm(struct nuvec_s *d, struct nuvec_s *a);

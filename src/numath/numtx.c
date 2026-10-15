@@ -51,12 +51,12 @@
  *   0x0010aa10 NuMtxGetTranslation
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
 void NuMtxAlignZ(struct numtx_s *m, struct nuvec_s *v);
-double cos(double);
-double sin(double);
 extern float NuTrigTable[];
 extern struct numtx_s D_002938A0;
 #define mtx_scratch D_002938A0

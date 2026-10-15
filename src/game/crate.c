@@ -60,6 +60,8 @@
  *   0x001f9208 ResetCrate
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct nulsthdr_s;
@@ -69,7 +71,6 @@ extern struct nulnkhdr_s *NuLstGetNext(struct nulsthdr_s *hdr,
                                        struct nulnkhdr_s *lnk);
 extern struct nulnkhdr_s *NuLstAlloc(struct nulsthdr_s *hdr);
 extern void NuLstFree(struct nulnkhdr_s *lnk);
-extern void *memset(void *s, s32 c, s32 n);
 extern struct nulsthdr_s *NuLstCreate(int num, int size);
 extern void NuLstDestroy(struct nulsthdr_s *hdr);
 
@@ -207,7 +208,9 @@ extern s32 FurtherALONG(s32 iRAIL, s32 iALONG, f32 fALONG, s32 iRAIL2,
 extern f32 CRATEBALLOONRADIUS;
 extern f32 CRATEBALLOONOFFSET;
 extern void NuVecSub(struct nuvec_s *dest, struct nuvec_s *a, struct nuvec_s *b);
+extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 ang);
 extern s32 TimeTrial;
+struct crate_s *NextCrate(struct crate_s *a);
 
 /* Per-level descriptor (same layout as game/creature.c's copy). */
 struct ldata_s {
@@ -510,7 +513,6 @@ struct numtl_s;
 extern f32 temp_ratio;
 extern s32 temp_face;
 extern struct nuvec_s vTEMP;
-extern s32 sprintf(char *buf, const char *fmt, ...);
 extern char tbuf[];
 extern char LevelFileName[];
 extern char D_00631250[];
@@ -1644,7 +1646,6 @@ void UpdateCrateExplosions(void) {
 extern void NewTopBot(struct obj_s *obj);
 extern void OldTopBot(struct obj_s *obj);
 extern f32 D_0062D7B0;
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 ang);
 extern f32 D_0062D7A0;
 extern f32 D_0062D7A4;
 

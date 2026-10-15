@@ -11,6 +11,8 @@
  *   0x00238ba0 CombinationCharacterBC
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 /* Font3DObjTab entry (objtemp_s): i@0, flags@2, action@3, anim_time@4. */
@@ -98,7 +100,6 @@ extern f32 FONT3D_JSCALEDX, FONT3DYMUL, FONT3DSIZE;
 extern f32 D_0062E358, D_0062E35C, D_0062E360;
 extern struct numtl_s **nurndr_forced_mtl_table;
 
-extern int strlen(const char *s);
 extern s32 DrawPanel3DObject(s32 i, f32 x, f32 y, f32 z, f32 sx, f32 sy,
                               f32 sz, s32 a1, s32 a2, s32 rot, void *scene,
                               void *special, s32 last);

@@ -7,6 +7,8 @@
  *   0x001065f8 NuPPGetSize
  */
 
+#include "nucore/nuerror.h"
+
 #define RNC_ID 0x02434E52
 
 #define SWAP32(x) (((x) >> 24) | (((x) & 0xFF0000) >> 8) | (((x) & 0xFF00) << 8) | ((x) << 24))
@@ -25,10 +27,6 @@ extern int NuFileSeek(int fh, int offset, int origin);
 extern int NuFileRead(int fh, void *data, int size);
 extern int NuFileOpenSize(int fh);
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern void timeUserReset(void);
 extern unsigned int timeUserRead(void);
 void NuPPUnpack(unsigned char *src, unsigned char *out);

@@ -81,6 +81,7 @@
  *   0x001c1cc8 TestMenu
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -335,10 +336,8 @@ extern NUMTL *D_006B40C0[6];
 extern s32 NuStrLen(char *str);
 extern void NuStrCpy(char *dst, char *src);
 extern void NuStrCat(char *dst, char *src);
-extern u32 strlen(char *str);
 extern void *NuMemAllocFn(s32 size, char *file, s32 line);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
-extern void *memset(void *dst, s32 c, u32 n);
 extern void NuRndrLineRect2di(s32 x, s32 y, s32 w, s32 h, u32 colour,
                               NUMTL *mtl);
 extern NUMTL *NuMtlCreate(s32 count);
@@ -357,7 +356,6 @@ extern void NuFntSetPen(s32 pen);
 extern void NuFntSet(void *font);
 extern s32 NuFntPrintLen(char *text);
 extern void NuFntPrintEx(s32 x, s32 y, s32 flags, char *fmt, ...);
-extern double floor(double x);
 extern void NuMtlUpdate(NUMTL *mtl);
 s32 eduiMenuProcess(EDUIMENU *menu, f32 dt, NUPAD *pad);
 extern void eduiMenuRender(EDUIMENU *menu);

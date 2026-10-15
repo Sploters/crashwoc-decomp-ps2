@@ -67,6 +67,8 @@
  *   0x00189f60 DebrisDoSounds
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct debinfo_s;
@@ -357,11 +359,7 @@ void AddDebrisEffect(s32 *key, s32 type, f32 x, f32 y, f32 z);
 void NuMtxRotateZ(struct numtx_s *m, s32 angle);
 void NuMtxRotateY(struct numtx_s *m, s32 angle);
 void NuMtxSetIdentity(struct numtx_s *m);
-s32 strcmp(const char *a, const char *b);
 f32 NuFsqrt(f32 x);
-double sqrt(double x);
-s32 rand(void);
-s32 abs(s32 x);
 void edbitsSoundPlay(struct nuvec_s *pos, s32 id);
 void NuVecMtxTransform(struct nuvec_s *out, struct nuvec_s *in, struct numtx_s *mtx);
 void NuVecRotateY(struct nuvec_s *out, struct nuvec_s *in, s32 angle);

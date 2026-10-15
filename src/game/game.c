@@ -130,6 +130,7 @@
  *   0x001f1120 SplinePointAngle
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 #define NULL 0
@@ -381,7 +382,6 @@ extern float PANELMENUX;
 extern float GAMENAMEY;
 extern char tbuf[];
 extern char D_00630C78[]; /* "%s: %s" language format */
-extern s32 sprintf(char *, const char *, ...);
 extern void AddSpacesIntoText(char *, s32);
 extern void DrawCredits(void);
 extern char NameInputTable[][7];
@@ -806,12 +806,10 @@ void ResumeGame(void);
 void edobjResetAnimsToZero(void);
 s32 GotoCheckpoint(struct nuvec_s *pos, s32 dir);
 void loadsaveCallEachFrame(void);
-s32 strcmp(const char *a, const char *b);
 void UpdateSaveSlots(struct cursor_s *cur);
 int NuSoundStopStream(s32 ch);
 void ResetMaskFeathers(void);
 
-void *memset(void *s, s32 c, u32 n);
 void NuStrCpy(char *dst, const char *src);
 void NewLanguage(s32 lang);
 void DefaultTimeTrialNames(s32 which);
@@ -3034,6 +3032,7 @@ inline s32 RotDiff(u16 a, u16 b) {
     return diff;
 }
 
+extern void NewRumble(void *p, s32 power);
 extern void NewBuzz(void *p, s32 n);
 
 inline void TransporterGo(void) {
@@ -3339,6 +3338,7 @@ struct nugspline_s {
 };
 
 extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
+extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern float NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *c);
 extern s32 NuAtan2D(float x, float z);
 
@@ -3922,7 +3922,6 @@ extern float point_time;
 extern float point_delay;
 extern float point_duration;
 extern s32 JStrLen(char *txt);
-extern s32 strlen(const char *s);
 extern void OpenPreviousCheckpoints(s32 iRAIL, s32 iALONG, float fALONG);
 
 void ResetCheckpoint(s32 iRAIL, s32 iALONG, float fALONG, struct nuvec_s *pos) {
@@ -5140,7 +5139,6 @@ void UpdateTempCharacter(void) {
 
 extern s32 tumble_character;
 extern float tumble_item_addtime;
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern void AddGameDebris(s32 i, struct nuvec_s *pos);
 
 void UpdateAwards(void) {
@@ -5549,6 +5547,7 @@ extern float hub_vr_newscale;
 extern struct nuvec_s hub_vr_pos;
 extern u16 hub_vr_xrot;
 extern u16 hub_vr_yrot;
+u16 SeekRot(u16 a, u16 b, s32 shift);
 
 void HubMoveVR(void) {
     struct nuvec_s pos;
@@ -6533,7 +6532,6 @@ extern s32 i_screenwumpa;
 extern s32 mg_wumpatot;
 extern float WUMPAOBJSX;
 extern float PANELSY;
-extern double fabs(double x);
 
 void UpdateScreenWumpas(void) {
     struct nuvec_s v[2];
@@ -7732,7 +7730,6 @@ extern char D_00630BC0[];         /* "%i/%i" */
 extern float CRATECOUNT3DSEPERATION;
 extern float CRATECOUNT3DSCALE;
 extern s32 DESTRUCTIBLECRATECOUNT;
-extern s32 strlen(const char *s);
 
 void Draw3DCrateCount(struct nuvec_s *pos, u16 angle) {
     struct nuvec_s v;

@@ -104,6 +104,8 @@
  *   0x001a0b78 edobjcbCancelSoundTypeMenu
  */
 
+#include "nu_libc.h"
+
 struct nuvec_s {
     float x;
     float y;
@@ -585,8 +587,6 @@ extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern float NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern struct nuvec_s *edmainQueryLocVec(void);
 extern float NuFsqrt(float x);
-extern int strncmp(const char *a, const char *b, int n);
-extern char *strcpy(char *dst, const char *src);
 extern char *edbitsGetSoundName(int id);
 extern void eduiMenuProcess(void *menu, struct pad_s *pad);
 extern void edobjDoInput(struct pad_s *pad);
@@ -605,8 +605,6 @@ extern void UpdatePlatinst(int platinst, struct numtx_s *mtx);
 extern void PlatInstRotate(int platinst, int rotate);
 extern void PlatInstBounce(int platinst, float player_grav, float tension, float damping);
 extern int DeletePlatinst(int id);
-extern void *memset(void *dst, int c, unsigned int n);
-extern int sprintf(char *buf, const char *fmt, ...);
 extern int NuFileSize(char *name);
 extern void edobjObjectReset(void);
 extern int edobjFileSaveObjects(char *filename);
@@ -651,7 +649,6 @@ extern int edbitsLookupSoundFX(char *name);
 extern void edbitsSoundPlay(struct nuvec_s *pos, int id);
 extern void edobjParticleDestroy(int obj, int slot);
 extern void edobjSoundDestroy(int obj, int slot);
-extern int abs(int x);
 extern struct eduimenu_s *eduiMenuCreate(int x, int y, int w, int h, void *font,
                                          void *cancel, char *title);
 extern void *eduiItemSelCreate(int value, struct eduistyle_s *style, int on,
@@ -710,7 +707,6 @@ extern void edobjcbSetBouncyPlayerGrav(void *menu, struct edobjitem_s *item);
 extern void edobjcbSetBouncyTension(void *menu, struct edobjitem_s *item);
 extern void edobjcbSetBouncyDamping(void *menu, struct edobjitem_s *item);
 extern struct numtl_s *NuMtlCreate(int count);
-extern char *strncpy(char *dst, const char *src, unsigned int n);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);
 extern int EdFileClose(void);

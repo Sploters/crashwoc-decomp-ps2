@@ -1,5 +1,7 @@
 /* nu2crash.ps2/nucore/nulist.c -- doubly-linked list helpers*/
 
+#include "nucore/nuerror.h"
+
 typedef struct NuListNode {
     struct NuListNode *next;
     struct NuListNode *prev;
@@ -10,10 +12,6 @@ typedef struct NuList {
     NuListNode *tail;
 } NuList;
 
-
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 
 extern char D_00613D50[];
 extern char D_0062EA38[];

@@ -1,15 +1,9 @@
 /* nu2crash.ps2/nucore/nuerror.c -- error / warning / debug message output */
 
+#include "nu_libc.h"
 #include "nu_stdarg.h"
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern int printf(const char *fmt, ...);
-extern int sprintf(char *buf, const char *fmt, ...);
-extern int vsprintf(char *buf, const char *fmt, va_list args);
-extern char *strcat(char *dst, const char *src);
-extern int strlen(const char *s);
-extern char *strrchr(const char *s, int c);
+#include "nucore/nuerror.h"
 
 extern void *NuFileOpen(char *name, int mode);
 extern void NuFileClose(void *handle);
