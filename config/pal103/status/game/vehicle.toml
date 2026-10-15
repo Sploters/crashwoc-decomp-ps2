@@ -69,11 +69,11 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002056d8:ZoffaSmoke"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00205978:TeleportManager"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00205be8:MoveZoffaUFO"
@@ -85,7 +85,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002070d0:InitHova"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002072f0:InitialiseHovaBlimps"
@@ -145,7 +145,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00209990:ProcessGliderBullets"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00209c38:MovePlane"
@@ -245,11 +245,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:002107a0:InitWeatherBoss_a"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00210960:DrawWeatherBoss_a"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00210b28:ProcessWeatherBoss_a"
@@ -333,15 +333,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00214de8:ProcessVehicleLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00214f40:DrawExtraCreatures"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00215140:GetCurrentLevelObjectives"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002152f8:ControlAtlas"
@@ -385,7 +385,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00217420:JonnyParticles"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00217680:DrawEarthBoss"
@@ -393,7 +393,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00217890:PrintEarthBossAction"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00217ab8:ProcessEarthBossActions"
@@ -465,7 +465,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0021ba08:ProcessVehMasks"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021bc88:DrawVehMasks"
@@ -493,7 +493,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c048:ResetVehicleLevel"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c1b0:DrawVehicleTrail"
@@ -717,7 +717,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e448:InitBigGun"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e618:DrawBigGun"
@@ -741,7 +741,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021e918:PrintWeatherBossAction"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021ea20:InitWeatherBoss"

@@ -2414,7 +2414,7 @@ void DrawWesternArenaLevelExtra(void) {
 }
 
 
-void ProcessWesternArenaLevel(void) {
+void ProcessWesternArenaLevel(struct pad_s *pad) {
     s32 i;
 
     if (WesternCountdown == 0.0f) {
@@ -2440,7 +2440,7 @@ void ProcessWesternArenaLevel(void) {
 }
 
 
-void FireBossReset(void) {
+void FireBossReset(s32 PlayerDead) {
     FireBossFinished = 0;
     FireBossWon = 0;
     ChrisBigBossDead = 0;
@@ -2453,7 +2453,7 @@ void FireBossReset(void) {
     WaterTimer = 0;
 }
 
-void ProcessFireBossLevel(void) {
+void ProcessFireBossLevel(struct pad_s *pad) {
     struct nuvec_s Rel;
 
     ProcessFireBoss(&FireBoss);
