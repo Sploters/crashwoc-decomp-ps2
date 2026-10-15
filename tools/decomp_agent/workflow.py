@@ -116,12 +116,21 @@ def save(project, record) -> None:
     _atomic_write(_path(project, record["function_id"]), record)
 
 
+def _runs_dir(project) -> Path:
+    """Batch reports and verifier logs, kept apart from the records."""
+    d = _dir(project) / "runs"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def all_records(project):
     for path in sorted(_dir(project).glob("*.json")):
         try:
-            yield json.loads(path.read_text())
+            record = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError):
             continue
+        if isinstance(record, dict) and record.get("function_id"):
+            yield record
 
 
 def _now():
@@ -261,7 +270,7 @@ def _run_logged(project, cmd):
     on stdout, which carries the JSON result)."""
     proc = subprocess.run(cmd, cwd=str(project.root), capture_output=True,
                           text=True)
-    (_dir(project) / "last_verifier.log").write_text(
+    (_runs_dir(project) / "last_verifier.log").write_text(
         proc.stdout + ("\n--- stderr ---\n" + proc.stderr if proc.stderr
                        else ""))
     return proc
@@ -400,7 +409,7 @@ def batch(project: DecompProject, *, limit=None, compile_diff=None,
     already = [f for f in exact if states.get(f) == "matching"]
     runs, report = 0, {"accepted": [], "rejected": {}, "error": None}
     if to_flip:
-        report_path = _dir(project) / "last_promote_report.json"
+        report_path = _runs_dir(project) / "last_promote_report.json"
         report = promote(project, to_flip, report_path)
         runs = report.get("verifier_runs") or 0
     elif already:
@@ -447,7 +456,7 @@ def batch(project: DecompProject, *, limit=None, compile_diff=None,
     return schemas.ok("workflow_batch", queued=len(pending),
                       promoted=promoted, not_promoted=not_promoted,
                       verifier_runs=runs, error=report.get("error"),
-                      verifier_log=str(_dir(project) / "last_verifier.log")
+                      verifier_log=str(_runs_dir(project) / "last_verifier.log")
                       if runs else None)
 
 
