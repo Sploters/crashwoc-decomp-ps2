@@ -85,6 +85,7 @@
 #include "nu_types.h"
 
 #include "numath/numathtypes.h"
+#include "nu3d/numtl.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -121,24 +122,6 @@ typedef struct eduigradread_s {
     f32 b;
     u32 colour;
 } EDUIGRADREAD;
-
-typedef struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;
-    u64 unk36 : 8;
-    u64 cull : 2;
-    u64 zmode : 2;
-    u64 unk48 : 16;
-} NUMTLATTRIB;
-
-typedef struct numtl_s {
-    u8 unk_0x000[0x168];
-    NUMTLATTRIB attrib;
-    u8 unk_0x170[0x10];
-    struct nucolour3_s diffuse;
-    u8 unk_0x18C[0x14];
-    f32 alpha;
-} NUMTL;
 
 typedef struct nupad_s {
     u8 unk_0x000[0x55C];
@@ -213,7 +196,7 @@ typedef struct eduiitem_s {
             f32 v[2];
             void (*change)(struct eduimenu_s *menu, struct eduiitem_s *item,
                            u32 buttons);
-            NUMTL *mtl;
+            struct numtl_s *mtl;
             s32 corner;
             f32 zoom;
         } texpick;
@@ -294,7 +277,7 @@ extern s32 D_00633250;
 extern EDUIMENU *D_00633254;
 extern EDUIMENU *D_00633258;
 extern EDUIMENU *D_0063325C;
-extern NUMTL *D_006B40C0[6];
+extern struct numtl_s *D_006B40C0[6];
 
 #define gpcfg_clip_h    D_0062F8FC
 #define gpcfg_clip_s    D_0062F900
@@ -335,24 +318,22 @@ extern void NuStrCat(char *dst, char *src);
 extern void *NuMemAllocFn(s32 size, char *file, s32 line);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
 extern void NuRndrLineRect2di(s32 x, s32 y, s32 w, s32 h, u32 colour,
-                              NUMTL *mtl);
-extern NUMTL *NuMtlCreate(s32 count);
-extern void NuRndrRect2di(s32 x, s32 y, s32 w, s32 h, u32 colour, NUMTL *mtl);
+                              struct numtl_s *mtl);
+extern void NuRndrRect2di(s32 x, s32 y, s32 w, s32 h, u32 colour, struct numtl_s *mtl);
 extern void NuRndrGradRect2di(s32 x, s32 y, s32 w, s32 h, u32 *colours,
-                              NUMTL *mtl);
+                              struct numtl_s *mtl);
 extern void NuRndrTriStrip2di(s32 *pnts, u32 *colours, s32 count, u32 colour,
-                              NUMTL *mtl);
+                              struct numtl_s *mtl);
 extern void NuRndrRectUV2di(s32 x, s32 y, s32 w, s32 h, f32 u0, f32 v0, f32 u1,
-                            f32 v1, u32 colour, NUMTL *mtl);
+                            f32 v1, u32 colour, struct numtl_s *mtl);
 extern void NuRndrLine2di(s32 x0, s32 y0, s32 x1, s32 y1, u32 colour,
-                          NUMTL *mtl);
+                          struct numtl_s *mtl);
 extern void NuRndrLineStrip2di(s32 *pnts, u32 *colours, s32 count, u32 colour,
-                               NUMTL *mtl);
+                               struct numtl_s *mtl);
 extern void NuFntSetPen(s32 pen);
 extern void NuFntSet(void *font);
 extern s32 NuFntPrintLen(char *text);
 extern void NuFntPrintEx(s32 x, s32 y, s32 flags, char *fmt, ...);
-extern void NuMtlUpdate(NUMTL *mtl);
 s32 eduiMenuProcess(EDUIMENU *menu, f32 dt, NUPAD *pad);
 extern void eduiMenuRender(EDUIMENU *menu);
 EDUIITEM *eduiItemSliderCreate(void *data, EDUISTYLE *style, s32 group,

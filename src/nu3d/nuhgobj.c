@@ -29,17 +29,15 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
+#include "nu3d/nutexanm.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nuplane.h"
 #include "numath/nuvec.h"
 
-struct numtl_s {
-    char pad000[0x1A4];
-    int tid;
-    char pad1A8[0x28];
-} __attribute__((aligned(16)));
 struct SkinDmaTag;
 
 struct nugeom_s {
@@ -124,18 +122,6 @@ struct nushadowdata_s {
 
 struct nutexanimenv_s;
 
-struct nutexanim_s {
-    struct nutexanim_s *succ;
-    struct nutexanim_s *prev;
-    short *tids;
-    short numtids;
-    unsigned int dynalloc : 1;
-    struct numtl_s *mtl;
-    struct nutexanimenv_s *env;
-    char *ntaname;
-    char *scriptname;
-};
-
 struct nuhcollideentry_s {
     int type;
     void *data;
@@ -188,11 +174,7 @@ extern int NuFileBeginBlkRead(int fh, int blockid);
 extern void NuFileEndBlkRead(int fh);
 extern int NuFileGetBlkSize(int fh);
 extern int NuFileRead(int fh, void *buf, int size);
-extern void NuTexAnimRemoveList(struct nutexanim_s *list);
-extern void NuTexAnimDestroy(struct nutexanim_s *anim);
 extern void NuGobjDestroy(struct nugobj_s *gobj);
-extern void NuMtlDestroy(struct numtl_s *mtl);
-extern void NuTexDestroy(int tid);
 extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 extern void NuCvtSknInstFix(struct SkinDmaTag *tag);
 extern void ReadNuIFFHGobjSet(int fh, struct NUHGOBJ_s *hobj);
@@ -1093,16 +1075,9 @@ struct nughgheader_s {
     int texanims;
 };
 
-typedef int (*NuMtlReadEventFunc)(struct numtl_s *mtl);
 
-extern int NuTexCreateNative(void *data);
-extern void *NuTexAnimProgFind(char *name);
-extern struct nutexanimenv_s *NuTexAnimEnvCreate(void *buff, struct numtl_s *mtl, short *tids, void *prog);
-extern void NuTexAnimAddList(struct nutexanim_s *list);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
-extern void NuMtlAdd(struct numtl_s *mtl);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern NuMtlReadEventFunc NuMtlReadEvent;
 extern int D_0062EECC;
 extern char D_00615470[];

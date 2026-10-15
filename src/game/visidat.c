@@ -13,11 +13,11 @@
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 struct nugeom_s;
 struct nufaceongeom_s;
 struct nucolourref_s;
-struct numtl_s;
 struct nuspecial_s;
 
 struct nugobj_s {

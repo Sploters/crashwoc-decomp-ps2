@@ -51,6 +51,8 @@
 
 #include "nucore/nuerror.h"
 #include "numath/nurand.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nutexanm.h"
 
 typedef struct NuFPar {
     int handle;
@@ -59,11 +61,6 @@ typedef struct NuFPar {
     char word[0x101];
     int line_num;
 } NuFPar;
-
-struct numtl_s {
-    char pad000[0x1A4];
-    int tid;
-};
 
 struct nunrand_s;
 
@@ -88,9 +85,9 @@ typedef struct NuFParCommand {
     void (*func)(NuFPar *parser);
 } NuFParCommand;
 
-typedef struct NuTexAnimProg {
-    struct NuTexAnimProg *next;
-    struct NuTexAnimProg *prev;
+struct nutexanimprog_s {
+    struct nutexanimprog_s *next;
+    struct nutexanimprog_s *prev;
     char name[32];
     int on_pc[32];
     int off_pc[32];
@@ -102,10 +99,10 @@ typedef struct NuTexAnimProg {
     short num_codes;
     int dynalloc : 1;
     short code[2];
-} NuTexAnimProg;
+};
 
-typedef struct NuTexAnimEnv {
-    NuTexAnimProg *prog;
+struct nutexanimenv_s {
+    struct nutexanimprog_s *prog;
     int pc;
     int repeat_count[16];
     int repeat_pc[16];
@@ -119,22 +116,10 @@ typedef struct NuTexAnimEnv {
     short *tids;
     int tex;
     unsigned int dynalloc : 1;
-} NuTexAnimEnv;
-
-typedef struct NuTexAnim {
-    struct NuTexAnim *next;
-    struct NuTexAnim *prev;
-    short *tids;
-    short num_tids;
-    int dynalloc : 1;
-    struct numtl_s *mtl;
-    NuTexAnimEnv *env;
-    char *name;
-    char *scriptname;
-} NuTexAnim;
+};
 
 typedef struct NuTexAnimList {
-    NuTexAnim *anims;
+    struct nutexanim_s *anims;
     struct NuTexAnimList *next;
     struct NuTexAnimList *prev;
 } NuTexAnimList;
@@ -146,10 +131,10 @@ extern NuTexAnimList *ntal_first;
 extern NuTexAnimList *ntal_free;
 
 extern NuFParCommand D_002E9100[];
-extern NuTexAnimProg *D_0062EF30;
+extern struct nutexanimprog_s *D_0062EF30;
 extern int D_00633188;
 extern int D_0063318C;
-extern NuTexAnimProg *D_00633190;
+extern struct nutexanimprog_s *D_00633190;
 extern unsigned int D_00633194;
 extern unsigned int D_00633198;
 extern unsigned int D_0063319C;
@@ -203,11 +188,10 @@ extern int NuFParPushCom(NuFPar *parser, NuFParCommand *commands);
 extern int NuFParInterpretWord(NuFPar *parser);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
-extern void NuTexAnimEnvProc(NuTexAnimEnv *env);
 extern void NuStrCpy(char *dst, char *src);
 
 
-void NuTexAnimProgAssembleEnd(NuTexAnimProg *prog)
+void NuTexAnimProgAssembleEnd(struct nutexanimprog_s *prog)
 {
     short i;
 
@@ -432,7 +416,7 @@ void pftaUntiltex(NuFPar *parser)
 }
 
 
-inline void NuTexAnimProgInit(NuTexAnimProg *prog)
+inline void NuTexAnimProgInit(struct nutexanimprog_s *prog)
 {
     int i;
 
@@ -451,18 +435,18 @@ inline void NuTexAnimProgInit(NuTexAnimProg *prog)
 }
 
 
-NuTexAnimProg *NuTexAnimProgReadScript(char **buff, char *name)
+struct nutexanimprog_s *NuTexAnimProgReadScript(char **buff, char *name)
 {
-    NuTexAnimProg *mem;
-    NuTexAnimProg *prog;
+    struct nutexanimprog_s *mem;
+    struct nutexanimprog_s *prog;
     NuFPar *parser;
     int len;
     int label;
     short *end;
 
     if (buff) {
-        mem = (NuTexAnimProg *)*buff;
-        mem = (NuTexAnimProg *)(((int)mem + 3) & 0xFFFFFFFC);
+        mem = (struct nutexanimprog_s *)*buff;
+        mem = (struct nutexanimprog_s *)(((int)mem + 3) & 0xFFFFFFFC);
     } else {
         mem = NuMemAllocFn(0x400, nutexanm_srcfile, 0x2FC);
     }
@@ -484,7 +468,7 @@ NuTexAnimProg *NuTexAnimProgReadScript(char **buff, char *name)
             }
         }
         end = &mem->code[mem->num_codes];
-        mem = (NuTexAnimProg *)end;
+        mem = (struct nutexanimprog_s *)end;
         if (buff) {
             *buff = (char *)end;
         }
@@ -542,13 +526,13 @@ static inline int NuTexAnimCondition(int condition, int value, int ref)
 }
 
 
-void NuTexAnimEnvProc(NuTexAnimEnv *env)
+void NuTexAnimEnvProc(struct nutexanimenv_s *env)
 {
-    NuTexAnimProg *prog;
+    struct nutexanimprog_s *prog;
     NuTexAnimList *list;
-    NuTexAnim *anim;
-    NuTexAnimEnv *other;
-    NuTexAnimProg *other_prog;
+    struct nutexanim_s *anim;
+    struct nutexanimenv_s *other;
+    struct nutexanimprog_s *other_prog;
     int done;
     int i;
     int signal;
@@ -693,7 +677,7 @@ void NuTexAnimEnvProc(NuTexAnimEnv *env)
         case NTA_XREF:
             xdef = prog->code[env->pc + 1];
             for (list = ntal_first; list; list = list->next) {
-                for (anim = list->anims; anim; anim = anim->next) {
+                for (anim = list->anims; anim; anim = anim->succ) {
                     other = anim->env;
                     if (other && other != env && other->prog && other->prog->num_xdefs) {
                         other_prog = other->prog;
@@ -740,9 +724,9 @@ void NuTexAnimProgRelease(void)
 }
 
 
-NuTexAnimProg *NuTexAnimProgFind(char *name)
+struct nutexanimprog_s *NuTexAnimProgFind(char *name)
 {
-    NuTexAnimProg *prog;
+    struct nutexanimprog_s *prog;
 
     for (prog = ntap_first; prog; prog = prog->next) {
         if (!strcasecmp(name, prog->name)) {
@@ -753,7 +737,7 @@ NuTexAnimProg *NuTexAnimProgFind(char *name)
 }
 
 
-void NuTexAnimProgDestroy(NuTexAnimProg *prog)
+void NuTexAnimProgDestroy(struct nutexanimprog_s *prog)
 {
     if (prog->prev) {
         prog->prev->next = prog->next;
@@ -769,16 +753,16 @@ void NuTexAnimProgDestroy(NuTexAnimProg *prog)
 }
 
 
-NuTexAnimProg *NuTexAnimProgCreate(char **buff, int code_size, char *name)
+struct nutexanimprog_s *NuTexAnimProgCreate(char **buff, int code_size, char *name)
 {
-    NuTexAnimProg *prog;
+    struct nutexanimprog_s *prog;
 
     if (buff) {
-        prog = (NuTexAnimProg *)*buff;
-        *buff += sizeof(NuTexAnimProg);
+        prog = (struct nutexanimprog_s *)*buff;
+        *buff += sizeof(struct nutexanimprog_s);
         *buff += code_size;
     } else {
-        prog = NuMemAllocFn(sizeof(NuTexAnimProg) + code_size, nutexanm_srcfile, 0xDD);
+        prog = NuMemAllocFn(sizeof(struct nutexanimprog_s) + code_size, nutexanm_srcfile, 0xDD);
     }
     if (prog) {
         NuTexAnimProgInit(prog);
@@ -793,21 +777,21 @@ NuTexAnimProg *NuTexAnimProgCreate(char **buff, int code_size, char *name)
 }
 
 
-void NuTexAnimProgWrite(char *name, NuTexAnimProg *prog)
+void NuTexAnimProgWrite(char *name, struct nutexanimprog_s *prog)
 {
     int fh;
 
     fh = NuFileOpen(name, 1);
     if (fh) {
-        NuFileWrite(fh, prog, sizeof(NuTexAnimProg) + prog->num_codes * sizeof(short));
+        NuFileWrite(fh, prog, sizeof(struct nutexanimprog_s) + prog->num_codes * sizeof(short));
         NuFileClose(fh);
     }
 }
 
 
-NuTexAnimProg *NuTexAnimProgRead(char **buff, char *name)
+struct nutexanimprog_s *NuTexAnimProgRead(char **buff, char *name)
 {
-    NuTexAnimProg *prog;
+    struct nutexanimprog_s *prog;
     int fh;
     int size;
 
@@ -816,7 +800,7 @@ NuTexAnimProg *NuTexAnimProgRead(char **buff, char *name)
     if (fh) {
         size = NuFileOpenSize(fh);
         if (buff) {
-            prog = (NuTexAnimProg *)(((int)*buff + 3) & 0xFFFFFFFC);
+            prog = (struct nutexanimprog_s *)(((int)*buff + 3) & 0xFFFFFFFC);
             *buff = (char *)prog + size;
         } else {
             prog = NuMemAllocFn(size, nutexanm_srcfile, 0x117);
@@ -839,7 +823,7 @@ NuTexAnimProg *NuTexAnimProgRead(char **buff, char *name)
 }
 
 
-inline void NuTexAnimEnvDestroy(NuTexAnimEnv *env)
+inline void NuTexAnimEnvDestroy(struct nutexanimenv_s *env)
 {
     if (env->dynalloc) {
         NuMemFreeFn(env, nutexanm_srcfile, 0x161);
@@ -847,7 +831,7 @@ inline void NuTexAnimEnvDestroy(NuTexAnimEnv *env)
 }
 
 
-inline void NuTexAnimEnvReset(NuTexAnimEnv *env)
+inline void NuTexAnimEnvReset(struct nutexanimenv_s *env)
 {
     if (env) {
         env->pc = 0;
@@ -861,15 +845,15 @@ inline void NuTexAnimEnvReset(NuTexAnimEnv *env)
 }
 
 
-inline NuTexAnimEnv *NuTexAnimEnvCreate(char **buff, struct numtl_s *mtl, short *tids, NuTexAnimProg *prog)
+inline struct nutexanimenv_s *NuTexAnimEnvCreate(char **buff, struct numtl_s *mtl, short *tids, struct nutexanimprog_s *prog)
 {
-    NuTexAnimEnv *env;
+    struct nutexanimenv_s *env;
 
     if (buff) {
-        env = (NuTexAnimEnv *)(((int)*buff + 3) & 0xFFFFFFFC);
-        *buff = (char *)env + sizeof(NuTexAnimEnv);
+        env = (struct nutexanimenv_s *)(((int)*buff + 3) & 0xFFFFFFFC);
+        *buff = (char *)env + sizeof(struct nutexanimenv_s);
     } else {
-        env = NuMemAllocFn(sizeof(NuTexAnimEnv), nutexanm_srcfile, 0x17D);
+        env = NuMemAllocFn(sizeof(struct nutexanimenv_s), nutexanm_srcfile, 0x17D);
     }
     if (env) {
         env->prog = prog;
@@ -889,10 +873,10 @@ inline NuTexAnimEnv *NuTexAnimEnvCreate(char **buff, struct numtl_s *mtl, short 
 void NuTexAnimRestart(void)
 {
     NuTexAnimList *list;
-    NuTexAnim *anim;
+    struct nutexanim_s *anim;
 
     for (list = ntal_first; list; list = list->next) {
-        for (anim = list->anims; anim; anim = anim->next) {
+        for (anim = list->anims; anim; anim = anim->succ) {
             NuTexAnimEnvReset(anim->env);
         }
     }
@@ -910,9 +894,9 @@ void NuTexAnimSetSignals(unsigned int signals)
 }
 
 
-void NuTexAnimProcessList(NuTexAnim *anim)
+void NuTexAnimProcessList(struct nutexanim_s *anim)
 {
-    for (; anim; anim = anim->next) {
+    for (; anim; anim = anim->succ) {
         if (anim->env) {
             NuTexAnimEnvProc(anim->env);
         }
@@ -920,10 +904,10 @@ void NuTexAnimProcessList(NuTexAnim *anim)
 }
 
 
-NuTexAnim *NuTexAnimFind(NuTexAnim *anim, char *name)
+struct nutexanim_s *NuTexAnimFind(struct nutexanim_s *anim, char *name)
 {
-    for (; anim; anim = anim->next) {
-        if (!strcasecmp(anim->name, name)) {
+    for (; anim; anim = anim->succ) {
+        if (!strcasecmp(anim->ntaname, name)) {
             return anim;
         }
     }
@@ -931,7 +915,7 @@ NuTexAnim *NuTexAnimFind(NuTexAnim *anim, char *name)
 }
 
 
-void NuTexAnimDestroy(NuTexAnim *anim)
+void NuTexAnimDestroy(struct nutexanim_s *anim)
 {
     if (anim->env) {
         NuTexAnimEnvDestroy(anim->env);
@@ -942,22 +926,22 @@ void NuTexAnimDestroy(NuTexAnim *anim)
 }
 
 
-NuTexAnim *NuTexAnimCreate(char **buff, NuTexAnimProg *prog, struct numtl_s *mtl, short *tids, int num_tids)
+struct nutexanim_s *NuTexAnimCreate(char **buff, struct nutexanimprog_s *prog, struct numtl_s *mtl, short *tids, int num_tids)
 {
-    NuTexAnim *anim;
+    struct nutexanim_s *anim;
 
     if (buff) {
-        anim = (NuTexAnim *)(((int)*buff + 3) & 0xFFFFFFFC);
-        *buff = (char *)anim + sizeof(NuTexAnim);
+        anim = (struct nutexanim_s *)(((int)*buff + 3) & 0xFFFFFFFC);
+        *buff = (char *)anim + sizeof(struct nutexanim_s);
         *buff += num_tids * sizeof(short);
     } else {
-        anim = NuMemAllocFn(sizeof(NuTexAnim) + num_tids * sizeof(short), nutexanm_srcfile, 0x4CC);
+        anim = NuMemAllocFn(sizeof(struct nutexanim_s) + num_tids * sizeof(short), nutexanm_srcfile, 0x4CC);
     }
     anim->prev = 0;
-    anim->next = 0;
-    anim->num_tids = num_tids;
+    anim->succ = 0;
+    anim->numtids = num_tids;
     anim->mtl = mtl;
-    anim->name = 0;
+    anim->ntaname = 0;
     anim->tids = (short *)(anim + 1);
     memcpy(anim->tids, tids, num_tids * sizeof(short));
     anim->env = NuTexAnimEnvCreate(buff, mtl, anim->tids, prog);
@@ -965,7 +949,7 @@ NuTexAnim *NuTexAnimCreate(char **buff, NuTexAnimProg *prog, struct numtl_s *mtl
 }
 
 
-void NuTexAnimAddList(NuTexAnim *anim)
+void NuTexAnimAddList(struct nutexanim_s *anim)
 {
     NuTexAnimList *list;
 
@@ -985,7 +969,7 @@ void NuTexAnimAddList(NuTexAnim *anim)
 }
 
 
-void NuTexAnimRemoveList(NuTexAnim *anim)
+void NuTexAnimRemoveList(struct nutexanim_s *anim)
 {
     NuTexAnimList *list;
 
@@ -1013,10 +997,10 @@ void NuTexAnimRemoveList(NuTexAnim *anim)
 void NuTexAnimProcess(void)
 {
     NuTexAnimList *list;
-    NuTexAnim *anim;
+    struct nutexanim_s *anim;
 
     for (list = ntal_first; list; list = list->next) {
-        for (anim = list->anims; anim; anim = anim->next) {
+        for (anim = list->anims; anim; anim = anim->succ) {
             if (anim->env) {
                 NuTexAnimEnvProc(anim->env);
             }
@@ -1149,9 +1133,9 @@ void pftaScriptname(NuFPar *parser)
 }
 
 
-void NuTexAnimResetList(NuTexAnim *anim)
+void NuTexAnimResetList(struct nutexanim_s *anim)
 {
-    for (; anim; anim = anim->next) {
+    for (; anim; anim = anim->succ) {
         NuTexAnimEnvReset(anim->env);
     }
 }

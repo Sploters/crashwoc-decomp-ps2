@@ -11,51 +11,11 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
+
 #include "creature.h"
-
-struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;                /* bits 32-35 */
-    u64 filter : 2;               /* bits 36-37 */
-    u64 unk38 : 6;
-    u64 cull : 2;                 /* bits 44-45 */
-    u64 zmode : 2;                /* bits 46-47 */
-    u64 unk48 : 16;
-};
-
-struct nurndrstream_s {
-    u8 *start;                    /* 0x00 */
-    u8 *cur;                      /* 0x04 */
-    u8 pad08[0xC];
-    struct numtl_s *mtl;          /* 0x14 */
-    u8 pad18[0x1C];
-    s32 mtl_tid;                  /* 0x34 */
-};
-
-struct numtl_s {
-    u8 pad000[0x124];
-    struct nurndrstream_s rs;     /* 0x124 */
-    u8 pad15C[0xC];
-    struct numtlattrib_s attrib;  /* 0x168 */
-    u8 pad170[0x10];
-    struct nucolour3_s diffuse;   /* 0x180 */
-    u8 pad18C[0x14];
-    f32 alpha;                    /* 0x1A0 */
-    s32 tid;                      /* 0x1A4 */
-    s32 alpha_sort;               /* 0x1A8 */
-    u8 pad1AC[0x24];
-}; /* 0x1D0 */
-
-struct nutex_s {
-    s32 type;                     /* 0x00 */
-    s32 width;                    /* 0x04 */
-    s32 height;                   /* 0x08 */
-    s32 mmcnt;                    /* 0x0C */
-    void *bits;                   /* 0x10 */
-    void *pal;                    /* 0x14 */
-    s32 decal;                    /* 0x18 */
-    s32 linear;                   /* 0x1C */
-}; /* 0x20 */
 
 struct nuvtx_tc1_s {
     struct nuvec_s pnt;           /* 0x00 */
@@ -102,17 +62,7 @@ extern s32 NuFileSize(char *name);
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
 extern void *NuMemAllocFn(s32 size, char *file, s32 line);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
-extern s32 NuTexCreate(struct nutex_s *tex);
-extern s32 NuTexCreateNative(void *native);
-extern void NuTexDestroy(s32 tid);
-extern void NuTexAccomodateRS(struct nurndrstream_s *rs, s32 tid);
-extern u8 *NuTexSetPal(u8 *cur, s32 tid, s32 paltid, s32 mode);
-extern struct numtl_s *NuMtlCreate(s32 n);
-extern void NuMtlAdd(struct numtl_s *mtl);
-extern void NuMtlUpdate(struct numtl_s *mtl);
-extern void NuMtlDestroy(struct numtl_s *mtl);
 extern void NuRndrStreamLink(struct nurndrstream_s *rs);
-extern int NuRndrStreamAddMtl(struct nurndrstream_s *rs, struct numtl_s *mtl);
 extern s32 NuRndrStreamTriStrip3dClip(struct nuvtx_tc1_s *vtx, s32 num, struct numtx_s *mtx,
                                       struct nurndrstream_s *rs);
 extern u8 *vpDmaTag_CntEx(u8 *cur, s32 qwc, u32 tag);
@@ -183,7 +133,7 @@ void ShadRndr(struct numtx_s *mtx, struct shadentry_s *shad, f32 frame, f32 scal
     if (shad->mtl != 0) {
         mtl = shad->mtl;
     }
-    rs = &mtl->rs;
+    rs = &mtl->stream;
     tid = shadtids[pal];
     if (tid != 0) {
         NuRndrStreamLink(rs);
@@ -191,13 +141,13 @@ void ShadRndr(struct numtx_s *mtx, struct shadentry_s *shad, f32 frame, f32 scal
         rs->mtl_tid = 0;
         NuRndrStreamAddMtl(rs, mtl);
         NuTexAccomodateRS(rs, tid);
-        rs->cur = NuTexSetPal(rs->cur, mtl->tid, tid, 0);
-        rndrstream_free = vpDmaTag_Next(rs->cur, 0);
+        rs->cur.b = NuTexSetPal(rs->cur.b, mtl->tid, tid, 0);
+        rndrstream_free = vpDmaTag_Next(rs->cur.b, 0);
     }
     NuRndrStreamTriStrip3dClip(shadvtx, 4, &m, rs);
     NuRndrStreamLink(rs);
-    rs->cur = vpDmaTag_CntEx(rs->cur, 0, 0x13000000);
-    rndrstream_free = vpDmaTag_Next(rs->cur, 0);
+    rs->cur.b = vpDmaTag_CntEx(rs->cur.b, 0, 0x13000000);
+    rndrstream_free = vpDmaTag_Next(rs->cur.b, 0);
 }
 
 

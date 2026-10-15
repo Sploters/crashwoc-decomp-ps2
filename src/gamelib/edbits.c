@@ -20,8 +20,8 @@
 
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
-struct numtl_s;
 struct nuinstance_s;
 
 struct nurndrvtx_s {

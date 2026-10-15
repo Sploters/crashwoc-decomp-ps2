@@ -33,6 +33,9 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
+#include "nu3d/nutexanm.h"
 #include "nucore/nuerror.h"
 #include "numath/numtx.h"
 #include "numath/nutrig.h"
@@ -174,8 +177,6 @@ extern void sceGsSyncV(s32 mode);
 extern void *world_scene[];
 extern void NuHGobjDestroy(void *obj);
 extern void NuSoundFlushLoops(void);
-extern void NuTexInit(void);
-extern void NuMtlRelease(void);
 extern void NuGobjInit(void);
 extern s32 set_cutscenecammtx;
 extern struct numtx_s cutscenecammtx;
@@ -311,9 +312,7 @@ extern void *NuDatOpen(char *name, char **mem, s32 *used);
 struct nudathdr_s;
 extern void NuDatSet(struct nudathdr_s *ndh);
 extern void NuDatClose(struct nudathdr_s *ndh);
-struct NuTexAnimProg;
-extern void NuTexAnimProgSysInit(void);
-extern struct NuTexAnimProg *NuTexAnimProgReadScript(char **buff, char *name);
+struct nutexanimprog_s;
 void CutSceneNextLogoFunction(NuGCutScene *icutscene);
 
 struct scenecache_s {

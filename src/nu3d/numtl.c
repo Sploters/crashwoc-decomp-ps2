@@ -34,98 +34,14 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 
-struct nurndrstream_s {
-    void *start;
-    void *cur;
-    void *txtr_start;
-    void *txtr_end;
-    void *zbuf;
-    struct NuMtl *mtl;
-    void *mpgtag;
-    unsigned int sortkey;
-    int local_mtx_id;
-    short view_mtx_id;
-    short scissor_id;
-    short xyoffset_id;
-    char pad_0x2A[2];
-    void *light_addr;
-    unsigned int flags;
-    int mtl_tid;
-};
-
-struct numtluv_s {
-    float u;
-    float v;
-    u32 pad08[6];
-    u32 strow;
-    int row_u;
-    int row_v;
-    int row_z;
-    int row_w;
-};
-
-typedef struct NuMtl {
-    u8 unk000[0x120];
-    /* The attribute bits only fill the low word but are accessed as a dword;
-       the render stream starts right after them, at 0x124. */
-    union {
-        u64 flags;                          /* 0x120 */
-        struct {
-            u32 attrib;
-            struct nurndrstream_s stream;   /* 0x124 */
-            struct numtluv_s *uv;           /* 0x15C */
-        };
-    };
-    struct NuMtl *next;
-    struct NuMtl *prev;
-    struct NuMtl *display_next;
-    u32 alpha_mode : 4;
-    u32 filter : 2;
-    u32 fx : 2;
-    u32 utc : 2;
-    u32 vtc : 2;
-    u32 cull : 2;
-    u32 zmode : 2;
-    u32 lighting : 2;
-    u32 colour : 1;
-    u32 fill : 1;
-    u32 atst : 3;
-    u32 aref : 8;
-    u32 pad3F : 1;
-    u32 afail : 2;
-    u32 fst : 1;
-    u32 punch : 1;
-    u32 gouraud : 1;
-    struct nucolour3_s ambient;
-    struct nucolour3_s diffuse;
-    int fx1;
-    int fx2;
-    int fx3;
-    int fx4;
-    float power;
-    float alpha;
-    int tid;
-    int alpha_sort;
-    short K;
-    u8 L;
-    u8 uanmode : 4;
-    u8 vanmode : 4;
-    float su;
-    float sv;
-    float du;
-    float dv;
-    struct NuMtl *zmtl;
-    signed char ctxt;
-    u8 fxid;
-    u8 special_id;
-    u8 pad1C7[9];
-} NuMtl;
-
 struct numtlfile_s {
-    struct NuMtl *next;
+    struct numtl_s *next;
     u32 alpha_mode : 2;
     u32 filter : 2;
     u32 fx : 2;
@@ -162,19 +78,6 @@ struct numtlfile_s {
     float dv;
 };
 
-typedef struct NuMtlRect {
-    float x;
-    float y;
-    float w;
-    float h;
-    float z;
-    float u0;
-    float v0;
-    float u1;
-    float v1;
-    NuMtl *mtl;
-} NuMtlRect;
-
 typedef struct GsZbufReg {
     u64 zbp : 9;
     u64 pad09 : 15;
@@ -189,31 +92,13 @@ typedef struct GsZbufPair {
     u64 addr;
 } GsZbufPair;
 
-typedef int (*NuMtlReadEventFunc)(NuMtl *mtl);
 
 #define NUMTL_VALID 0x01
 #define NUMTL_POOLED 0x02
 #define NUMTL_ALLOCATED 0x04
 #define NUMTL_ZUPD 0x08
 
-extern int NuMtlReadEventDefault(NuMtl *mtl);
-extern void NuMtlCreateDefault(void);
-extern NuMtl *NuMtlCreate(int count);
-extern void NuMtlUpdateEx(NuMtl *mtl, int flags);
-extern int CreateStateBlock(NuMtl *mtl, int keep);
-extern void NuMtlClose(void);
-extern void NuMtlDestroy(NuMtl *mtl);
-extern void NuMtlRemove(NuMtl *mtl);
-extern void NuMtlInsert(NuMtl *mtl);
-extern void NuMtlUpdate(NuMtl *mtl);
-extern int NuMtlGetZupd(NuMtl *mtl);
-extern void NuRndrStreamResetStream(struct nurndrstream_s *stream, int flag);
-extern NuMtlReadEventFunc NuMtlReadEventSetHandler(NuMtlReadEventFunc handler);
-
 extern void NuRndrStreamLink(struct nurndrstream_s *rs);
-extern void NuTexAccomodateRS(struct nurndrstream_s *rs, int tid);
-extern void *NuTexSet(void *cur, int tid, int ctxt);
-extern void *NuRndrStreamAddZBState(void *cur, int zupd);
 extern void *vpDmaTag_Call(void *cur, void *addr);
 extern void *vpDmaTag_Next(void *cur, void *addr);
 
@@ -223,18 +108,16 @@ extern void *vtBeginDirect(void *packet, int irq);
 extern void *vtCloseDirect(void *packet);
 extern void *gsBeginGifPacket(void *packet, int eop, int nloop, int pre, int prim, int flg, int nreg, ...);
 extern void *gsCloseGifPacket(void *packet);
-extern void *NuTexWriteMaterialSettings(void *packet, NuMtl *mtl);
 extern float NuTrigTable[];
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern int NuFileRead(int fh, void *data, int size);
 extern int NuFileWrite(int fh, void *data, int size);
-extern short NuTexUnRef(int tid);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
 extern int VU1_DmaGetStatus(void);
-extern void NuRndrRect(NuMtlRect *rect);
+extern void NuRndrRect(struct numtlrect_s *rect);
 extern void NuFntSet(void *font);
 extern void NuFntScale(int x, int y);
 extern void NuFntPrintEx(int x, int y, int colour, const char *fmt, ...);
@@ -257,10 +140,10 @@ extern char D_00614568[];
 extern int D_0062EBA0;
 #define mtl_initialised D_0062EBA0
 
-extern NuMtl *D_0062EBA4;
+extern struct numtl_s *D_0062EBA4;
 #define mtl_list D_0062EBA4
 
-extern NuMtl *D_0062EBA8;
+extern struct numtl_s *D_0062EBA8;
 #define mtl_pool D_0062EBA8
 
 extern int D_0062EBAC;
@@ -269,7 +152,7 @@ extern int D_0062EBAC;
 extern int D_0062EBB0;
 #define mtl_pool_count D_0062EBB0
 
-extern NuMtl *D_0062EBDC;
+extern struct numtl_s *D_0062EBDC;
 #define mtl_iter D_0062EBDC
 
 extern char D_006144E8[];
@@ -308,11 +191,11 @@ extern char D_00286FC0[];
 extern struct nurndrstream_s *rndrstream_mtl_sort;
 extern void *rndrstream_free;
 
-extern NuMtl *numtl_defaultmtl2d;
-extern NuMtl *numtl_defaultmtl3d;
+extern struct numtl_s *numtl_defaultmtl2d;
+extern struct numtl_s *numtl_defaultmtl3d;
 
 
-int CreateStateBlock(NuMtl *mtl, int keep) {
+int CreateStateBlock(struct numtl_s *mtl, int keep) {
     int tme;
     int abe;
     int atst;
@@ -327,11 +210,11 @@ int CreateStateBlock(NuMtl *mtl, int keep) {
     u64 test;
     u32 *p;
 
-    afail = mtl->afail;
+    afail = mtl->attrib2.afail;
     tme = mtl->tid != 0;
-    abe = mtl->alpha_mode != 0;
-    atst = mtl->atst;
-    switch (mtl->alpha_mode) {
+    abe = mtl->attrib.alpha != 0;
+    atst = mtl->attrib.atst;
+    switch (mtl->attrib.alpha) {
     case 1:
     default:
         alpha = 0x44;
@@ -353,7 +236,7 @@ int CreateStateBlock(NuMtl *mtl, int keep) {
         break;
     }
     zte = 1;
-    switch (mtl->zmode) {
+    switch (mtl->attrib.zmode) {
     case 0:
     default:
         ztst = 2;
@@ -374,8 +257,8 @@ int CreateStateBlock(NuMtl *mtl, int keep) {
     }
     p = vpDmaTag_RetEx(mtl, 0x10000000, 0x50000000);
     ((u8 *)p)[-14] = 1;
-    fst = mtl->fst;
-    iip = mtl->gouraud;
+    fst = mtl->attrib2.uvmode;
+    iip = mtl->attrib2.gouraud;
     p = vtBeginDirect(p - 1, 0);
     p = gsBeginGifPacket(p, 0, 1, 0, 0, 0, 1, 0xE);
     prmode = ((u64)iip << 3) | ((u64)tme << 4);
@@ -385,7 +268,7 @@ int CreateStateBlock(NuMtl *mtl, int keep) {
     *((u64 *)p)++ = 0x42 + mtl->ctxt;
     *((u64 *)p)++ = (NuPs2ZBufReg0.zbuf.zbp | (NuPs2ZBufReg0.zbuf.psm << 24)) | ((u64)zmsk << 32);
     *((u64 *)p)++ = 0x4E + mtl->ctxt;
-    test = (u64)abe | ((u64)atst << 1) | ((u64)mtl->aref << 4);
+    test = (u64)abe | ((u64)atst << 1) | ((u64)mtl->attrib.aref << 4);
     test |= (u64)afail << 12;
     *((u64 *)p)++ = test | ((u64)zte << 16) | ((u64)ztst << 17);
     *((u64 *)p)++ = 0x47 + mtl->ctxt;
@@ -400,7 +283,7 @@ int CreateStateBlock(NuMtl *mtl, int keep) {
     *((float *)p)++ = mtl->diffuse.g * 128.0f;
     *((float *)p)++ = mtl->diffuse.b * 128.0f;
     *((float *)p)++ = mtl->alpha * 128.0f;
-    mtl->uv = (struct numtluv_s *)p;
+    mtl->effect.uv = (struct numtluv_s *)p;
     if (keep) {
         p += 8;
     } else {
@@ -427,7 +310,7 @@ int CreateStateBlock(NuMtl *mtl, int keep) {
 
 
 void NuMtlAnimate(float dt) {
-    NuMtl *mtl;
+    struct numtl_s *mtl;
     float u;
     float v;
 
@@ -438,25 +321,25 @@ void NuMtlAnimate(float dt) {
             break;
         case 1:
             u = mtl->su;
-            mtl->uv->u = u;
-            mtl->uv->row_u = u * 4096.0f;
+            mtl->effect.uv->u = u;
+            mtl->effect.uv->row_u = u * 4096.0f;
             break;
         case 2:
             mtl->su += mtl->du * dt;
             mtl->su = mtl->su - floor(mtl->su);
             u = mtl->su;
-            mtl->uv->u = u;
-            mtl->uv->row_u = u * 4096.0f;
+            mtl->effect.uv->u = u;
+            mtl->effect.uv->row_u = u * 4096.0f;
             break;
         case 3:
             u = NuTrigTable[(int)(mtl_anim_time * mtl->du * 65536.0f) & 0xFFFF] * mtl->su;
-            mtl->uv->u = u;
-            mtl->uv->row_u = u * 4096.0f;
+            mtl->effect.uv->u = u;
+            mtl->effect.uv->row_u = u * 4096.0f;
             break;
         case 4:
             u = NuTrigTable[((int)(mtl_anim_time * mtl->du * 65536.0f) + 0x4000) & 0xFFFF] * mtl->su;
-            mtl->uv->u = u;
-            mtl->uv->row_u = u * 4096.0f;
+            mtl->effect.uv->u = u;
+            mtl->effect.uv->row_u = u * 4096.0f;
             break;
         }
         switch (mtl->vanmode) {
@@ -464,32 +347,32 @@ void NuMtlAnimate(float dt) {
             break;
         case 1:
             v = mtl->sv;
-            mtl->uv->v = v;
-            mtl->uv->row_v = v * 4096.0f;
+            mtl->effect.uv->v = v;
+            mtl->effect.uv->row_v = v * 4096.0f;
             break;
         case 2:
             mtl->sv += mtl->dv * dt;
             mtl->sv = mtl->sv - floor(mtl->sv);
             v = mtl->sv;
-            mtl->uv->v = v;
-            mtl->uv->row_v = v * 4096.0f;
+            mtl->effect.uv->v = v;
+            mtl->effect.uv->row_v = v * 4096.0f;
             break;
         case 3:
             v = NuTrigTable[(int)(mtl_anim_time * mtl->dv * 65536.0f) & 0xFFFF] * mtl->sv;
-            mtl->uv->v = v;
-            mtl->uv->row_v = v * 4096.0f;
+            mtl->effect.uv->v = v;
+            mtl->effect.uv->row_v = v * 4096.0f;
             break;
         case 4:
             v = NuTrigTable[((int)(mtl_anim_time * mtl->dv * 65536.0f) + 0x4000) & 0xFFFF] * mtl->sv;
-            mtl->uv->v = v;
-            mtl->uv->row_v = v * 4096.0f;
+            mtl->effect.uv->v = v;
+            mtl->effect.uv->row_v = v * 4096.0f;
             break;
         }
     }
 }
 
 
-inline int NuMtlGetZupd(NuMtl *mtl) {
+inline int NuMtlGetZupd(struct numtl_s *mtl) {
     u64 flags;
 
     flags = mtl->flags;
@@ -499,8 +382,8 @@ inline int NuMtlGetZupd(NuMtl *mtl) {
 
 void NuMtlBuildRenderList(void) {
     struct nurndrstream_s *rs;
-    NuMtl *mtl;
-    NuMtl *tex_mtl;
+    struct numtl_s *mtl;
+    struct numtl_s *tex_mtl;
     u32 *last_tag;
     int tid;
     int accomodated_tid;
@@ -516,49 +399,49 @@ void NuMtlBuildRenderList(void) {
     for (tex_mtl = mtl; mtl; mtl = mtl->next) {
         if (tex_mtl) {
             if (last_tag) {
-                last_tag[1] = (u32)rs->cur;
+                last_tag[1] = (u32)rs->cur.b;
                 last_tag = 0;
             }
-            if (tex_mtl->stream.start && tex_mtl->stream.cur != tex_mtl->stream.start
+            if (tex_mtl->stream.start && tex_mtl->stream.cur.b != tex_mtl->stream.start
                 && tex_mtl->tid != accomodated_tid) {
                 NuTexAccomodateRS(rs, tex_mtl->tid);
                 accomodated_tid = tex_mtl->tid;
             }
             tex_mtl = tex_mtl->next;
         }
-        if (mtl->stream.start && mtl->stream.cur != mtl->stream.start) {
+        if (mtl->stream.start && mtl->stream.cur.b != mtl->stream.start) {
             if (last_tag) {
-                last_tag[1] = (u32)rs->cur;
+                last_tag[1] = (u32)rs->cur.b;
             }
             if (mtl->tid != tid) {
-                rs->cur = NuTexSet(rs->cur, mtl->tid, mtl->ctxt);
+                rs->cur.b = NuTexSet(rs->cur.b, mtl->tid, mtl->ctxt);
                 tid = mtl->tid;
             }
             if (mpgtag != mtl->stream.mpgtag) {
-                rs->cur = vpDmaTag_Call(rs->cur, mtl->stream.mpgtag);
+                rs->cur.b = vpDmaTag_Call(rs->cur.b, mtl->stream.mpgtag);
                 mpgtag = mtl->stream.mpgtag;
             }
-            rs->cur = vpDmaTag_Call(rs->cur, mtl);
-            rs->cur = NuRndrStreamAddZBState(rs->cur, NuMtlGetZupd(mtl));
-            rs->cur = vpDmaTag_Next(rs->cur, mtl->stream.start);
-            last_tag = mtl->stream.cur;
+            rs->cur.b = vpDmaTag_Call(rs->cur.b, mtl);
+            rs->cur.b = NuRndrStreamAddZBState(rs->cur.b, NuMtlGetZupd(mtl));
+            rs->cur.b = vpDmaTag_Next(rs->cur.b, mtl->stream.start);
+            last_tag = mtl->stream.cur.b;
             NuRndrStreamResetStream(&mtl->stream, 1);
         }
         mtl->stream.start = 0;
-        mtl->stream.cur = 0;
+        mtl->stream.cur.b = 0;
     }
     if (last_tag) {
-        last_tag[1] = (u32)rs->cur;
+        last_tag[1] = (u32)rs->cur.b;
     }
-    rndrstream_free = vpDmaTag_Next(rs->cur, 0);
+    rndrstream_free = vpDmaTag_Next(rs->cur.b, 0);
 }
 
 
 void NuMtlCreateDefault(void) {
     numtl_defaultmtl3d = NuMtlCreate(1);
-    numtl_defaultmtl3d->zmode = 0;
-    numtl_defaultmtl3d->zmode = 3;
-    numtl_defaultmtl3d->alpha_mode = 0;
+    numtl_defaultmtl3d->attrib.zmode = 0;
+    numtl_defaultmtl3d->attrib.zmode = 3;
+    numtl_defaultmtl3d->attrib.alpha = 0;
     numtl_defaultmtl3d->diffuse.r = 0.5f;
     numtl_defaultmtl3d->diffuse.g = 0.5f;
     numtl_defaultmtl3d->diffuse.b = 0.5f;
@@ -567,9 +450,9 @@ void NuMtlCreateDefault(void) {
     numtl_defaultmtl3d->L = 0;
     NuMtlUpdate(numtl_defaultmtl3d);
     numtl_defaultmtl2d = NuMtlCreate(1);
-    numtl_defaultmtl2d->cull = 2;
-    numtl_defaultmtl2d->zmode = 3;
-    numtl_defaultmtl2d->alpha_mode = 0;
+    numtl_defaultmtl2d->attrib.cull = 2;
+    numtl_defaultmtl2d->attrib.zmode = 3;
+    numtl_defaultmtl2d->attrib.alpha = 0;
     numtl_defaultmtl2d->diffuse.r = 0.5f;
     numtl_defaultmtl2d->diffuse.g = 0.5f;
     numtl_defaultmtl2d->alpha = 1.0f;
@@ -580,8 +463,8 @@ void NuMtlCreateDefault(void) {
 }
 
 
-NuMtl *NuMtlAlloc(void) {
-    NuMtl *mtl;
+struct numtl_s *NuMtlAlloc(void) {
+    struct numtl_s *mtl;
     int i;
 
     mtl = 0;
@@ -593,7 +476,7 @@ NuMtl *NuMtlAlloc(void) {
         while (i != mtl_pool_last) {
             if (!(mtl_pool[i].flags & NUMTL_VALID)) {
                 mtl = &mtl_pool[i];
-                memset(mtl, 0, sizeof(NuMtl));
+                memset(mtl, 0, sizeof(struct numtl_s));
                 mtl->flags |= NUMTL_VALID;
                 mtl->flags |= NUMTL_POOLED;
                 mtl_pool_last = i;
@@ -605,8 +488,8 @@ NuMtl *NuMtlAlloc(void) {
             }
         }
     } else {
-        mtl = NuMemAllocFn(sizeof(NuMtl), numtl_file, 0x398);
-        memset(mtl, 0, sizeof(NuMtl));
+        mtl = NuMemAllocFn(sizeof(struct numtl_s), numtl_file, 0x398);
+        memset(mtl, 0, sizeof(struct numtl_s));
         mtl->flags |= NUMTL_VALID;
         mtl->flags |= NUMTL_ALLOCATED;
     }
@@ -614,8 +497,8 @@ NuMtl *NuMtlAlloc(void) {
 }
 
 
-NuMtl *NuMtlCreate(int count) {
-    NuMtl *mtl;
+struct numtl_s *NuMtlCreate(int count) {
+    struct numtl_s *mtl;
     int i;
 
     mtl = 0;
@@ -624,11 +507,11 @@ NuMtl *NuMtlCreate(int count) {
         if (!mtl) {
             NuErrorProlog(numtl_file, 0x3AF)(msg_alloc_failed);
         }
-        mtl->filter = 1;
-        mtl->atst = 5;
-        mtl->aref = 0x7F;
-        mtl->afail = 3;
-        mtl->gouraud = 1;
+        mtl->attrib.filter = 1;
+        mtl->attrib.atst = 5;
+        mtl->attrib.aref = 0x7F;
+        mtl->attrib2.afail = 3;
+        mtl->attrib2.gouraud = 1;
         mtl->alpha = 1.0f;
         mtl->L = 0;
         mtl->su = 0.0f;
@@ -649,8 +532,8 @@ NuMtl *NuMtlCreate(int count) {
 }
 
 
-NuMtl *NuMtlRead(int fh) {
-    NuMtl *mtl;
+struct numtl_s *NuMtlRead(int fh) {
+    struct numtl_s *mtl;
     struct numtlfile_s file;
 
     mtl = NuMtlCreate(1);
@@ -661,10 +544,10 @@ NuMtl *NuMtlRead(int fh) {
         mtl->display_next = file.next;
         mtl->ambient = file.ambient;
         mtl->diffuse = file.diffuse;
-        mtl->fx1 = file.fx1;
-        mtl->fx2 = file.fx2;
-        mtl->fx3 = file.fx3;
-        mtl->fx4 = file.fx4;
+        mtl->fx1.s32 = file.fx1;
+        mtl->fx2.s32 = file.fx2;
+        mtl->fx3.s32 = file.fx3;
+        mtl->fx4.s32 = file.fx4;
         mtl->power = file.power;
         mtl->alpha = file.alpha;
         mtl->tid = file.tid;
@@ -679,40 +562,40 @@ NuMtl *NuMtlRead(int fh) {
         mtl->dv = file.dv;
         mtl->fxid = file.fxid;
         mtl->special_id = file.special_id;
-        mtl->alpha_mode = file.alpha_mode;
-        mtl->filter = file.filter;
-        mtl->fx = 0;
-        mtl->utc = file.utc;
-        mtl->vtc = file.vtc;
-        mtl->cull = file.cull;
-        mtl->zmode = file.zmode;
-        mtl->lighting = file.lighting;
-        mtl->colour = file.colour;
-        mtl->fill = file.fill;
-        mtl->atst = file.atst;
-        mtl->aref = file.aref;
-        mtl->afail = file.afail;
-        mtl->fst = file.fst;
-        mtl->punch = 0;
-        if (mtl->alpha_mode && mtl->atst == 5) {
-            if (mtl->aref == 0xFF) {
-                mtl->punch = 1;
-                mtl->aref = 0x7F;
+        mtl->attrib.alpha = file.alpha_mode;
+        mtl->attrib.filter = file.filter;
+        mtl->attrib.fx = 0;
+        mtl->attrib.utc = file.utc;
+        mtl->attrib.vtc = file.vtc;
+        mtl->attrib.cull = file.cull;
+        mtl->attrib.zmode = file.zmode;
+        mtl->attrib.lighting = file.lighting;
+        mtl->attrib.colour = file.colour;
+        mtl->attrib.fill = file.fill;
+        mtl->attrib.atst = file.atst;
+        mtl->attrib.aref = file.aref;
+        mtl->attrib2.afail = file.afail;
+        mtl->attrib2.uvmode = file.fst;
+        mtl->attrib2.punch = 0;
+        if (mtl->attrib.alpha && mtl->attrib.atst == 5) {
+            if (mtl->attrib.aref == 0xFF) {
+                mtl->attrib2.punch = 1;
+                mtl->attrib.aref = 0x7F;
             }
         }
-        mtl->gouraud = 1;
-        if (mtl->afail == 1) {
-            mtl->afail = 3;
+        mtl->attrib2.gouraud = 1;
+        if (mtl->attrib2.afail == 1) {
+            mtl->attrib2.afail = 3;
         }
     }
     if (numtl_lighting_disabled) {
-        mtl->lighting = 2;
+        mtl->attrib.lighting = 2;
     }
-    if (mtl->alpha_mode) {
+    if (mtl->attrib.alpha) {
         mtl->alpha_sort++;
     }
     if (numtl_force_mipmap) {
-        mtl->filter = 2;
+        mtl->attrib.filter = 2;
     }
     if (mtl->tid != -1) {
         mtl->diffuse.r *= 0.5f;
@@ -723,7 +606,7 @@ NuMtl *NuMtlRead(int fh) {
 }
 
 
-int NuMtlValid(NuMtl *mtl) {
+int NuMtlValid(struct numtl_s *mtl) {
     u64 flags;
 
     flags = mtl->flags;
@@ -745,12 +628,12 @@ void NuMtlInit(void) {
 
 
 int NuMtlGetSysBuffSize(int count) {
-    return count * sizeof(NuMtl);
+    return count * sizeof(struct numtl_s);
 }
 
 
 void NuMtlInitEx(void **buff, int count) {
-    NuMtl *pool;
+    struct numtl_s *pool;
     int i;
 
     if (mtl_initialised) {
@@ -762,13 +645,13 @@ void NuMtlInitEx(void **buff, int count) {
     mtl_pool = 0;
     NuMtlCreateDefault();
     NuMtlReadEventSetHandler(0);
-    pool = (NuMtl *)(((u32)*buff + 0xF) & 0xFFFFFFF0);
+    pool = (struct numtl_s *)(((u32)*buff + 0xF) & 0xFFFFFFF0);
     mtl_pool_count = count;
     mtl_pool_last = 0;
     *buff = pool;
     mtl_pool = pool;
     *buff = pool + count;
-    memset(pool, 0, count * sizeof(NuMtl));
+    memset(pool, 0, count * sizeof(struct numtl_s));
     for (i = 0; i < mtl_pool_count; i++) {
         mtl_pool[i].flags |= NUMTL_POOLED;
     }
@@ -777,8 +660,8 @@ void NuMtlInitEx(void **buff, int count) {
 
 
 void NuMtlClose(void) {
-    NuMtl *mtl;
-    NuMtl *next;
+    struct numtl_s *mtl;
+    struct numtl_s *next;
     int i;
 
     if (mtl_initialised) {
@@ -801,8 +684,8 @@ void NuMtlClose(void) {
 
 
 void NuMtlRelease(void) {
-    NuMtl *mtl;
-    NuMtl *next;
+    struct numtl_s *mtl;
+    struct numtl_s *next;
     int i;
 
     mtl = mtl_list;
@@ -821,7 +704,7 @@ void NuMtlRelease(void) {
 }
 
 
-void NuMtlDestroy(NuMtl *mtl) {
+void NuMtlDestroy(struct numtl_s *mtl) {
     if (mtl->tid) {
         NuTexUnRef(mtl->tid);
     }
@@ -840,14 +723,14 @@ void NuMtlDestroy(NuMtl *mtl) {
 }
 
 
-void NuMtlUpdate(NuMtl *mtl) {
+void NuMtlUpdate(struct numtl_s *mtl) {
     NuMtlUpdateEx(mtl, 1);
 }
 
 
-int NuMtlWrite(int fh, NuMtl *mtl) {
-    NuFileWrite(fh, mtl, sizeof(NuMtl));
-    return sizeof(NuMtl);
+int NuMtlWrite(int fh, struct numtl_s *mtl) {
+    NuFileWrite(fh, mtl, sizeof(struct numtl_s));
+    return sizeof(struct numtl_s);
 }
 
 
@@ -869,9 +752,9 @@ void *NuMtlGetStateBlockDma(void *dma) {
 }
 
 
-inline void NuMtlInsert(NuMtl *mtl) {
-    NuMtl *cur;
-    NuMtl *prev;
+inline void NuMtlInsert(struct numtl_s *mtl) {
+    struct numtl_s *cur;
+    struct numtl_s *prev;
     int key;
 
     prev = 0;
@@ -899,8 +782,8 @@ inline void NuMtlInsert(NuMtl *mtl) {
 }
 
 
-void NuMtlAdd(NuMtl *mtl) {
-    mtl->uv = 0;
+void NuMtlAdd(struct numtl_s *mtl) {
+    mtl->effect.uv = 0;
     mtl->prev = 0;
     mtl->next = 0;
     mtl->display_next = 0;
@@ -912,8 +795,8 @@ void NuMtlAdd(NuMtl *mtl) {
     NuMtlInsert(mtl);
 }
 
-NuMtl *NuMtlIterate(int restart) {
-    NuMtl *mtl;
+struct numtl_s *NuMtlIterate(int restart) {
+    struct numtl_s *mtl;
 
     if (restart) {
         mtl = mtl_list;
@@ -930,7 +813,7 @@ NuMtl *NuMtlIterate(int restart) {
 }
 
 
-inline void NuMtlRemove(NuMtl *mtl) {
+inline void NuMtlRemove(struct numtl_s *mtl) {
     NuDisableVBlank();
     if (mtl->prev) {
         mtl->prev->next = mtl->next;
@@ -944,26 +827,26 @@ inline void NuMtlRemove(NuMtl *mtl) {
 }
 
 
-void NuMtlUpdateEx(NuMtl *mtl, int flags) {
+void NuMtlUpdateEx(struct numtl_s *mtl, int flags) {
     int keep;
-    NuMtl *zmtl;
+    struct numtl_s *zmtl;
 
     NuDisableVBlank();
     if (numtl_lighting_disabled) {
-        mtl->lighting = 2;
+        mtl->attrib.lighting = 2;
     }
     if (numtl_force_colour) {
-        mtl->colour = 1;
+        mtl->attrib.colour = 1;
     }
     if (numtl_force_lit) {
-        mtl->lighting = 0;
+        mtl->attrib.lighting = 0;
     }
     keep = flags & 2;
     if (!keep) {
         memset(mtl, 0, 0x120);
     }
     CreateStateBlock(mtl, keep);
-    switch (mtl->zmode) {
+    switch (mtl->attrib.zmode) {
     case 0:
     case 2:
     default:
@@ -976,7 +859,7 @@ void NuMtlUpdateEx(NuMtl *mtl, int flags) {
     }
     zmtl = mtl->zmtl;
     if (zmtl) {
-        switch (zmtl->zmode) {
+        switch (zmtl->attrib.zmode) {
         case 0:
         case 2:
         default:
@@ -988,7 +871,7 @@ void NuMtlUpdateEx(NuMtl *mtl, int flags) {
             break;
         }
     }
-    switch (mtl->lighting) {
+    switch (mtl->attrib.lighting) {
     case 3:
         mtl->stream.flags = 0x3D;
         mtl->stream.mpgtag = rndr3d_mode3_microcode;
@@ -999,7 +882,7 @@ void NuMtlUpdateEx(NuMtl *mtl, int flags) {
         break;
     case 0:
     default:
-        if (mtl->colour == 1) {
+        if (mtl->attrib.colour == 1) {
             mtl->stream.mpgtag = rndr3d_l_microcode;
         } else {
             mtl->stream.mpgtag = rndr3d_microcode;
@@ -1011,7 +894,7 @@ void NuMtlUpdateEx(NuMtl *mtl, int flags) {
         mtl->stream.mpgtag = rndr3d_fx_microcode;
         break;
     }
-    switch (mtl->fx) {
+    switch (mtl->attrib.fx) {
     case 0:
         break;
     case 1:
@@ -1027,15 +910,15 @@ void NuMtlUpdateEx(NuMtl *mtl, int flags) {
 }
 
 
-int NuMtlReadEventDefault(NuMtl *mtl) {
+int NuMtlReadEventDefault(struct numtl_s *mtl) {
     return 0;
 }
 
 
 
 void NuMtlUpdateAll(void) {
-    NuMtl *mtl;
-    NuMtl *next;
+    struct numtl_s *mtl;
+    struct numtl_s *next;
 
     mtl = mtl_list;
     NuErrorProlog(numtl_file, 0x5A8)(msg_update_all_dangerous);
@@ -1049,8 +932,8 @@ void NuMtlUpdateAll(void) {
 
 
 int NuMtlDisplayMtl(int index) {
-    NuMtlRect rect;
-    NuMtl *mtl;
+    struct numtlrect_s rect;
+    struct numtl_s *mtl;
     int i;
 
     mtl = mtl_list;

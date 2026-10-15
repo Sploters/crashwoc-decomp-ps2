@@ -12,6 +12,7 @@
 
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 #include "creature.h"
 
@@ -29,7 +30,6 @@ extern char *D_00633270;
 struct nugeom_s;
 struct nufaceongeom_s;
 struct nucolourref_s;
-struct numtl_s;
 struct nuspecial_s;
 
 struct nugobj_s {

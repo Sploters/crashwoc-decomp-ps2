@@ -43,6 +43,7 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nustream.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
@@ -1719,7 +1720,6 @@ void NuAnimCurve2SetApplyToMatrix(NuAnimCurve2 *curves, signed char *curveflags,
 }
 
 
-extern void *NuStreamGetOutputBuffer(int stream);
 extern int NuMemFileOpen(void *buf, int size, int mode);
 extern char D_00614A80[];
 extern char D_00614AA0[];

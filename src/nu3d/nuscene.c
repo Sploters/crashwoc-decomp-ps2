@@ -34,13 +34,9 @@
 
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
-
-struct numtl_s {
-    char pad000[0x168];
-    struct numtl_s *specmtl;        /* 0x168 */
-    char pad16C[0x38];
-    int tid;                        /* 0x1A4 */
-};
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
+#include "nu3d/nutexanm.h"
 
 struct nuanimdata_s;
 
@@ -139,17 +135,6 @@ struct nufaceongeom_s {
     int pad1C;
 }; /* 0x20 */
 
-struct nutex_s {
-    int type;                       /* 0x00 */
-    int width;                      /* 0x04 */
-    int height;                     /* 0x08 */
-    int mmcnt;                      /* 0x0C */
-    void *bits;                     /* 0x10 */
-    void *pal;                      /* 0x14 */
-    int decal;                      /* 0x18 */
-    int linear;                     /* 0x1C */
-}; /* 0x20 */
-
 struct nugobj_s {
     struct nugobj_s *sysnext;       /* 0x00 */
     struct nugobj_s *syslast;       /* 0x04 */
@@ -203,10 +188,6 @@ struct nuscene_s {
     struct nunode_s *root;          /* 0x34 */
     struct nugscn_s *gscene;        /* 0x38 */
 }; /* 0x3C */
-
-struct nutexanim_s {
-    char pad00[0x20];
-}; /* 0x20 */
 
 struct nuinstanim_s {
     struct numtx_s mtx;             /* 0x00 */
@@ -279,10 +260,7 @@ extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern int NuFileRead(int fh, void *buf, int size);
 extern int NuFileBeginBlkRead(int fh, int blk);
 extern void NuFileEndBlkRead(int fh);
-extern int NuTexImgSizeMM(int type, int width, int height, int mmcnt);
-extern int NuTexPalSize(int type);
 extern void NuTexSwizzelBits(struct nutex_s *tex);
-extern int NuTexCreate(struct nutex_s *tex);
 extern int FindSplinePtSize(char *name);
 extern struct nugobj_s *NuGobjCreate(void);
 extern struct nugeom_s *NuGeomCreate(void);
@@ -306,10 +284,6 @@ extern int NuFileReadInt(int fh);
 extern unsigned int NuFileReadUnsignedInt(int fh);
 extern char NuFileReadChar(int fh);
 extern float NuFileReadFloat(int fh);
-extern void NuTexDestroy(int tid);
-extern void NuMtlDestroy(struct numtl_s *mtl);
-extern struct numtl_s *NuMtlRead(int fh);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuGobjDestroy(struct nugobj_s *gobj);
 extern void NuNodeDestroyHierarchy(struct nunode_s *node);
 extern struct nunode_s *NuNodeCreate(void);
@@ -327,7 +301,6 @@ void ReadNuIFFScene(int fh, struct nuscene_s *scene);
 char *ReadNuIFFNameTable(int fh, int *size);
 extern struct nuanimdata_s *NuAnimDataRead(int fh);
 extern void ReadNuIFFTexAnimSet(int fh, struct nugscn_s *gscene, short *tids);
-extern void NuTexAnimDestroy(struct nutexanim_s *texanim);
 extern struct nuprim_s *NuPrimCreate(int nvids, int type);
 extern void NuGeomAddPrim(struct nugeom_s *geom, struct nuprim_s *prim);
 void NuSceneMtlUpdate(struct nuscene_s *scene);

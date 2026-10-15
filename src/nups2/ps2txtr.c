@@ -23,48 +23,11 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
 #include "nucore/nuerror.h"
+#include "nups2/ps2txtr.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
-
-typedef struct NuTex {
-    u32 type;
-    int width;
-    int height;
-    int mmcount;
-    void *bits;
-    u32 *pal;
-} NuTex;
-
-typedef struct NuPs2Tex {
-    u8 unk000[0x8];
-    u16 palend;
-    u16 gsbase;
-    u16 gsused;
-    u8 unk00E[0x2];
-    u16 tw;
-    u16 th;
-    void *mipdata[7];
-    int reqsize[7];
-    int upsize[7];
-    u16 tbp[7];
-    u16 tbw[7];
-    u16 dbw[7];
-    u8 mipcount;
-    u8 psm;
-    u8 uppsm;
-    u8 tcc;
-    u8 alphamode;
-    u8 unk097;
-    u8 *paldata;
-    u8 *palstream;
-    u16 cbp;
-    u16 cbw;
-    u16 cpsm;
-    u16 palsize;
-    u16 palstreamsize;
-    u8 unk0AA[0x2];
-    int gsaddr;
-} NuPs2Tex;
 
 typedef union QuantColour {
     u32 value;
@@ -117,7 +80,6 @@ extern char D_006161F0[];
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *NuRndrStreamAlloc(int qwc);
 extern void NuPs2GetCurrentBackBuffer(u64 *frame);
 extern void NuPs2GetCurrentFrontBuffer(u64 *frame);
 extern void NuPs2GetCurrentZBuffer(u64 *zbuf);
@@ -149,7 +111,7 @@ static inline int QuantAddColour(u32 colour) {
 }
 
 
-void QuantizeTexture(NuTex *spec) {
+void QuantizeTexture(struct nutex_s *spec) {
     QuantColour col;
     int index;
     int alpha;
@@ -205,7 +167,7 @@ void QuantizeTexture(NuTex *spec) {
 }
 
 
-int GenPaletteLoad(NuTex *spec, NuPs2Tex *tex) {
+int GenPaletteLoad(struct nutex_s *spec, struct nups2tex_s *tex) {
     int cpsm;
     int size;
     int width;
@@ -291,8 +253,8 @@ int GenPaletteLoad(NuTex *spec, NuPs2Tex *tex) {
 }
 
 
-u64 *Ps2TxSetStateData(u64 *dst, NuPs2Tex *tex, NuPs2Tex *paltex, char context) {
-    NuPs2Tex *pal;
+u64 *Ps2TxSetStateData(u64 *dst, struct nups2tex_s *tex, struct nups2tex_s *paltex, char context) {
+    struct nups2tex_s *pal;
     int cld;
     int tbp;
 
@@ -424,7 +386,7 @@ u64 *Ps2TxSetSurfaceStateData(u64 *dst, int surface) {
 }
 
 
-void NuPs2ChangeTexPalStreamTemp(NuPs2Tex *tex, u32 *pal) {
+void NuPs2ChangeTexPalStreamTemp(struct nups2tex_s *tex, u32 *pal) {
     u32 *dst;
     int block;
     int i;
@@ -453,7 +415,7 @@ void NuPs2ChangeTexPalStreamTemp(NuPs2Tex *tex, u32 *pal) {
 }
 
 
-int NuPs2TxDestroy(NuPs2Tex *tex) {
+int NuPs2TxDestroy(struct nups2tex_s *tex) {
     int i;
 
     for (i = 0; i < tex->mipcount; i++) {
@@ -466,7 +428,7 @@ int NuPs2TxDestroy(NuPs2Tex *tex) {
 }
 
 
-u8 *NuPs2TxUploadPal(u8 *stream, NuPs2Tex *tex, int addr) {
+u8 *NuPs2TxUploadPal(u8 *stream, struct nups2tex_s *tex, int addr) {
     u8 *pal;
     GifPtr p;
 
@@ -496,7 +458,7 @@ u8 *NuPs2TxUploadPal(u8 *stream, NuPs2Tex *tex, int addr) {
 }
 
 
-void NuPs2ChangeTexPal(NuPs2Tex *tex, u32 *pal) {
+void NuPs2ChangeTexPal(struct nups2tex_s *tex, u32 *pal) {
     u32 *dst;
     int block;
     int i;
@@ -522,7 +484,7 @@ void NuPs2ChangeTexPal(NuPs2Tex *tex, u32 *pal) {
 }
 
 
-u64 Ps2TxGetTex0(NuPs2Tex *tex) {
+u64 Ps2TxGetTex0(struct nups2tex_s *tex) {
     int cld;
 
     cld = tex->paldata ? 2 : 0;

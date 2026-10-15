@@ -26,6 +26,7 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nustream.h"
 #include "numath/nuvec.h"
 
 #include "creature.h"
@@ -185,11 +186,6 @@ s32 NuFileWriteInt(void *f, s32 v);
 s32 NuFileWriteFloat(void *f, f32 v);
 s32 NuFileWriteChar(void *f, char v);
 f32 FindLightProportion(struct nuvec_s *vec, struct Nearest_Light_s *nearest_light);
-extern s32 NuRndrSetDirectionalLights(struct nuvec_s *d0, struct nucolour3_s *c0,
-                                      struct nuvec_s *d1, struct nucolour3_s *c1,
-                                      struct nuvec_s *d2, struct nucolour3_s *c2);
-extern s32 NuRndrSetAmbientLight(struct nuvec_s *amb);
-extern void NuRndrSetSpecularLight(struct nuvec_s *dir, s32 enable);
 void NuRndrLine3dDbg(u32 colour, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1);
 void ResetLights(struct Nearest_Light_s *nl);
 void GetLights(struct nuvec_s *pos, struct Nearest_Light_s *nearest_lights,

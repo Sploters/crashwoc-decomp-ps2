@@ -179,6 +179,7 @@
 
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 struct edptlitem_s {
     char pad00[0xC];
@@ -955,26 +956,7 @@ extern char D_00618840[];
 #define memcardmergecharlabel D_00618808
 #define memcarddeletelabel D_00618828
 #define memcarderaselabel D_00618840
-struct numtlattrib_s {
-    unsigned long long : 32;
-    unsigned long long alpha : 4;
-    unsigned long long : 8;
-    unsigned long long cull : 2;
-    unsigned long long zmode : 2;
-    unsigned long long : 16;
-};
 
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x180 - 0x170];
-    struct nucolour3_s diffuse;
-    char pad18C[0x1A0 - 0x18C];
-    float alpha;
-};
-
-extern struct numtl_s *NuMtlCreate(int count);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void *eduiItemToggleCreate(int value, struct edptlfont_s *font, int on, int group, void *cb,
                                   char *label);
 extern int edpp_curr;

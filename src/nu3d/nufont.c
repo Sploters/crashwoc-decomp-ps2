@@ -28,37 +28,9 @@
 
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
-
-struct numtlattrib_s {
-    u64 : 32;
-    u64 alpha : 4;
-    u64 filter : 2;
-    u64 : 6;
-    u64 cull : 2;
-    u64 zmode : 2;
-    u64 lighting : 2;
-    u64 colour : 1;
-    u64 : 13;
-};
-
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x10];
-    struct nucolour3_s diffuse;
-    char pad18c[0x14];
-    f32 alpha;
-    s32 tid;
-};
-
-struct nutex_s {
-    s32 type;
-    s32 width;
-    s32 height;
-    s32 mmcnt;
-    u8 *bits;
-    s32 *pal;
-};
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
 
 struct nufontchar_s {
     f32 u0;
@@ -84,31 +56,14 @@ struct nufont_s {
     struct nufontchar_s chars[1];
 };
 
-struct nurndrstream_s {
-    u8 *start;
-    union {
-        u8 *b;
-        s32 *i;
-        f32 *f;
-    } cur;
-};
-
 extern s32 NuFileSize(char *name);
 extern s32 NuFileOpen(char *name, s32 mode);
 extern s32 NuFileRead(s32 handle, void *buf, s32 size);
 extern void NuFileClose(s32 handle);
 extern void *NuMemAllocFn(s32 size, char *file, s32 line);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
-extern struct nutex_s *NuTexReadBitmap(char *name);
-extern struct nutex_s *NuTexReadBitmapMem(void *data);
-extern s32 NuTexCreate(struct nutex_s *tex);
-extern void NuTexDestroy(s32 tid);
-extern struct numtl_s *NuMtlCreate(s32 count);
-extern void NuMtlUpdate(struct numtl_s *mtl);
-extern void NuMtlDestroy(struct numtl_s *mtl);
 
 extern void NuRndrStreamLink(struct nurndrstream_s *rs);
-extern s32 NuRndrStreamAddMtl(struct nurndrstream_s *rs, struct numtl_s *mtl);
 extern u8 *vpDmaTag_CntEx(u8 *cur, u32 qwc, u32 tag);
 extern u8 *vpDmaTag_Close(u8 *cur);
 extern u8 *vpDmaTag_Next(u8 *cur, s32 tag);

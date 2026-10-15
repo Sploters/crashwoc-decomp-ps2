@@ -22,35 +22,11 @@
 #include "numath/nurand.h"
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
 
-typedef struct NuMtlAttrib {
-    u32 : 32;
-    u32 alpha : 4;
-    u32 filter : 2;
-    u32 fx : 2;
-    u32 utc : 2;
-    u32 vtc : 2;
-    u32 cull : 2;
-    u32 zmode : 2;
-    u32 lighting : 2;
-    u32 colour : 1;
-    u32 fill : 1;
-    u32 atst : 3;
-    u32 : 9;
-} NuMtlAttrib;
-
-typedef struct NuMtlAttrib2 {
-    u32 fx : 2;
-    u32 : 30;
-    u32 : 32;
-} NuMtlAttrib2;
-
-typedef union NuMtlFx {
-    float f;
-    int i;
-} NuMtlFx;
-
-typedef struct NuWaterFx {
+struct nuwaterfx_s {
     u8 pad00[0x8];
     float wave;
     int phase;
@@ -58,48 +34,15 @@ typedef struct NuWaterFx {
     float vscale;
     float width;
     float height;
-} NuWaterFx;
+};
 
 typedef struct NuCamera {
     struct numtx_s mtx;
 } NuCamera;
 
-typedef struct NuRndrStream {
-    u32 *start;
-    u32 *cur;
-    u8 pad08[0x10];
-    void *fxcode;
-    u8 pad1C[0x1C];
-} NuRndrStream;
-
-typedef struct NuMtl {
-    u64 pad000[0x24];
-    u8 pad120[0x4];
-    NuRndrStream stream;
-    NuWaterFx *fxdata;
-    u8 pad160[0x8];
-    union {
-        NuMtlAttrib attrib;
-        struct NuMtl *layer;
-    };
-    NuMtlAttrib2 attrib2;
-    u8 pad178[0x8];
-    struct nucolour3_s diffuse;
-    NuMtlFx fx1;
-    NuMtlFx fx2;
-    NuMtlFx fx3;
-    NuMtlFx fx4;
-    float power;
-    float alpha;
-    int tid;
-    int alpha_sort;
-    u8 pad1AC[0x19];
-    u8 fxid;
-} NuMtl;
-
 typedef struct NuGeom {
     struct NuGeom *next;
-    NuMtl *mtl;
+    struct numtl_s *mtl;
 } NuGeom;
 
 typedef struct NuGobj {
@@ -121,37 +64,18 @@ typedef struct NuGScn {
     NuInstance *instances;
 } NuGScn;
 
-typedef struct NuTexSpec {
-    int type;
-    int width;
-    int height;
-    int mmcnt;
-    void *bits;
-    int *pal;
-    int decal;
-    int linear;
-} NuTexSpec;
-
 typedef struct WaterTable {
     struct nuvec4_s wave[32];
     float fx1;
     float fx4;
 } WaterTable;
 
-extern NuMtl *NuMtlIterate(int first);
-extern NuMtl *NuMtlCreate(int count);
-extern void NuMtlUpdate(NuMtl *mtl);
-extern int NuTexCreate(NuTexSpec *spec);
-extern int NuTexGetReqSize(int tid, int level);
-extern int NuTexReserve(int size);
-extern void NuTexAssignAddr(int tid, int addr);
-extern void NuTexUnReserve(void);
 extern int NuRndrBeginScene(int target);
 extern void NuRndrEndScene(void);
 extern void NuRndrRectUV2di(int x, int y, int w, int h, float u0, float v0, float u1, float v1,
-                            u32 colour, NuMtl *mtl);
+                            u32 colour, struct numtl_s *mtl);
 extern void NuRndrGobj(NuGobj *gobj, NuInstance *inst);
-extern void NuRndrStreamLink(NuRndrStream *stream);
+extern void NuRndrStreamLink(struct nurndrstream_s *stream);
 extern u32 *vpDmaTag_Cnt(u32 *cur);
 extern u32 *vpDmaTag_Close(u32 *cur);
 extern u32 *vpDmaTag_Next(u32 *cur, int mode);
@@ -178,7 +102,7 @@ extern char D_00290840[];
 extern int D_006331AC;
 #define nwaterinst D_006331AC
 
-extern NuMtl *D_006331B0;
+extern struct numtl_s *D_006331B0;
 #define water_grab_mtl D_006331B0
 
 extern int D_006331B4;
@@ -208,7 +132,7 @@ extern int D_0062EFFC;
 extern float D_0062F008;
 #define water_time D_0062F008
 
-extern NuMtl *D_006B1EB0[8];
+extern struct numtl_s *D_006B1EB0[8];
 #define watermtl D_006B1EB0
 
 extern int D_006B1ED0[8];
@@ -279,7 +203,7 @@ static inline u32 getWaterTable(float fx1, float fx4) {
 
 
 void fixNewMaterials(void) {
-    NuMtl *mtl;
+    struct numtl_s *mtl;
     int width;
     int height;
     u32 table;
@@ -289,23 +213,23 @@ void fixNewMaterials(void) {
         case 0x85:
         case 0x86:
             if (mtl->fxid == 0x86) {
-                mtl->stream.fxcode = water_alt_microcode;
+                mtl->stream.mpgtag = water_alt_microcode;
             } else {
-                mtl->stream.fxcode = water_microcode;
+                mtl->stream.mpgtag = water_microcode;
             }
-            mtl->fxdata->wave = mtl->fx3.f / mtl->fx4.f;
-            mtl->fxdata->phase = 0;
+            mtl->effect.water->wave = mtl->fx3.f32 / mtl->fx4.f32;
+            mtl->effect.water->phase = 0;
             width = 1;
             while (width < PS2_REZ_W) {
                 width <<= 1;
             }
-            mtl->fxdata->uscale = 1.0 / (width * 16.0);
+            mtl->effect.water->uscale = 1.0 / (width * 16.0);
             for (height = 1; height < PS2_REZ_H; height <<= 1) {
             }
-            mtl->fxdata->vscale = 1.0 / (height * 16.0);
-            mtl->fxdata->width = PS2_REZ_W;
-            mtl->fxdata->height = PS2_REZ_H;
-            table = getWaterTable(mtl->fx1.f, mtl->fx4.f);
+            mtl->effect.water->vscale = 1.0 / (height * 16.0);
+            mtl->effect.water->width = PS2_REZ_W;
+            mtl->effect.water->height = PS2_REZ_H;
+            table = getWaterTable(mtl->fx1.f32, mtl->fx4.f32);
             watermtl_table[nwatermtl] = table;
             if (nwatermtl >= 8) {
                 NuErrorProlog(nuwater_file, 0xE0)(msg_assert);
@@ -316,20 +240,20 @@ void fixNewMaterials(void) {
             water_grab = 1;
             mtl->tid = water_grab_tid;
             NuMtlUpdate(mtl);
-            mtl->stream.fxcode = water_microcode;
-            mtl->fxdata->wave = mtl->fx2.f / 48.0f / mtl->fx4.f;
-            mtl->fxdata->phase = 0;
+            mtl->stream.mpgtag = water_microcode;
+            mtl->effect.water->wave = mtl->fx2.f32 / 48.0f / mtl->fx4.f32;
+            mtl->effect.water->phase = 0;
             width = 1;
             while (width < PS2_REZ_W) {
                 width <<= 1;
             }
-            mtl->fxdata->uscale = 1.0 / (width * 16.0);
+            mtl->effect.water->uscale = 1.0 / (width * 16.0);
             for (height = 1; height < PS2_REZ_H; height <<= 1) {
             }
-            mtl->fxdata->vscale = 1.0 / (height * 16.0);
-            mtl->fxdata->width = PS2_REZ_W;
-            mtl->fxdata->height = PS2_REZ_H;
-            table = getWaterTable(mtl->fx1.f, mtl->fx4.f);
+            mtl->effect.water->vscale = 1.0 / (height * 16.0);
+            mtl->effect.water->width = PS2_REZ_W;
+            mtl->effect.water->height = PS2_REZ_H;
+            table = getWaterTable(mtl->fx1.f32, mtl->fx4.f32);
             watermtl_table[nwatermtl] = table;
             if (nwatermtl >= 8) {
                 NuErrorProlog(nuwater_file, 0xF6)(msg_assert);
@@ -342,8 +266,8 @@ void fixNewMaterials(void) {
 
 
 void fixMaterials(void) {
-    NuMtl *mtl;
-    NuMtl *layer;
+    struct numtl_s *mtl;
+    struct numtl_s *layer;
     struct nucolour3_s diffuse;
     int fxid;
     int i;
@@ -383,28 +307,28 @@ void fixMaterials(void) {
         layer->alpha = mtl->alpha;
         layer->attrib.alpha = mtl->attrib.alpha;
         layer->attrib.atst = mtl->attrib.atst;
-        layer->attrib2.fx = mtl->attrib2.fx;
+        layer->attrib2.afail = mtl->attrib2.afail;
         layer->attrib.fx = 1;
         layer->attrib.zmode = 0;
         layer->attrib.lighting = 0;
         layer->attrib.colour = 1;
         layer->alpha_sort = 0x7FFF;
         NuMtlUpdate(layer);
-        layer->stream.fxcode = water_microcode;
-        layer->fxdata->wave = mtl->fx3.f / mtl->fx4.f;
-        layer->fxdata->phase = 0;
+        layer->stream.mpgtag = water_microcode;
+        layer->effect.water->wave = mtl->fx3.f32 / mtl->fx4.f32;
+        layer->effect.water->phase = 0;
         width = 1;
         while (width < PS2_REZ_W) {
             width <<= 1;
         }
-        layer->fxdata->uscale = 1.0 / (width * 16.0);
+        layer->effect.water->uscale = 1.0 / (width * 16.0);
         for (height = 1; height < PS2_REZ_H; height <<= 1) {
         }
-        layer->fxdata->vscale = 1.0 / (height * 16.0);
-        layer->fxdata->width = PS2_REZ_W;
-        layer->fxdata->height = PS2_REZ_H;
+        layer->effect.water->vscale = 1.0 / (height * 16.0);
+        layer->effect.water->width = PS2_REZ_W;
+        layer->effect.water->height = PS2_REZ_H;
         layer->layer = 0;
-        table = getWaterTable(layer->fx1.f, layer->fx4.f);
+        table = getWaterTable(layer->fx1.f32, layer->fx4.f32);
         watermtl_table[nwatermtl + i] = table;
         watermtl[nwatermtl + i] = layer;
         mtl->diffuse = diffuse;
@@ -419,20 +343,20 @@ void fixMaterials(void) {
         mtl->tid = water_grab_tid;
         mtl->alpha_sort = 0x7FFE;
         NuMtlUpdate(mtl);
-        mtl->stream.fxcode = water_microcode;
-        mtl->fxdata->wave = mtl->fx2.f / 48.0f / mtl->fx4.f;
-        mtl->fxdata->phase = 0;
+        mtl->stream.mpgtag = water_microcode;
+        mtl->effect.water->wave = mtl->fx2.f32 / 48.0f / mtl->fx4.f32;
+        mtl->effect.water->phase = 0;
         width = 1;
         while (width < PS2_REZ_W) {
             width <<= 1;
         }
-        mtl->fxdata->uscale = 1.0 / (width * 16.0);
+        mtl->effect.water->uscale = 1.0 / (width * 16.0);
         for (height = 1; height < PS2_REZ_H; height <<= 1) {
         }
-        mtl->fxdata->vscale = 1.0 / (height * 16.0);
-        mtl->fxdata->width = PS2_REZ_W;
-        mtl->fxdata->height = PS2_REZ_H;
-        table = getWaterTable(mtl->fx1.f, mtl->fx4.f);
+        mtl->effect.water->vscale = 1.0 / (height * 16.0);
+        mtl->effect.water->width = PS2_REZ_W;
+        mtl->effect.water->height = PS2_REZ_H;
+        table = getWaterTable(mtl->fx1.f32, mtl->fx4.f32);
         watermtl_table[nwatermtl] = table;
         mtl->layer = layer;
     }
@@ -442,8 +366,8 @@ void fixMaterials(void) {
 
 
 void NuWaterInit(NuGScn *scene) {
-    NuTexSpec spec;
-    NuMtl *mtl;
+    struct nutex_s spec;
+    struct numtl_s *mtl;
 
     water_grab = 0;
     spec.type = 0xF;
@@ -479,8 +403,8 @@ void animateWaterTables(float scale, float time) {
     struct nuvec_s pos;
     struct numtx_s mtx;
     struct nuvec_s mtxscale = {0.5f, 0.5f, 0.5f};
-    NuMtl *mtl;
-    NuRndrStream *stream;
+    struct numtl_s *mtl;
+    struct nurndrstream_s *stream;
     float *table;
     float amp;
     float freq;
@@ -491,8 +415,8 @@ void animateWaterTables(float scale, float time) {
     NuMtxScale(&mtx, &mtxscale);
     mtx._03 = mtx._13 = mtx._23 = 0.0f;
     for (i = 0; i < nwatertable; i++) {
-        freq = time * watermtl[i]->fx1.f;
-        amp = watermtl[i]->fx4.f * scale;
+        freq = time * watermtl[i]->fx1.f32;
+        amp = watermtl[i]->fx4.f32 * scale;
         table = &watertable[i].wave[0].x;
         NuRandSeed(0x11);
         for (j = 0; j < 32; j++) {
@@ -511,15 +435,15 @@ void animateWaterTables(float scale, float time) {
         table = &watertable[watermtl_table[i]].wave[0].x;
         stream = &mtl->stream;
         NuRndrStreamLink(stream);
-        stream->cur = vpDmaTag_Cnt(stream->cur);
-        *stream->cur++ = 0x10000000;
-        *stream->cur++ = 0x6C2001B2;
+        stream->cur.w = vpDmaTag_Cnt(stream->cur.w);
+        *stream->cur.w++ = 0x10000000;
+        *stream->cur.w++ = 0x6C2001B2;
         for (j = 0; j < 32; j++) {
-            *((struct nuvec4_s *)stream->cur)++ = *(struct nuvec4_s *)table;
+            *((struct nuvec4_s *)stream->cur.w)++ = *(struct nuvec4_s *)table;
             table += 4;
         }
-        stream->cur = vpDmaTag_Close(stream->cur);
-        rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+        stream->cur.w = vpDmaTag_Close(stream->cur.w);
+        rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
     }
 }
 
@@ -529,8 +453,8 @@ void animateWater(float scale, float time) {
     struct nuvec_s pos;
     struct numtx_s mtx;
     struct nuvec_s mtxscale = {0.5f, 0.5f, 0.5f};
-    NuMtl *mtl;
-    NuRndrStream *stream;
+    struct numtl_s *mtl;
+    struct nurndrstream_s *stream;
     float amp;
     float freq;
     int i;
@@ -541,28 +465,28 @@ void animateWater(float scale, float time) {
     mtx._03 = mtx._13 = mtx._23 = 0.0f;
     for (i = 0; i < nwatermtl; i++) {
         mtl = watermtl[i];
-        freq = time * mtl->fx1.f;
-        amp = mtl->fx4.f * scale;
+        freq = time * mtl->fx1.f32;
+        amp = mtl->fx4.f32 * scale;
         stream = &mtl->stream;
         NuRndrStreamLink(stream);
-        stream->cur = vpDmaTag_Cnt(stream->cur);
-        *stream->cur++ = 0;
-        *stream->cur++ = 0;
-        *stream->cur++ = 0x10000000;
-        *stream->cur++ = 0x6C2001B2;
+        stream->cur.w = vpDmaTag_Cnt(stream->cur.w);
+        *stream->cur.w++ = 0;
+        *stream->cur.w++ = 0;
+        *stream->cur.w++ = 0x10000000;
+        *stream->cur.w++ = 0x6C2001B2;
         NuRandSeed(0x11);
         for (j = 0; j < 32; j++) {
             wave.x = NuTrigTable[(u16)((freq * (NuRandFloat() * 0.4f + 0.8f) + NuRandFloat() * 6.284f) * 10430.378f)] * amp;
             wave.y = 0.0f;
             wave.z = NuTrigTable[(u16)((freq * (NuRandFloat() * 0.4f + 0.7f) + NuRandFloat() * 6.284f) * 10430.378f)] * amp;
             NuVecMtxTransformH(&pos, &wave, &mtx);
-            *((float *)stream->cur)++ = pos.x;
-            *((float *)stream->cur)++ = pos.y;
-            *((float *)stream->cur)++ = 1.0f;
-            *((float *)stream->cur)++ = wave.x;
+            *((float *)stream->cur.w)++ = pos.x;
+            *((float *)stream->cur.w)++ = pos.y;
+            *((float *)stream->cur.w)++ = 1.0f;
+            *((float *)stream->cur.w)++ = wave.x;
         }
-        stream->cur = vpDmaTag_Close(stream->cur);
-        rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+        stream->cur.w = vpDmaTag_Close(stream->cur.w);
+        rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
     }
 }
 
@@ -605,28 +529,28 @@ void NuWaterRender(NuGScn *scene) {
 
 void NuWaterOverride(float fx1, float fx2, float fx3, float fx4) {
     int i;
-    NuMtl *mtl;
+    struct numtl_s *mtl;
     float unset;
 
     unset = 4294967296.0f;
     for (i = 0; i < nwatermtl; i++) {
         mtl = watermtl[i];
         if (fx1 != unset) {
-            mtl->fx1.f = fx1;
+            mtl->fx1.f32 = fx1;
         }
         if (fx2 != unset) {
-            mtl->fx2.f = fx2;
+            mtl->fx2.f32 = fx2;
         }
         if (fx3 != unset) {
-            mtl->fx3.f = fx3;
+            mtl->fx3.f32 = fx3;
         }
         if (fx4 != unset) {
-            mtl->fx4.f = fx4;
+            mtl->fx4.f32 = fx4;
         }
         if (mtl->alpha_sort == 0x7FFE) {
-            mtl->fxdata->wave = mtl->fx2.f / 48.0f / mtl->fx4.f;
+            mtl->effect.water->wave = mtl->fx2.f32 / 48.0f / mtl->fx4.f32;
         } else {
-            mtl->fxdata->wave = mtl->fx3.f / mtl->fx4.f;
+            mtl->effect.water->wave = mtl->fx3.f32 / mtl->fx4.f32;
         }
     }
 }

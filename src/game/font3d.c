@@ -13,6 +13,8 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/numtl.h"
+
 #include "creature.h"
 
 /* Font3DObjTab entry (objtemp_s): i@0, flags@2, action@3, anim_time@4. */
@@ -34,11 +36,6 @@ extern char D_005CD808[];   /* j_bc */
 extern s32 qrand(void);
 
 /* --- Font3D scene / material types (offsets verified from InitFont3D) --- */
-
-struct numtl_s {
-    u8 pad_1c6[0x1C6];
-    u8 special_id;          /* +0x1C6 verified in InitFont3D (lbu 0x1C6) */
-};
 
 struct nugscn_s {
     u8 pad_08[0x8];

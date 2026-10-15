@@ -131,7 +131,7 @@ def members(body):
 
 def declarators(code):
     """Member names declared by one declaration (comments/bodies removed)."""
-    code = re.sub(r"\{\}", " ", code).strip()
+    code = re.sub(r"\{\}", " ", code).strip().rstrip(";").strip()
     fnptr = re.search(r"\(\s*\*\s*(\w+)\s*\)\s*\(", code)
     if fnptr:
         return [fnptr.group(1)]

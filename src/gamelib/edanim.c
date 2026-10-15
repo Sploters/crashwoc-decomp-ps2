@@ -89,6 +89,7 @@
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 struct debtypedef_s {
     char name[0x10];
@@ -96,24 +97,6 @@ struct debtypedef_s {
     signed char gensort;
     char pad21[0x50 - 0x21];
     struct nuvec_s varstart;
-};
-
-struct numtlattrib_s {
-    unsigned long long : 32;
-    unsigned long long alpha : 4;
-    unsigned long long : 8;
-    unsigned long long cull : 2;
-    unsigned long long zmode : 2;
-    unsigned long long : 16;
-};
-
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x180 - 0x170];
-    struct nucolour3_s diffuse;
-    char pad18c[0x1A0 - 0x18C];
-    float alpha;
 };
 
 struct nuinstanim_s {
@@ -579,8 +562,6 @@ extern void edanimcbSetLocalSoundType(void *menu, struct edanimitem_s *item);
 extern void edanimcbCancelLocalSoundTypeMenu(void);
 extern void edanimcbSetSoundType(void *menu, struct edanimitem_s *item);
 extern void edanimcbCancelSoundTypeMenu(void);
-extern struct numtl_s *NuMtlCreate(int count);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void edanimcbCancelOptMenu(void);
 extern void edanimcbParticleMenu(struct eduimenu_s *menu);
 extern void edanimcbSoundMenu(struct eduimenu_s *menu);

@@ -27,6 +27,7 @@
 #include "numath/numtx.h"
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 #include "creature.h"
 
@@ -1956,24 +1957,6 @@ Finish:
     }
 }
 
-struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;                /* bits 32-35 */
-    u64 unk36 : 8;
-    u64 cull : 2;                 /* bits 44-45 */
-    u64 zmode : 2;                /* bits 46-47 */
-    u64 unk48 : 16;
-};
-
-struct numtl_s {
-    u8 unk_0x000[0x168];
-    struct numtlattrib_s attrib;  /* 0x168 */
-    u8 unk_0x170[0x10];
-    struct nucolour3_s diffuse;   /* 0x180 */
-    u8 unk_0x18C[0x14];
-    f32 alpha;                    /* 0x1A0 */
-};
-
 struct nurndrvtx_s {
     struct nuvec_s pnt;           /* 0x00 */
     u8 unk_0x0C[0xC];
@@ -1984,8 +1967,6 @@ struct nurndrvtx_s {
 extern struct numtl_s *D_00633268;
 #define camtarget_mtl D_00633268
 
-extern struct numtl_s *NuMtlCreate(s32 n);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl,
                          struct numtx_s *mtx);
 extern void NuRndrLine3dDbg(u32 colour, f32 x0, f32 y0, f32 z0, f32 x1,
