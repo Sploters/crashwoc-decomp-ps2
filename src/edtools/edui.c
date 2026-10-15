@@ -81,11 +81,7 @@
  *   0x001c1cc8 TestMenu
  */
 
-typedef signed int s32;
-typedef unsigned int u32;
-typedef unsigned char u8;
-typedef unsigned long long u64;
-typedef float f32;
+#include "nu_types.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

@@ -40,10 +40,8 @@
  *   0x0016d700 VU1_DmaGetStatusI
  */
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long u64;
+#include "nu_stdarg.h"
+#include "nu_types.h"
 
 typedef struct DmaTag {
     u16 qwc;
@@ -66,13 +64,6 @@ typedef struct GifTag {
 
 typedef DmaTag *(*TagWalkFunc)(DmaTag *tag, void *user);
 typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-typedef char *va_list;
-#define va_start(ap, last) \
-    ((ap) = ((va_list)__builtin_next_arg(last) \
-        - (__builtin_args_info(2) < 8 ? (8 - __builtin_args_info(2)) * 8 : 0)))
-#define va_arg(ap, type) (*(type *)(((ap) += 8) - 8))
-#define va_end(ap) ((ap) = (va_list)0)
 
 #define VIF0_CHCR       (*(volatile int *)0x10008000)
 #define VIF0_QWC        (*(volatile int *)0x10008020)

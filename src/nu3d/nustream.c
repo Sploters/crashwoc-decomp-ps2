@@ -44,9 +44,7 @@
  */
 
 
-typedef unsigned short u16;
-typedef unsigned char u8;
-typedef unsigned long long u64;
+#include "nu_types.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
 
 typedef void (*NuDebugMsgFn)(char *fmt, ...);

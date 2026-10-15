@@ -8,10 +8,7 @@
  *   0x001a99e8 SpecialTerrainCollideCheck
  */
 
-typedef float f32;
-typedef signed int s32;
-typedef unsigned int u32;
-typedef unsigned short u16;
+#include "nu_types.h"
 
 struct nuvec_s {
     f32 x;

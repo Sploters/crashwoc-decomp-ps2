@@ -118,9 +118,7 @@
  *   0x00130928 NuRndrAnglesZX
  */
 
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned long long u64;
+#include "nu_types.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
 
 typedef struct { float x, y, z; } NuVec3;

@@ -43,7 +43,7 @@
  *   0x001cb600 SetLevel
  */
 
-typedef signed int s32;
+#include "nu_types.h"
 
 struct numtx_s {
     float _00, _01, _02, _03;
@@ -90,11 +90,6 @@ extern void NuWindDraw(struct nugscn_s *scene);
 extern void edobjRenderObjects(struct nugscn_s *scene);
 extern void NuRndrRect2di(s32 x, s32 y, s32 w, s32 h, s32 colour,
                           struct numtl_s *mtl);
-
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
 
 struct ldata_s {
     char *name;               /* 0x00 */
@@ -921,8 +916,6 @@ void SetLevel(void)
     }
     AIVISRANGE = 25.0f;
 }
-
-typedef signed char s8;
 
 struct nupad_s {
     u8 unk_0x00[0x564];

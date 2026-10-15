@@ -1,6 +1,8 @@
 #ifndef GAMECODE_CREATURE_H
 #define GAMECODE_CREATURE_H
 
+#include "nu_types.h"
+
 /* PS2 PAL v1.03 (SLES_503.86) layout of the creature/player structures for
  * unit 91 (game/creature, .\creature.c).
  * Key PS2-verified anchors:
@@ -11,15 +13,6 @@
  *   sizeof(struct CharacterModel) = 0x988 (CloseCreatures CModel loop stride,
  *                                          ModelAnimDuration index scaling)
  */
-
-typedef unsigned char u8;
-typedef signed char s8;
-typedef unsigned short u16;
-typedef signed short s16;
-typedef unsigned int u32;
-typedef signed int s32;
-typedef unsigned long long u64;
-typedef float f32;
 
 /* ------------------------------------------------------------------ */
 /* Shared small math / engine types                                    */

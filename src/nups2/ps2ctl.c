@@ -15,12 +15,9 @@
  *   0x0016e838 DeadZoneValue
  */
 
-typedef signed int s32;
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+#include "nu_types.h"
+
 typedef unsigned int u128 __attribute__((mode(TI)));
-typedef float f32;
 
 typedef struct nupadframe_s {
     u8 status;

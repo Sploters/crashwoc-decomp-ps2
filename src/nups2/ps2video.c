@@ -73,7 +73,7 @@
  *   0x0016b770 GetElapsedTime
  */
 
-typedef unsigned long long u64;
+#include "nu_types.h"
 
 /* GIF A+D pair: a GS register value followed by its register address. */
 typedef struct NuPs2GsReg {

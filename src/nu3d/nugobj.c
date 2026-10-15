@@ -27,8 +27,7 @@
  *   0x00116558 NuPrimStride
  */
 
-typedef unsigned long long u64;
-typedef unsigned int u32;
+#include "nu_types.h"
 
 struct nuvec_s {
     float x;
@@ -152,7 +151,7 @@ extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern void *memset(void *s, int c, unsigned int n);
 extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern double sqrt(double x);
-extern long NuRand(void *rand);
+extern s64 NuRand(void *rand);
 extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);

@@ -34,13 +34,7 @@
  *   0x00162ae0 testShadowCast
  */
 
-typedef unsigned char u8;
-typedef short s16;
-typedef unsigned short u16;
-typedef int s32;
-typedef unsigned int u32;
-typedef unsigned long long u64;
-typedef float f32;
+#include "nu_types.h"
 
 struct nuvec_s {
     f32 x;

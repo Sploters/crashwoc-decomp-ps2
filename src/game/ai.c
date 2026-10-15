@@ -211,7 +211,7 @@ void Draw3DCharacter(struct nuvec_s *pos, s32 xrot, s32 yrot, s32 z,
 struct gdeb_s {
     s32 i;
     char *name;
-    unsigned long levbits;
+    u64 levbits;
 };
 
 /* debris emitter (debkeydata): PS2 stride 0x56C; delay at +0x4C2. */

@@ -21,7 +21,7 @@
  *   0x001aae20 saveloadASDelete
  */
 
-typedef int s32;
+#include "nu_types.h"
 
 extern s32 NuFileSize(char *name);
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);

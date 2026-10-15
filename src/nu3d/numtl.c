@@ -31,9 +31,7 @@
  *   0x0011c4b0 NuMtlDisplayMtl
  */
 
-typedef unsigned char u8;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+#include "nu_types.h"
 
 struct nurndrstream_s {
     void *start;

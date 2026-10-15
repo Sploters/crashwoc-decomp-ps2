@@ -46,6 +46,8 @@
  *   0x0015b330 NuTexAnimResetList
  */
 
+#include "nu_types.h"
+
 typedef struct NuFPar {
     int handle;
     char buffer[0x1000];
@@ -199,7 +201,7 @@ extern int NuFParPushCom(NuFPar *parser, NuFParCommand *commands);
 extern int NuFParInterpretWord(NuFPar *parser);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
-extern long NuRand(struct nunrand_s *rand);
+extern s64 NuRand(struct nunrand_s *rand);
 extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern void NuTexAnimEnvProc(NuTexAnimEnv *env);
 extern int strcasecmp(char *a, char *b);

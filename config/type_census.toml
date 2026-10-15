@@ -5,9 +5,9 @@ schema = 1
 
 [metrics]
 struct_redefinitions = 481
-typedef_redefinitions = 217
-long_types = 18
-varargs_hacks = 4
+typedef_redefinitions = 99
+long_types = 1
+varargs_hacks = 0
 offset_casts = 20
 sizeof_pads = 1
 libc_prototypes = 206

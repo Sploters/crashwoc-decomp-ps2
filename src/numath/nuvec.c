@@ -42,7 +42,7 @@
  *   0x001075a8 NuLineLineIntersect
  */
 
-typedef float f32;
+#include "nu_types.h"
 
 struct nuvec_s {
     f32 x;
