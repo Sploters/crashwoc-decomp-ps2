@@ -485,7 +485,7 @@ struct glider_s {
  * exactly that much). */
 struct NEWBUGGY {
     struct creature_s *owner;  /* 0x00  owning creature (KillAtlasphere) */
-    char pad_04[0x08 - 0x04];
+    s32 whacko;                /* 0x04 */
     s32 type;                  /* 0x08  atlasphere type (InitAtlas) */
     s32 dead;                  /* 0x0C  kill flag (KillAtlasphere) */
     s32 ball_health;           /* 0x10  hit points (EarthBoss) */
@@ -493,7 +493,9 @@ struct NEWBUGGY {
     float inhibitcontroltimer; /* 0x24  ignores the pad while > 0 */
     char pad_28[0x2C - 0x28];
     s32 ball_action;           /* 0x2C  AI action (EarthBoss) */
-    char pad_30[0x3C - 0x30];
+    s32 ball_lastaction;       /* 0x30 */
+    float ball_actiontimer;    /* 0x34  time spent in the current action */
+    char pad_38[0x3C - 0x38];
     s32 ball_beenhit;          /* 0x3C  hit flag (ShootRoksSkyward) */
     char pad_40[0x20C - 0x40];
     struct nuvec_s ball_pos;   /* 0x20C  position (NuMtxTranslate) */
