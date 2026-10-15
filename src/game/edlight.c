@@ -39,6 +39,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct numtlattrib_s {
@@ -267,9 +269,6 @@ extern void edcamGetPosAng(struct nuvec_s *pos, s32 *ax, s32 *ay);
 extern void edcamSetPos(struct nuvec_s *pos);
 extern void edcamMove(struct edpad_s *pad);
 extern void eduiItemSliderSetVal(struct slider_s *item, f32 val);
-extern f32 NuVecMag(struct nuvec_s *v);
-extern void NuVecAdd(struct nuvec_s *out, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecNorm(struct nuvec_s *out, struct nuvec_s *in);
 extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void edlightcb_r_sliderval(void *menu, struct slider_s *slider);
 extern void edlightcb_g_sliderval(void *menu, struct slider_s *slider);
@@ -300,8 +299,6 @@ extern void NuFntScale(s32 x, s32 y);
 extern void eduiMenuRender(void *menu);
 extern void NuRndrLine3dDbg(s32 colour, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1,
                             f32 z1);
-extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
-extern void NuVecSub(struct nuvec_s *out, struct nuvec_s *a, struct nuvec_s *b);
 extern void edcamSetPosAng(struct nuvec_s *pos, s32 a, s32 b);
 extern void ResetCheckpoint(s32 a, s32 b, s32 c, f32 d);
 extern void ResetTimeTrial(void);

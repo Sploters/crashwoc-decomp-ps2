@@ -68,12 +68,8 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
-
-typedef struct nuvec_s {
-    float x;
-    float y;
-    float z;
-} nuvec_s;
+#include "numath/numathtypes.h"
+#include "numath/nuvec4.h"
 
 typedef struct sceSifRpcData {
     void *paddr;
@@ -92,19 +88,8 @@ typedef struct sceSifClientData {
     void *serve;
 } sceSifClientData;
 
-typedef struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-} nuvec4_s;
-
-typedef struct numtx_s {
-    float m[4][4];
-} numtx_s;
-
 typedef struct NuSoundLoopInfo {
-    nuvec_s *pos;
+    struct nuvec_s *pos;
     short playing;
     short channel;
     short timer;
@@ -131,10 +116,9 @@ extern int sceSifCallRpc(sceSifClientData *client, unsigned int function,
 extern int sceSifCheckStatRpc(sceSifRpcData *rpcd);
 extern int sceGsSyncV(int mode);
 extern float NuFsqrt(float x);
-extern numtx_s *NuCameraGetVPCMtx(void);
-extern void NuVec4MtxTransformH(nuvec4_s *dst, nuvec4_s *src, numtx_s *mtx);
+extern struct numtx_s *NuCameraGetVPCMtx(void);
 
-int NuSoundApply3d(nuvec_s *pos, int *left, int *right);
+int NuSoundApply3d(struct nuvec_s *pos, int *left, int *right);
 
 void SOUND_CopyIOPBuffer(void);
 int init_adpcm(SFXINFO *sfx_info);
@@ -163,7 +147,7 @@ extern char D_0061AB90[];
 extern char D_0061ABB0[];
 extern char D_0061ABD0[];
 extern int D_0062F9D4;
-extern nuvec_s D_002D3EF0;
+extern struct nuvec_s D_002D3EF0;
 extern float nusound_fade_start;
 extern float nusound_fade_end;
 extern int nusound_dpl_enabled;
@@ -172,7 +156,7 @@ extern sceSifClientData D_006B4100;
 extern SFXINFO D_006B4128[];
 extern volatile unsigned char SOUND_SPUKeyStatus[];
 extern NuSoundLoopInfo NuSndLoopInfo[];
-extern nuvec_s *NuSoundListenPos;
+extern struct nuvec_s *NuSoundListenPos;
 extern int NuSndSteroPitch;
 extern int SOUND_STREAM_SPU_CHAN[];
 extern int SOUND_STREAM_ID[];
@@ -451,7 +435,7 @@ static inline void transfer_sample_infos(SFXINFO *info)
 }
 
 
-static inline NuSoundLoopInfo *find_loop_info(nuvec_s *pos)
+static inline NuSoundLoopInfo *find_loop_info(struct nuvec_s *pos)
 {
     NuSoundLoopInfo *info;
     int free;
@@ -605,9 +589,9 @@ void NuSoundInit(SFXINFO *sfx_info)
 }
 
 
-int NuSoundApply3d(nuvec_s *pos, int *left, int *right)
+int NuSoundApply3d(struct nuvec_s *pos, int *left, int *right)
 {
-    nuvec4_s screen;
+    struct nuvec4_s screen;
     float dx;
     float dy;
     float dz;
@@ -774,7 +758,7 @@ void NuSoundPlayChan(int sfx, int left, int right, int pitch, int channel)
 }
 
 
-void NuSoundPlay3d(nuvec_s *pos, int sfx, int left, int right, int pitch)
+void NuSoundPlay3d(struct nuvec_s *pos, int sfx, int left, int right, int pitch)
 {
     if (nusound_irx_loaded) {
         if (NuSoundApply3d(pos, &left, &right)) {
@@ -792,7 +776,7 @@ void NuSoundPlay3d(nuvec_s *pos, int sfx, int left, int right, int pitch)
 }
 
 
-void NuSoundPlay3dChan(nuvec_s *pos, int sfx, int left, int right, int pitch,
+void NuSoundPlay3dChan(struct nuvec_s *pos, int sfx, int left, int right, int pitch,
                        int channel)
 {
     int sample;
@@ -866,7 +850,7 @@ void NuSoundPlayStereo2(int sfx_left, int sfx_right, int left, int right,
 }
 
 
-void NuSoundPlay3dLoopSfx(nuvec_s *pos, int sfx, int left, int right, int pitch)
+void NuSoundPlay3dLoopSfx(struct nuvec_s *pos, int sfx, int left, int right, int pitch)
 {
     NuSoundLoopInfo *info;
     int base_left;
@@ -982,7 +966,7 @@ void NuSoundLocalSet(SFXINFO *sfx_info, int unused, int first)
 }
 
 
-void NuSoundListener(nuvec_s *pos)
+void NuSoundListener(struct nuvec_s *pos)
 {
     NuSoundListenPos = pos;
 }
@@ -1296,7 +1280,7 @@ int NuSoundFindFree(int channel)
 }
 
 
-NuSoundLoopInfo *NuSoundFindLoopInfo(nuvec_s *pos)
+NuSoundLoopInfo *NuSoundFindLoopInfo(struct nuvec_s *pos)
 {
     NuSoundLoopInfo *info;
     int free;

@@ -48,19 +48,10 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
-};
 
 struct nucolour4_s {
     struct nucolour3_s rgb;
@@ -100,10 +91,6 @@ typedef union {
     NuDmaTag tag;
 } NuDmaTagQw;
 
-typedef struct {
-    float m[16];
-} NuMtx;
-
 struct nurtlight_s {
     NuDmaTagQw cnt;
     float dirx[3];
@@ -122,7 +109,7 @@ struct nurtlight_s {
 
 struct nuspecpkt_s {
     NuDmaTagQw cnt;
-    NuMtx mtx;
+    struct numtx_s mtx;
     struct nucolour4_s col;
     NuDmaTagQw ref;
 };
@@ -141,7 +128,7 @@ typedef struct NuMtl {
 
 struct nulocalmtxpkt_s {
     char tag[0x10];
-    NuMtx mtx;
+    struct numtx_s mtx;
     int unpack;
     short mode;
     char pad_0x56[6];
@@ -157,7 +144,7 @@ typedef struct {
 } NuViewport;
 
 struct nucamera_s {
-    NuMtx mtx;
+    struct numtx_s mtx;
     float fov;
     float aspect;
     float nearclip;
@@ -172,7 +159,7 @@ union vifword_u {
 
 struct nurndrfxmtx_s {
     NuDmaTagQw cnt;
-    NuMtx mtx;
+    struct numtx_s mtx;
     NuDmaTagQw ref;
 };
 
@@ -303,19 +290,17 @@ extern int D_0062EAB8;
 
 extern short rndrstream_view_mtx_id;
 
-extern NuMtx D_0067A2C0;
+extern struct numtx_s D_0067A2C0;
 #define zfix_mtx D_0067A2C0
 
-extern NuMtx D_0067A300;
+extern struct numtx_s D_0067A300;
 #define view_mtx D_0067A300
 
-extern NuMtx D_0067A3D0;
+extern struct numtx_s D_0067A3D0;
 #define vu1_view_mtx D_0067A3D0
 
-extern NuMtx D_0067A470;
+extern struct numtx_s D_0067A470;
 #define vu1_clip_view_mtx D_0067A470
-
-extern void NuMtxMulH(NuMtx *dst, NuMtx *a, NuMtx *b);
 
 extern int NuMtlValid(NuMtl *mtl);
 
@@ -369,8 +354,6 @@ extern u8 *frame_base;
 extern struct nurndrstream_s *rndrstream_system;
 
 extern void NuRndrStreamLink(struct nurndrstream_s *stream);
-
-extern void NuMtxSetIdentity(NuMtx *m);
 
 extern struct nurndrstream_s *D_0067A240[];
 #define rndrstream_sorted D_0067A240
@@ -442,10 +425,10 @@ extern char D_00614120[];
 extern int D_0062EABC;
 #define view_mtx_pkt_dirty D_0062EABC
 
-extern NuMtx D_0067A420;
+extern struct numtx_s D_0067A420;
 #define vu1_proj_mtx D_0067A420
 
-extern NuMtx D_0067A4C0;
+extern struct numtx_s D_0067A4C0;
 #define vu1_clip_proj_mtx D_0067A4C0
 
 extern struct nuvec_s D_002D3DE0;
@@ -459,17 +442,7 @@ extern struct nuvec_s D_002D3E08;
 
 extern struct nucamera_s global_camera;
 
-extern NuMtx numtx_identity;
-
-extern void NuVecInvMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, NuMtx *m);
-
-extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, NuMtx *m);
-
-extern void NuVecLerp(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b, float t);
-
-extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
-
-extern void NuMtxAlignZ(NuMtx *m, struct nuvec_s *dir);
+extern struct numtx_s numtx_identity;
 
 extern int D_0062EAB4;
 #define local_mtx_pkt_dirty D_0062EAB4
@@ -785,7 +758,7 @@ int NuRndrStreamSetLocalMtx(struct nurndrstream_s *stream)
 }
 
 
-int NuRndrSetViewMtx(NuMtx *vm, NuMtx *pm, NuMtx *clip_pm)
+int NuRndrSetViewMtx(struct numtx_s *vm, struct numtx_s *pm, struct numtx_s *clip_pm)
 {
     u8 *pkt;
 
@@ -794,25 +767,25 @@ int NuRndrSetViewMtx(NuMtx *vm, NuMtx *pm, NuMtx *clip_pm)
         view_mtx_pkt_dirty = 0;
         pkt = vpDmaTag_CntEx(view_mtx_pkt, 0, 0x6C040004);
         if (rndrstream_zfix != 0.0f) {
-            NuMtxMulH(((NuMtx *)pkt)++, &view_mtx, &zfix_mtx);
+            NuMtxMulH(((struct numtx_s *)pkt)++, &view_mtx, &zfix_mtx);
         } else {
-            NuMemCopy128(((NuMtx *)pkt)++, &view_mtx, 4);
+            NuMemCopy128(((struct numtx_s *)pkt)++, &view_mtx, 4);
         }
         *((u64 *)pkt)++ = 0;
         *((unsigned int *)pkt)++ = 0;
         *((unsigned int *)pkt)++ = 0x6C040008;
-        NuMemCopy128(((NuMtx *)pkt)++, pm, 4);
+        NuMemCopy128(((struct numtx_s *)pkt)++, pm, 4);
         view_mtx_pkt_size = (char *)vpDmaTag_Close(pkt) - view_mtx_pkt;
         pkt = vpDmaTag_CntEx(clip_view_mtx_pkt, 0, 0x6C040004);
         if (rndrstream_zfix != 0.0f) {
-            NuMtxMulH(((NuMtx *)pkt)++, &view_mtx, &zfix_mtx);
+            NuMtxMulH(((struct numtx_s *)pkt)++, &view_mtx, &zfix_mtx);
         } else {
-            NuMemCopy128(((NuMtx *)pkt)++, &view_mtx, 4);
+            NuMemCopy128(((struct numtx_s *)pkt)++, &view_mtx, 4);
         }
         *((u64 *)pkt)++ = 0;
         *((unsigned int *)pkt)++ = 0;
         *((unsigned int *)pkt)++ = 0x6C040008;
-        NuMemCopy128(((NuMtx *)pkt)++, clip_pm, 4);
+        NuMemCopy128(((struct numtx_s *)pkt)++, clip_pm, 4);
         vpDmaTag_Close(pkt);
     } else {
         if (rndrstream_zfix != 0.0f) {
@@ -853,13 +826,13 @@ int NuRndrSetSpecularLight(struct nuvec_s *dir, struct nucolour4_s *col)
     NuVecNorm(&v, &v);
     rndrstream_spec.mtx = numtx_identity;
     NuMtxAlignZ(&rndrstream_spec.mtx, &v);
-    rndrstream_spec.mtx.m[8] = -rndrstream_spec.mtx.m[8];
-    rndrstream_spec.mtx.m[9] = -rndrstream_spec.mtx.m[9];
-    rndrstream_spec.mtx.m[10] = -rndrstream_spec.mtx.m[10];
-    rndrstream_spec.mtx.m[14] = rndrstream_spec.mtx.m[3] = rndrstream_spec.mtx.m[7] = rndrstream_spec.mtx.m[11] = 0.0f;
-    rndrstream_spec.mtx.m[12] = half;
-    rndrstream_spec.mtx.m[13] = half;
-    rndrstream_spec.mtx.m[15] = 1.0f;
+    rndrstream_spec.mtx._20 = -rndrstream_spec.mtx._20;
+    rndrstream_spec.mtx._21 = -rndrstream_spec.mtx._21;
+    rndrstream_spec.mtx._22 = -rndrstream_spec.mtx._22;
+    rndrstream_spec.mtx._32 = rndrstream_spec.mtx._03 = rndrstream_spec.mtx._13 = rndrstream_spec.mtx._23 = 0.0f;
+    rndrstream_spec.mtx._30 = half;
+    rndrstream_spec.mtx._31 = half;
+    rndrstream_spec.mtx._33 = 1.0f;
     rndrstream_spec_addr = 0;
     return 1;
 }
@@ -903,7 +876,7 @@ void FaceYDirStream(int angle)
 }
 
 
-int NuRndrSetLocalMtx(NuMtx *mtx, int clip)
+int NuRndrSetLocalMtx(struct numtx_s *mtx, int clip)
 {
     u8 *pkt;
     unsigned int *code;
@@ -952,7 +925,7 @@ int NuRndrSetZFix(int zfix)
     z = zfix;
     if (z != rndrstream_zfix) {
         rndrstream_zfix = z;
-        zfix_mtx.m[14] = z;
+        zfix_mtx._32 = z;
         NuMtxMulH(&vu1_view_mtx, &view_mtx, &zfix_mtx);
         NuMtxMulH(&vu1_clip_view_mtx, &view_mtx, &zfix_mtx);
         rndrstream_view_mtx_id = view_mtx_id_next++;
@@ -1024,7 +997,7 @@ int NuRndrSetGlobalAlpha(float alpha)
 }
 
 
-int NuRndrSetFxMtx(NuMtx *mtx)
+int NuRndrSetFxMtx(struct numtx_s *mtx)
 {
     rndrstream_fx_mtx.mtx = *mtx;
     rndrstream_fx_mtx_addr[0] = 0;

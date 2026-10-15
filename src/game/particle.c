@@ -10,6 +10,8 @@
  *   0x001cb958 ProcessParticles
  */
 
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct nulsthdr_s;
@@ -57,7 +59,6 @@ extern void NuLstDestroy(struct nulsthdr_s *hdr);
 extern void *NuScratchAlloc32(u32 size);
 extern void NuScratchRelease(void);
 extern void NuRndrFaceOn(struct faceon_s *faceon, struct numtl_s *mtl, s32 flags);
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern f32 NuTrigTable[];
 
 extern struct nulsthdr_s *D_0062FCF0;

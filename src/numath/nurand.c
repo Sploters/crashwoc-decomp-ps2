@@ -12,9 +12,7 @@
 
 #include "nu_types.h"
 
-struct nunrand_s {
-    s64 idum;
-};
+#include "numath/nurand.h"
 
 extern struct nunrand_s D_0062EA60;
 extern s64 D_0062EA68;

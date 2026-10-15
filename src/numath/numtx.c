@@ -53,10 +53,12 @@
 
 #include "nu_libc.h"
 
+#include "numath/nufloat.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
-void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
-void NuMtxAlignZ(struct numtx_s *m, struct nuvec_s *v);
 extern float NuTrigTable[];
 extern struct numtx_s D_002938A0;
 #define mtx_scratch D_002938A0
@@ -296,9 +298,6 @@ void NuMtxInvH(struct numtx_s *mi, struct numtx_s *m0)
 }
 
 
-void NuVecCross(struct nuvec_s* dest, struct nuvec_s* a, struct nuvec_s* b);
-float NuVecDot(struct nuvec_s* a, struct nuvec_s* b);
-float NuFabs(float);
 float NuFsqrt(float); 
 extern float D_00643780; //0.86602539f
 

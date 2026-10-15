@@ -24,6 +24,10 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 #define NULL ((void *)0)
@@ -105,7 +109,6 @@ extern s32 temp_cRPosCOUNT;
 
 extern void ComplexRailPosition(struct nuvec_s *pos, s32 iRAIL, s32 iALONG,
                                 struct RPos_s *rpos, s32 a4);
-extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern f32 RatioBetweenEdges(struct nuvec_s *pos, struct nuvec_s *p0,
                              struct nuvec_s *p1, struct nuvec_s *p2,
                              struct nuvec_s *p3);
@@ -113,7 +116,6 @@ extern void RailInfo(struct RPos_s *rpos, struct nuvec_s *pos, u16 *angle,
                      u16 *cam_angle, u8 *mode);
 extern f32 NuTrigTable[];
 extern s32 RotDiff(u16 a, u16 b);
-extern s32 NuAtan2D(f32 x, f32 z);
 extern f32 NuFsqrt(f32 x);
 
 /* nugspline_s: dist@0x0, ptsize@0x2, pts@0x8. */
@@ -839,19 +841,9 @@ extern void JeepCamIntro(struct cammtx_s *cam);
 extern void NuCameraSet(struct nucam_s *cam);
 extern u16 TurnRot(u16 a, u16 b, s32 rate);
 extern u16 SeekRot(u16 a, u16 dist, s32 rate);
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecNorm(struct nuvec_s *d, struct nuvec_s *a);
-extern void NuVecScale(struct nuvec_s *d, struct nuvec_s *s, f32 k);
-extern void NuVecScaleAccum(struct nuvec_s *d, struct nuvec_s *s, f32 k);
 extern void PointAlongSpline(struct nugspline_s *spl, f32 ratio,
                              struct nuvec_s *pos, void *a3, void *a4);
 extern f32 NewShadowMask(struct nuvec_s *pos, f32 y, s32 flag);
-extern void NuMtxSetIdentity(struct numtx_s *m);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxPreRotateX(struct numtx_s *m, s32 a);
-extern void NuMtxPreRotateY(struct numtx_s *m, s32 a);
-extern void NuMtxPreRotateZ(struct numtx_s *m, s32 a);
 
 inline f32 LookUpDownRail(struct obj_s *obj, u16 angle, s32 mode) {
     s32 dyrot;

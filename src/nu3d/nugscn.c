@@ -64,19 +64,9 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-}; /* 0x40 */
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 struct nufaceon_s {
     struct nuvec_s point;           /* 0x00 */
@@ -201,7 +191,6 @@ struct nusplinecfg_s {
     int ptsize;                     /* 0x04 */
 };
 
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
 extern void *NuTexAnimProgFind(char *name);
 extern struct nutexanimenv_s *NuTexAnimEnvCreate(void *buff, struct numtl_s *mtl, short *tids, void *prog);
@@ -228,7 +217,6 @@ extern void CvtNodes(struct nunode_s *node, int depth);
 extern void MakeFaceOnDma(int fh, struct nufaceongeom_s *geom, int mtlid);
 
 extern char *NuStrIStr(char *str, char *sub);
-extern void NuVecLerp(struct nuvec_s *out, struct nuvec_s *a, struct nuvec_s *b, float t);
 
 struct nucvtmtl_s {
     char pad000[0x170];
@@ -515,13 +503,6 @@ void ReadNuIFFGeomSkin(int fh)
     }
 }
 
-
-struct nucolour_s {
-    unsigned int r : 8;
-    unsigned int g : 8;
-    unsigned int b : 8;
-    unsigned int a : 8;
-};
 
 struct nuvtx_s {
     struct nuvec_s pnt;             /* 0x00 */

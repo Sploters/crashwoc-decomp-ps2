@@ -44,6 +44,9 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/nufloat.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
 
 typedef enum nunodetype_e {
     NUNODETYPE_NODE,
@@ -65,10 +68,6 @@ typedef struct nunode_s {
     void *data;
 } NuNode;
 
-typedef struct numtx_s {
-    float m[4][4];
-} NuMtx;
-
 typedef struct numeshnode_s {
     NuNode node;
     void *geometry;
@@ -78,17 +77,17 @@ typedef struct numeshnode_s {
 
 typedef struct nutransformnode_s {
     NuNode node;
-    NuMtx mtx;
-    NuMtx wmtx;
+    struct numtx_s mtx;
+    struct numtx_s wmtx;
     int flags;
     char pad_a4[4];
 } NuTransformNode;
 
 typedef struct nujointnode_s {
     NuNode node;
-    NuMtx orient;
-    NuMtx mtx;
-    NuMtx wmtx;
+    struct numtx_s orient;
+    struct numtx_s mtx;
+    struct numtx_s wmtx;
     char pad_e0[0x18];
     float scale[3];
     float rot[3];
@@ -100,8 +99,8 @@ typedef struct nuskinnode_s {
     void *geometry;
     char pad_24[4];
     int num_joints;
-    NuMtx **joints;
-    NuMtx *joint_mtxs;
+    struct numtx_s **joints;
+    struct numtx_s *joint_mtxs;
 } NuSkinNode;
 
 typedef struct nusplinenode_s {
@@ -118,18 +117,14 @@ typedef void (*NuNodeIterFunc)(NuNode *node, void *data);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void *NuMemReAllocFn(void *ptr, int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void NuMtxSetIdentity(NuMtx *m);
-extern void NuMtxInv(NuMtx *dst, NuMtx *src);
-extern void NuMtxMulVU0(NuMtx *dst, NuMtx *a, NuMtx *b);
-extern int NuEquiv(float a, float b);
-extern void NuEquivTollerance(float tolerance);
+extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 
 void NuMeshNodeDestroy(NuNode *node);
 void NuTransformNodeDestroy(NuNode *node);
 void NuJointNodeDestroy(NuNode *node);
 void NuSkinNodeDestroy(NuSkinNode *skin);
 void NuSplineNodeDestroy(NuSplineNode *spline);
-void NuNodeUpdateXfms(NuNode *node, NuMtx *parent_mtx);
+void NuNodeUpdateXfms(NuNode *node, struct numtx_s *parent_mtx);
 
 extern char D_006141E0[];
 #define nunode_file D_006141E0
@@ -318,7 +313,7 @@ void NuNodeDestroyChildren(NuNode *node)
 
 void NuNodeGraphInit(NuNode *root)
 {
-    NuMtx mtx;
+    struct numtx_s mtx;
 
     NuMtxSetIdentity(&mtx);
     NuNodeResolveReferenceNodes(root);
@@ -327,17 +322,17 @@ void NuNodeGraphInit(NuNode *root)
 }
 
 
-int NuMtxEqual(NuMtx *a, NuMtx *b)
+int NuMtxEqual(struct numtx_s *a, struct numtx_s *b)
 {
     NuEquivTollerance(0.001f);
-    if (NuEquiv(a->m[0][0], b->m[0][0]) && NuEquiv(a->m[0][1], b->m[0][1])
-        && NuEquiv(a->m[0][2], b->m[0][2]) && NuEquiv(a->m[0][3], b->m[0][3])
-        && NuEquiv(a->m[1][0], b->m[1][0]) && NuEquiv(a->m[1][1], b->m[1][1])
-        && NuEquiv(a->m[1][2], b->m[1][2]) && NuEquiv(a->m[1][3], b->m[1][3])
-        && NuEquiv(a->m[2][0], b->m[2][0]) && NuEquiv(a->m[2][1], b->m[2][1])
-        && NuEquiv(a->m[2][2], b->m[2][2]) && NuEquiv(a->m[2][3], b->m[2][3])
-        && NuEquiv(a->m[3][0], b->m[3][0]) && NuEquiv(a->m[3][1], b->m[3][1])
-        && NuEquiv(a->m[3][2], b->m[3][2]) && NuEquiv(a->m[3][3], b->m[3][3])) {
+    if (NuEquiv(a->_00, b->_00) && NuEquiv(a->_01, b->_01)
+        && NuEquiv(a->_02, b->_02) && NuEquiv(a->_03, b->_03)
+        && NuEquiv(a->_10, b->_10) && NuEquiv(a->_11, b->_11)
+        && NuEquiv(a->_12, b->_12) && NuEquiv(a->_13, b->_13)
+        && NuEquiv(a->_20, b->_20) && NuEquiv(a->_21, b->_21)
+        && NuEquiv(a->_22, b->_22) && NuEquiv(a->_23, b->_23)
+        && NuEquiv(a->_30, b->_30) && NuEquiv(a->_31, b->_31)
+        && NuEquiv(a->_32, b->_32) && NuEquiv(a->_33, b->_33)) {
         return 1;
     }
     return 0;
@@ -526,9 +521,9 @@ int NuNodeNumSubNodes(NuNode *node)
 }
 
 
-void NuNodeUpdateXfms(NuNode *node, NuMtx *parent_mtx)
+void NuNodeUpdateXfms(NuNode *node, struct numtx_s *parent_mtx)
 {
-    NuMtx mtx;
+    struct numtx_s mtx;
     NuTransformNode *xform;
     NuJointNode *joint;
     NuNode *child;
@@ -582,7 +577,7 @@ void NuMeshNodeDestroy(NuNode *node)
 }
 
 
-NuTransformNode *NuTransformNodeCreate(NuMtx *mtx)
+NuTransformNode *NuTransformNodeCreate(struct numtx_s *mtx)
 {
     NuTransformNode *xform;
 
@@ -609,7 +604,7 @@ void NuTransformNodeDestroy(NuNode *node)
 }
 
 
-NuJointNode *NuJointNodeCreate(NuMtx *mtx)
+NuJointNode *NuJointNodeCreate(struct numtx_s *mtx)
 {
     NuJointNode *joint;
 
@@ -661,7 +656,7 @@ NuSkinNode *NuSkinNodeCreate(int num_joints)
     skin->num_joints = num_joints;
     if (num_joints != 0) {
         skin->joints = NuMemAllocFn(num_joints * sizeof(int), nunode_file, 0x333);
-        skin->joint_mtxs = NuMemAllocFn(num_joints * sizeof(NuMtx), nunode_file, 0x334);
+        skin->joint_mtxs = NuMemAllocFn(num_joints * sizeof(struct numtx_s), nunode_file, 0x334);
     }
     return skin;
 }

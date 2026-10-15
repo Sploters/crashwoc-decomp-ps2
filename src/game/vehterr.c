@@ -15,6 +15,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct VEHICLE {
@@ -46,22 +49,8 @@ struct VEHICLE {
     s32 FrontWheelGroundBits;
 };
 
-extern int NuAtan2D(float a, float b);
-extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecRotateZ(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecCross(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
-extern f32 NuVecMagSqr(struct nuvec_s *v);
-extern f32 NuVecMag(struct nuvec_s *v);
-extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
-
 extern struct nuvec_s CrossProduct(struct nuvec_s *a, struct nuvec_s *b);
 extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecScale(f32 scale, struct nuvec_s *dest, struct nuvec_s *src);
-extern void NuVecSub(struct nuvec_s *dest, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecScaleAccum(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern f32 NuFsqrt(f32 x);
 extern struct nuvec_s GenerateJeepWheelPoint(s32 WheelId);
 extern void NewGenerateJeepMatrix(struct numtx_s *Mat, short YAng, short SurfaceX, short SurfaceZ,
@@ -111,7 +100,7 @@ s32 TryUnembeddPointDir(struct nuvec_s *pos, struct nuvec_s *dir1,
 
     NuVecAdd(&avg, dir1, dir2);
     base = 0.0f;
-    NuVecScale(0.5f, &avg, &avg);
+    NuVecScale(&avg, &avg, 0.5f);
     best = 0.0f;
     last = 0.0f;
     step = 0.03f;
@@ -243,9 +232,9 @@ inline void FindVehicleNormalGiven4Points(struct nuvec_s *normal, struct nuvec_s
     struct nuvec_s side;
 
     NuVecAdd(&front, &points[0], &points[1]);
-    NuVecScale(0.5f, &front, &front);
+    NuVecScale(&front, &front, 0.5f);
     NuVecAdd(&rear, &points[2], &points[3]);
-    NuVecScale(0.5f, &rear, &rear);
+    NuVecScale(&rear, &rear, 0.5f);
     NuVecSub(&dir, &rear, &front);
     side.x = (points[1].x - points[0].x + points[3].x - points[2].x) * 0.5f;
     side.y = (points[1].y - points[0].y + points[3].y - points[2].y) * 0.5f;
@@ -293,9 +282,9 @@ void BestGuessActualsJeep(struct VEHICLE *Vehicle)
         Wheel[i] = Vehicle->ActualWheelPosition[i];
     }
     NuVecAdd(&Front, &Wheel[0], &Wheel[1]);
-    NuVecScale(0.5f, &Front, &Front);
+    NuVecScale(&Front, &Front, 0.5f);
     NuVecAdd(&Rear, &Wheel[2], &Wheel[3]);
-    NuVecScale(0.5f, &Rear, &Rear);
+    NuVecScale(&Rear, &Rear, 0.5f);
     NuVecSub(&Dir, &Rear, &Front);
     len = NuFsqrt(NuVecMagSqr(&Dir));
     Side.x = (Wheel[1].x - Wheel[0].x + Wheel[3].x - Wheel[2].x) * 0.5f;
@@ -426,11 +415,11 @@ s32 MyCast(struct nuvec_s *pos, struct nuvec_s *target, struct nuvec_s *normals,
         }
 
         if ((flip | wall | down) == 0 || (wall != 0 && flags == 0)) {
-            NuVecScale(0.005f, &refl, &snorm);
+            NuVecScale(&refl, &snorm, 0.005f);
             NuVecSub(&rel, &rel, &temp);
             if (wall != 0 && flags == 0) {
                 retval = 1;
-                NuVecScale(0.1f, &rel, &rel);
+                NuVecScale(&rel, &rel, 0.1f);
             }
             d = rel.x * snorm.x + rel.y * snorm.y + rel.z * snorm.z - 0.005f;
             rel.x = rel.x - snorm.x * d;
@@ -513,7 +502,7 @@ void FindSurfaceNormalAndUnembedd(struct VEHICLE *Vehicle, f32 dt)
     s32 tries;
 
     axis = Vehicle->WheelAxis[1];
-    NuVecScale(-0.1f, &down, &axis);
+    NuVecScale(&down, &axis, -0.1f);
     for (i = 0; i < 4; i++) {
         tries = 1;
         do {
@@ -692,7 +681,7 @@ struct nuvec_s TerrainVehicleSoft(struct VEHICLE *Vehicle, struct nuvec_s *Vel)
     maxMove = NuVecMag(Vel);
     moveMag = NuVecMag(&Move);
     if (maxMove < moveMag) {
-        NuVecScale(maxMove / moveMag, &Move, &Move);
+        NuVecScale(&Move, &Move, maxMove / moveMag);
     }
     dTarget = Vehicle->aTargetAngle - oldAngle;
     dActual = Vehicle->aActualAngle - oldAngle;

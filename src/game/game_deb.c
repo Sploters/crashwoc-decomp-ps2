@@ -11,6 +11,8 @@
  *   0x00260d50 AddMechanicalDebris
  */
 
+#include "numath/numtx.h"
+
 #include "creature.h"
 
 struct gdeb_s {
@@ -31,9 +33,6 @@ extern void AddVariableShotDebrisEffect(s32 effect, struct nuvec_s *pos, s32 n,
 extern void AddVariableShotDebrisEffectMtx2(s32 effect, struct nuvec_s *pos,
                                             s32 n, struct numtx_s *m1,
                                             struct numtx_s *m2);
-extern void NuMtxSetRotationX(struct numtx_s *m, s32 angle);
-extern void NuMtxMulR(struct numtx_s *dst, struct numtx_s *a,
-                      struct numtx_s *b);
 
 extern void AddDeb3(struct nuvec_s *pos, s32 effect, s32 n, void *arg);
 

@@ -13,25 +13,8 @@
  *   0x001b5e58 NuWindFreeMtxs
  */
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
-
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
 
 struct nucamera_s {
     struct numtx_s mtx;
@@ -72,8 +55,6 @@ struct nuwindgrp_s {
     float radiussq;
 };
 
-extern void NuMtxSetIdentity(struct numtx_s *m);
-extern void NuMtxPreRotateY(struct numtx_s *m, int angle);
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
 extern float NuFsqrt(float x);
 

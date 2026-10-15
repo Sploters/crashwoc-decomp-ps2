@@ -37,24 +37,10 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
-struct nuvec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-struct nuvec4_s {
-    f32 x;
-    f32 y;
-    f32 z;
-    f32 w;
-};
-
-struct nucolour3_s {
-    f32 r;
-    f32 g;
-    f32 b;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nurand.h"
+#include "numath/nuvec.h"
 
 struct numtlattrib_s {
     u32 alpha : 4;
@@ -107,13 +93,6 @@ struct nurndrstream_s {
     u8 *txtr_end;
     void *zbuf;
     struct numtl_s *mtl;
-};
-
-struct numtx_s {
-    f32 _00, _01, _02, _03;
-    f32 _10, _11, _12, _13;
-    f32 _20, _21, _22, _23;
-    f32 _30, _31, _32, _33;
 };
 
 struct nucamera_s {
@@ -220,8 +199,6 @@ extern void NuMtlUpdate(struct numtl_s *mtl);
 extern struct nurndrstream_s *NuRndrStreamAllocStream(u32 sortkey, void *mpgtag, u32 flags);
 extern void NuFPatchLightTexture(struct nutex_s *tex, s32 size, struct nuvec_s *lightdir,
                                  f32 range, f32 scale, f32 bias);
-extern void NuRandSeed(s32 seed);
-extern f32 NuRandFloat(void);
 extern s32 NuTexReserve(s32 size);
 extern s32 NuTexGetPointers(s32 tid, void **entry, void **ps2tex);
 extern u8 *NuPs2TxGenUpload(u8 *cur, void *ps2tex, s32 addr);
@@ -238,15 +215,10 @@ extern void NuRndrStreamLink(struct nurndrstream_s *rs);
 extern u8 *vpDmaTag_Call(u8 *cur, void *microcode);
 extern u8 *vpDmaTag_Next(u8 *cur, s32 mode);
 extern void NuTexUnReserve(void);
-extern void NuVecNorm(struct nuvec_s *out, struct nuvec_s *in);
-extern f32 NuVecDot(struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecScale(struct nuvec_s *out, struct nuvec_s *in, f32 scale);
 extern struct nucamera_s *NuCameraGetCam(void);
 extern struct numtx_s *NuCameraGetViewMtx(void);
 extern struct numtx_s *NuCameraGetScalingMtx(void);
 extern struct numtx_s *NuCameraGetProjectionMtx(void);
-extern void NuMtxMulH(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuMtxInvH(struct numtx_s *inv, struct numtx_s *mtx);
 
 extern void NuRndrFPatchHeightField(struct nufpatch_s *patch, void *heightbuf, s32 flags);
 extern void NuFPatchHeightFieldIndexSlow(struct nufpatch_s *src, f32 *heights,

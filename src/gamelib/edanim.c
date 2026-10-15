@@ -86,11 +86,9 @@
 
 #include "nu_libc.h"
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 struct debtypedef_s {
     char name[0x10];
@@ -98,12 +96,6 @@ struct debtypedef_s {
     signed char gensort;
     char pad21[0x50 - 0x21];
     struct nuvec_s varstart;
-};
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
 };
 
 struct numtlattrib_s {
@@ -122,14 +114,6 @@ struct numtl_s {
     struct nucolour3_s diffuse;
     char pad18c[0x1A0 - 0x18C];
     float alpha;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    struct nuvec_s pos;
-    float _33;
 };
 
 struct nuinstanim_s {
@@ -509,9 +493,6 @@ extern void eduiMenuDestroy(void *menu);
 extern void eduiMenuDetach(void *menu);
 extern void eduiCreateMessageMenu(void *menu, char *text, int flag);
 extern struct nuvec_s *edmainQueryLocVec(void);
-extern float NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
-extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern void PlatInstBounce(int instance, float player_grav, float tension, float damping);
 extern int saveloadCheckCardPresent(void);
 extern int saveloadCheckCardType(void);
@@ -547,8 +528,6 @@ extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl)
 extern void NuFntSet(void *fnt);
 extern void NuFntSetPen(int colour);
 extern void NuFntPrintEx(int x, int y, int flags, char *fmt, ...);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecRotateZ(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern void edcamMove(struct pad_s *pad);
 extern void edcamSetPos(struct nuvec_s *pos);
 extern void edcamGetPosAng(struct nuvec_s *pos, int *ax, int *ay);
@@ -636,11 +615,6 @@ extern void edanimcbSoundTypeMenu(struct eduimenu_s *menu);
 extern void edanimcbLocalSoundMenu(struct eduimenu_s *menu);
 extern void edanimcbCancelParticleMenu(void);
 extern void edanimcbCancelSoundMenu(void);
-extern void NuMtxInvRSS(struct numtx_s *dst, struct numtx_s *src);
-extern void NuMtxMul(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuMtxRotateZ(struct numtx_s *m, int angle);
-extern void NuMtxRotateY(struct numtx_s *m, int angle);
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
 extern void AddVariableShotDebrisEffectMtx2(int effect, struct nuvec_s *pos, int count,
                                             struct numtx_s *mtx, struct numtx_s *orient);
 extern int LookupDebrisEffect(char *name);
@@ -660,7 +634,7 @@ extern void edanimDetermineNearestSound(float range);
 static inline float edanimParamDistance(int param)
 {
     if (edmainQueryLocVec() != 0) {
-        return NuVecDist(&edanim_base_scene->specials[AnimParams[param].id].mtx.pos,
+        return NuVecDist((struct nuvec_s *)&edanim_base_scene->specials[AnimParams[param].id].mtx._30,
                          edmainQueryLocVec(), 0);
     }
     return 0.0f;
@@ -870,7 +844,7 @@ void edanimDetermineNearestAnim(float range)
     }
     if (edanim_nearest != -1) {
         NuVecSub(&delta, &edanim_cam_pos,
-                 &edanim_base_scene->specials[edanim_nearest].instance->mtx.pos);
+                 (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].instance->mtx._30);
         if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z == 0.0) {
             return;
         }
@@ -878,7 +852,7 @@ void edanimDetermineNearestAnim(float range)
     edanim_nearest = -1;
     edanim_nearest_param_id = -1;
     for (i = 0; i < edanim_base_scene->numspecial; i++) {
-        NuVecSub(&delta, &edanim_cam_pos, &edanim_base_scene->specials[i].instance->mtx.pos);
+        NuVecSub(&delta, &edanim_cam_pos, (struct nuvec_s *)&edanim_base_scene->specials[i].instance->mtx._30);
         dist = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
         if (range < 0.0f || dist < range) {
             edanim_nearest = i;
@@ -908,7 +882,7 @@ void edanimDetermineNearestParticle(float range)
         edanim_nearest_particle = -1;
         return;
     }
-    origin = &edanim_base_scene->specials[edanim_nearest].mtx.pos;
+    origin = (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30;
     if (edanim_nearest_particle != -1) {
         NuVecAdd(&pos, origin,
                  &AnimParams[edanim_nearest_param_id].particle_pos[edanim_nearest_particle]);
@@ -942,7 +916,7 @@ void edanimDetermineNearestSound(float range)
         edanim_nearest_sound = -1;
         return;
     }
-    origin = &edanim_base_scene->specials[edanim_nearest].mtx.pos;
+    origin = (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30;
     if (edanim_nearest_sound != -1) {
         NuVecAdd(&pos, origin,
                  &AnimParams[edanim_nearest_param_id].sound_pos[edanim_nearest_sound]);
@@ -1007,7 +981,7 @@ void edanimSoundCreate(struct nuvec_s *wpos)
     slot = AnimParams[edanim_nearest_param_id].sound_count;
     if (slot != 8 && edanim_sound_type != -1) {
         NuVecSub(&AnimParams[edanim_nearest_param_id].sound_pos[slot], wpos,
-                 &edanim_base_scene->specials[edanim_nearest].mtx.pos);
+                 (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30);
         AnimParams[edanim_nearest_param_id].sound_type[slot] = edanim_sound_type;
         AnimParams[edanim_nearest_param_id].sound_switch[slot] = 1;
         strcpy(AnimParams[edanim_nearest_param_id].sound_name[slot],
@@ -1039,7 +1013,7 @@ void edanimParticleCreate(struct nuvec_s *wpos)
     slot = AnimParams[edanim_nearest_param_id].particle_count;
     if (slot != 8 && edanim_particle_type != -1) {
         NuVecSub(&AnimParams[edanim_nearest_param_id].particle_pos[slot], wpos,
-                 &edanim_base_scene->specials[edanim_nearest].mtx.pos);
+                 (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30);
         AnimParams[edanim_nearest_param_id].particle_rotz[slot] = edanim_emitrotz;
         AnimParams[edanim_nearest_param_id].particle_roty[slot] = edanim_emitroty;
         AnimParams[edanim_nearest_param_id].particle_type[slot] = edanim_particle_type;
@@ -1077,7 +1051,7 @@ inline void edanimParamDestroy(int param)
 
 inline void edanimSoundPlace(int slot, struct nuvec_s *wpos)
 {
-    struct nuvec_s *origin = &edanim_base_scene->specials[edanim_nearest].mtx.pos;
+    struct nuvec_s *origin = (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30;
 
     NuVecSub(&AnimParams[edanim_nearest_param_id].sound_pos[slot], wpos, origin);
 }
@@ -1085,7 +1059,7 @@ inline void edanimSoundPlace(int slot, struct nuvec_s *wpos)
 
 inline void edanimParticlePlace(int slot, struct nuvec_s *wpos)
 {
-    struct nuvec_s *origin = &edanim_base_scene->specials[edanim_nearest].mtx.pos;
+    struct nuvec_s *origin = (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30;
 
     NuVecSub(&AnimParams[edanim_nearest_param_id].particle_pos[slot], wpos, origin);
     AnimParams[edanim_nearest_param_id].particle_rotz[slot] = edanim_emitrotz;
@@ -1138,7 +1112,7 @@ void edanimDoInput(struct pad_s *pad)
                 edanimDetermineNearestParticle(-1.0f);
             }
             if (edanim_nearest_particle != -1) {
-                NuVecAdd(&pos, &edanim_base_scene->specials[edanim_nearest].mtx.pos,
+                NuVecAdd(&pos, (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30,
                          &AnimParams[edanim_nearest_param_id].particle_pos[edanim_nearest_particle]);
                 edcamSetPos(&pos);
                 edanim_emitrotz =
@@ -1166,7 +1140,7 @@ void edanimDoInput(struct pad_s *pad)
                 edanimDetermineNearestSound(-1.0f);
             }
             if (edanim_nearest_sound != -1) {
-                NuVecAdd(&pos, &edanim_base_scene->specials[edanim_nearest].mtx.pos,
+                NuVecAdd(&pos, (struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].mtx._30,
                          &AnimParams[edanim_nearest_param_id].sound_pos[edanim_nearest_sound]);
                 edcamSetPos(&pos);
                 edanim_sound_type =
@@ -1190,7 +1164,7 @@ void edanimDoInput(struct pad_s *pad)
                 edanimDetermineNearestAnim(-1.0f);
             }
             if (edanim_nearest != -1) {
-                edcamSetPos(&edanim_base_scene->specials[edanim_nearest].instance->mtx.pos);
+                edcamSetPos((struct nuvec_s *)&edanim_base_scene->specials[edanim_nearest].instance->mtx._30);
                 edanim_nearest_param_id = -1;
                 for (i = 0; i < 64; i++) {
                     if (AnimParams[i].id == edanim_nearest) {
@@ -1854,7 +1828,7 @@ void edanimRenderParticleEmitters(int param)
     int colour;
     int i;
 
-    origin = &edanim_base_scene->specials[AnimParams[param].id].mtx.pos;
+    origin = (struct nuvec_s *)&edanim_base_scene->specials[AnimParams[param].id].mtx._30;
     for (i = 0; i < AnimParams[param].particle_count; i++) {
         if (AnimParams[param].particle_type[i] != -1) {
             if (edanim_particle_mode && edanim_nearest_particle == i) {
@@ -1886,7 +1860,7 @@ void edanimRenderSoundEmitters(int param)
     int colour;
     int i;
 
-    origin = &edanim_base_scene->specials[AnimParams[param].id].mtx.pos;
+    origin = (struct nuvec_s *)&edanim_base_scene->specials[AnimParams[param].id].mtx._30;
     for (i = 0; i < AnimParams[param].sound_count; i++) {
         if (AnimParams[param].sound_switch[i] != -1) {
             colour = -1;
@@ -1920,7 +1894,7 @@ void edanimRender(void)
             colour = 0xFF808080;
         }
         instance = edanim_base_scene->specials[edanim_nearest].instance;
-        edbitsDrawCube(instance->mtx.pos.x, instance->mtx.pos.y, instance->mtx.pos.z,
+        edbitsDrawCube(instance->mtx._30, instance->mtx._31, instance->mtx._32,
                        0.5f, 0.5f, 0.5f, 0, 0, 0, 0, colour, edanim_mtl_zoff);
         if (edanim_particle_mode) {
             edanimRenderParticleEmitters(edanim_nearest_param_id);
@@ -1988,7 +1962,7 @@ void edanimParamReset(void)
 float edanimPlayerAnimDistance(int param)
 {
     if (edmainQueryLocVec() != 0) {
-        return NuVecDist(&edanim_base_scene->specials[AnimParams[param].id].mtx.pos,
+        return NuVecDist((struct nuvec_s *)&edanim_base_scene->specials[AnimParams[param].id].mtx._30,
                          edmainQueryLocVec(), 0);
     }
     return 0.0f;

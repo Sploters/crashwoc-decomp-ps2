@@ -34,6 +34,9 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 
 #include "creature.h"
 #include "gcutscn.h"
@@ -87,8 +90,6 @@ extern struct game_s Game;
 extern s32 gamecut;
 extern struct nucolour3_s cutdircol[];
 extern struct nuvec_s cutdir[];
-
-extern void NuVecNorm(struct nuvec_s *out, struct nuvec_s *in);
 
 extern s32 cutmovie;
 extern s32 cut_on;
@@ -191,7 +192,6 @@ extern void *SpaceGameCutTab[][2];
 extern struct anim_s CutAnim;
 extern struct anim_s CutVortexAnim;
 extern s32 gamecut_finished;
-extern s32 NuAtan2D(f32 x, f32 z);
 extern void NuAnimData2CalcTime(void *anim, f32 currf, struct nuanimtime_s *atime);
 
 struct NUHGOBJ_s {
@@ -208,7 +208,6 @@ extern void NuHGobjEvalAnim2(struct NUHGOBJ_s *obj, void *joint_anim, f32 frame,
 extern void NuHGobjEval(struct NUHGOBJ_s *obj, s32 njoints, void *joints,
                         struct numtx_s *tmtx);
 extern float **NuHGobjEvalDwa2(s32 nlayers, short *layers, void *face_anim, f32 frame);
-extern void NuMtxMul(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 
 /* Cutscene character render callback: animate and draw one character, then
@@ -598,10 +597,6 @@ extern s32 GameMode;
 extern f32 HUBHOLOSCALE;
 extern f32 SPACEMASKADJUSTY;
 extern f32 FRONTENDCORTEXADJUSTY;
-extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxRotateY(struct numtx_s *m, s32 a);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 
 struct gtimer_s {
     s32 frame;   /* 0x0 */

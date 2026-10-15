@@ -69,6 +69,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct debinfo_s;
@@ -345,8 +348,6 @@ extern f32 D_0062CEA4;
 
 void SetupDebris(void);
 struct debpart_s *GenDebIndex(struct deb_s *deb, struct debinfo_s *info);
-f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
-f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, void *c);
 void DebFree(s32 *key);
 void DebFreeInstantly(s32 *key);
 struct deb_s **FindDebrisEffectStack(struct deb_s *node);
@@ -356,14 +357,8 @@ void DebReAlloc(struct deb_s *deb, s32 count);
 void DebFreeWithoutKey(struct deb_s *deb);
 void DebrisDoSounds(struct deb_s *deb, s32 type);
 void AddDebrisEffect(s32 *key, s32 type, f32 x, f32 y, f32 z);
-void NuMtxRotateZ(struct numtx_s *m, s32 angle);
-void NuMtxRotateY(struct numtx_s *m, s32 angle);
-void NuMtxSetIdentity(struct numtx_s *m);
 f32 NuFsqrt(f32 x);
 void edbitsSoundPlay(struct nuvec_s *pos, s32 id);
-void NuVecMtxTransform(struct nuvec_s *out, struct nuvec_s *in, struct numtx_s *mtx);
-void NuVecRotateY(struct nuvec_s *out, struct nuvec_s *in, s32 angle);
-void NuVecRotateZ(struct nuvec_s *out, struct nuvec_s *in, s32 angle);
 void GenericDebinfoDmaTypeUpdate(struct debinfo_s *info);
 void AddChunkControlToStack(struct chunkctrl_s *node, struct chunkctrl_s **list);
 void RemoveChunkControlFromStack(struct chunkctrl_s *node, struct chunkctrl_s **list);
@@ -371,16 +366,13 @@ f32 CameraEmitterDistance(struct nuvec_s *pos);
 s32 DebAlloc(void);
 void AddDebrisEffectToStack(struct deb_s *node, struct deb_s **list);
 void DebrisStartOffset(s32 key, s32 offset);
-void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 void NuRndrParticleGroup(struct debchunk_s *chunk, struct debdma_s *dma, struct numtl_s *mtl, struct numtx_s *mtx, s32 flags, f32 time);
 void DebrisEmitterOrientationMtx(s32 key, struct numtx_s *mtx);
-void NuVecScale(struct nuvec_s *d, struct nuvec_s *s, f32 k);
 s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
 struct numtl_s *NuMtlCreate(s32 count);
 void NuMtlUpdate(struct numtl_s *mtl);
 s32 NuTexCreate(struct nutex_s *tex);
 void LinkDmaParticalSets(struct debchunk_s **sets, s32 count);
-void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 
 
 void GenericDebinfoDmaTypeUpdate(struct debinfo_s *info) {

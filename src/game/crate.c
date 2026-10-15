@@ -62,6 +62,10 @@
 
 #include "nu_libc.h"
 
+#include "numath/nufloat.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct nulsthdr_s;
@@ -207,8 +211,6 @@ extern s32 FurtherALONG(s32 iRAIL, s32 iALONG, f32 fALONG, s32 iRAIL2,
                         s32 iALONG2, f32 fALONG2);
 extern f32 CRATEBALLOONRADIUS;
 extern f32 CRATEBALLOONOFFSET;
-extern void NuVecSub(struct nuvec_s *dest, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 ang);
 extern s32 TimeTrial;
 struct crate_s *NextCrate(struct crate_s *a);
 
@@ -266,10 +268,6 @@ extern u8 *rndrstream_free;
 extern s32 NuCameraClipTestPoints(struct nuvec_s *pos, s32 n, struct numtx_s *wm);
 extern struct numtx_s *NuCameraGetVPCSMtx(void);
 extern void *NuVpGetCurrentViewport(void);
-extern void NuMtxSetRotateXYZ(struct numtx_s *m, s32 *ang);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxMulH(struct numtx_s *dst, struct numtx_s *a,
-                      struct numtx_s *b);
 extern void NuVec4MtxTransformVU0(struct nuvec4_s *dst, struct nuvec4_s *src,
                                   struct numtx_s *m);
 extern void NuVec4ScaleXYZVU0(struct nuvec4_s *dst, struct nuvec4_s *src,
@@ -1649,8 +1647,6 @@ extern f32 D_0062D7B0;
 extern f32 D_0062D7A0;
 extern f32 D_0062D7A4;
 
-extern f32 NuFabs(f32 x);
-
 /* The three `0.249` compares are double literals, not floats: each one makes
  * gcc call fptodp/dpcmp and emit its own `li.d $a1,0.249`, which SN's `as`
  * pools into the unit's .rodata as D_0061EE90/98/A0 (2.95 does not dedup equal
@@ -1716,7 +1712,6 @@ struct cRPos_s {
 extern struct cRPos_s *best_cRPos;
 extern s32 cp_goto;
 extern struct nuvec_s cpGOTO;
-extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 
 /* Faithful reconstruction (state=asm), ~11%: logic/offsets correct (best_cRPos
  * iRAIL@0/iALONG@2/fALONG@8, cpGOTO x@0/y@4/z@8, direction-dependent
@@ -2220,8 +2215,6 @@ void DestroyCrate(struct crate_s *crate) {
 }
 
 extern struct numtx_s mTEMP;
-extern void NuMtxSetRotationY(struct numtx_s *m, s32 rot);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 extern s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 
 void DrawCrate(struct crate_s *crate) {
@@ -3208,8 +3201,6 @@ struct objtab_s {
 }; /* 0x20 */
 extern struct objtab_s ObjTab[];
 
-extern void NuMtxRotateX(struct numtx_s *m, s32 r);
-extern void NuMtxRotateZ(struct numtx_s *m, s32 r);
 extern f32 **NuHGobjEvalDwa(s32 nlayers, s16 *layer,
                             struct nuanimdata_s *data, f32 time);
 extern void NuHGobjEvalAnim(struct NUHGOBJ_s *hobj, struct nuanimdata_s *data,

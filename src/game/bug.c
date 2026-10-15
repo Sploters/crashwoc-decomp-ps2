@@ -10,6 +10,9 @@
  *   0x0025fa88 DrawBug
  */
 
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern s32 Level;
@@ -107,9 +110,6 @@ struct gamecam_s {
 extern struct gamecam_s GameCam;
 
 extern s32 qrand(void);
-extern s32 NuAtan2D(f32 x, f32 z);
-extern f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern f32 NuFsqrt(f32 x);
 extern u16 SeekRot(u16 a, u16 target, s32 rate);
 extern void AddGameDebris(s32 type, struct nuvec_s *pos);

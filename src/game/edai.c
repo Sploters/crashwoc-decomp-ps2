@@ -25,6 +25,10 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct pad_s {
@@ -88,8 +92,6 @@ struct aitype_s {
     u8 unk_0x04[0x18];
 };                           /* 0x1C */
 extern struct aitype_s AIType[];
-
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 
 extern s32 PANELOFF;
 extern char tbuf[];
@@ -164,10 +166,6 @@ extern CharacterData CData[];
 extern struct numtx_s mTEMP;
 extern s32 D_005CD1D0[8];
 
-extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
-extern void NuMtxRotateY(struct numtx_s *m, s32 ang);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-extern s32 NuAtan2D(f32 x, f32 z);
 extern void NuHGobjRndr(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                         s16 *layer);
 extern void NuRndrLine3dDbg(s32 colour, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1,

@@ -84,6 +84,8 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "numath/numathtypes.h"
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
@@ -129,17 +131,11 @@ typedef struct numtlattrib_s {
     u64 unk48 : 16;
 } NUMTLATTRIB;
 
-typedef struct nucolour3_s {
-    f32 r;
-    f32 g;
-    f32 b;
-} NUCOLOUR3;
-
 typedef struct numtl_s {
     u8 unk_0x000[0x168];
     NUMTLATTRIB attrib;
     u8 unk_0x170[0x10];
-    NUCOLOUR3 diffuse;
+    struct nucolour3_s diffuse;
     u8 unk_0x18C[0x14];
     f32 alpha;
 } NUMTL;

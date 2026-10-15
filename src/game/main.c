@@ -47,13 +47,9 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-}; /* 0x40 */
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
 
 struct nugscn_s;
 struct numtl_s;
@@ -1309,7 +1305,6 @@ extern struct nulight_s *D_0062FAE8;
 
 extern struct nulight_s *NuLightCreate(void);
 extern void NuLightUpdate(struct nulight_s *light);
-extern void NuMtxSetRotationX(struct numtx_s *m, s32 angle);
 
 void InitLights(void)
 {
@@ -1380,7 +1375,6 @@ extern void NuRndrFlush(s32 flags);
 extern s32 *NuVpGetCurrentViewport(void);
 extern void NuRndrRectUV2di(s32 x, s32 y, s32 w, s32 h, float u0, float v0, float u1, float v1,
                             u32 col, struct numtl_s *mtl);
-extern s32 NuPower2(s32 value);
 
 #define MTLATTR(m) (*(struct fadebits *)&(m)->reg168)
 
@@ -1626,7 +1620,6 @@ extern void BGLoadEnd(void);
 extern void BGSuspendMain(void);
 extern void NuVpSetSize(float width, float height);
 extern void NuSoundUpdate(void);
-extern void NuMtxTranslate(struct numtx_s *m, struct vec3_s *v);
 extern void TimeTunnelRender(void);
 extern void TimeTunnelClose(void);
 extern void DrawGameMessage(char *text, s32 frame, float y);

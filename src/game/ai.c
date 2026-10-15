@@ -37,6 +37,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 /* AI type entry (AIType): PS2 stride 0x1C; character (+0x0), label (+0x2),
@@ -99,11 +102,8 @@ void LoadScreen(char *name);           /* 0x001cabf0 */
 f32 FindNearestCreature(struct nuvec_s *pos, s32 type, struct nuvec_s *out); /* 0x002349c0 */
 void LoadAI(void);                     /* 0x0022ef10 */
 void ResetAI(void);                    /* 0x0022f2c8 */
-f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d); /* 0x001073a8 */
 void GetALONG(struct nuvec_s *pos, struct RPos_s *rpos, s32 iRAIL, s32 iALONG, s32 dir); /* 0x001dac00 */
 s32 AheadOfCheckpoint(s32 iRAIL, s32 iALONG, f32 fALONG); /* 0x001f0278 */
-void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b); /* 0x00106f28 */
-void NuVecScale(struct nuvec_s *d, struct nuvec_s *s, f32 k); /* 0x00106f98 */
 void RemoveGameObject(struct obj_s *obj); /* 0x00200c38 */
 
 extern struct aipath_s D_005CA154[];   /* saved AI path positions */
@@ -192,8 +192,6 @@ extern struct nuvec_s D_0058656C;      /* DRAINDAMAGE aim target */
 extern f32 DRAINWAWADY;                /* 0x00631b90 */
 extern f32 D_0062E264;                 /* DRAINDAMAGE anim rate */
 u16 SeekRot(u16 a, u16 target, s32 rate);
-s32 NuAtan2D(f32 x, f32 z);
-void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 
 struct cammtx_s;
 extern struct cammtx_s GameCam;        /* 0x005864c8 */
@@ -201,7 +199,6 @@ extern struct nuvec_s v001;
 extern f32 D_0062E26C;                 /* Spladoosh camera judder time */
 extern f32 D_0062E270;                 /* Spladoosh debris spread scale */
 void JudderGameCamera(struct cammtx_s *cam, f32 time, struct nuvec_s *pos);
-void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 void AddGameDebrisRot(s32 i, struct nuvec_s *pos, s32 n, u16 xrot, u16 yrot);
 void Draw3DCharacter(struct nuvec_s *pos, s32 xrot, s32 yrot, s32 z,
                      struct CharacterModel *model, f32 scale, s32 action,
@@ -1224,10 +1221,6 @@ s32 HitWumpa(struct obj_s *obj, s32 destroy);
 void GetTopBot(struct creature_s *c);
 void NewTopBot(struct obj_s *obj);
 void OldTopBot(struct obj_s *obj);
-void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-f32 NuVecMag(struct nuvec_s *v);
-f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
-f32 NuVecXZDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
 f32 NewShadowMaskPlat(struct nuvec_s *pos, f32 y, s32 layer);
 void GetSurfaceInfo(struct obj_s *obj, s32 mode, f32 y);
 void ObjectRotation(struct obj_s *obj, s32 mode, s32 vehicle);

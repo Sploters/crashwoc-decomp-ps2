@@ -15,6 +15,9 @@
  *   0x00239cb8 DrawGlassCreatures
  */
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+
 #include "creature.h"
 
 struct numtl_s {
@@ -118,7 +121,6 @@ extern s32 NuMtlUpdateEx(struct numtl_s *mtl, s32 force);
 extern void LoadScreen(char *name);
 extern s32 NuTexCreate(struct nutex_s *tex);
 extern struct nutex_s *NuTexReadBitmap(char *name);
-extern s32 NuPower2(s32 value);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
 extern s32 NuTexGetReqSize(s32 tid, s32 level);
 extern s32 NuTexReserve(s32 size);
@@ -129,8 +131,6 @@ extern void NuRndrEndScene(void);
 extern void NuRndrEndSceneEx(s32 flags);
 extern void NuRndrRectUV2di(s32 x, s32 y, s32 w, s32 h, f32 u0, f32 v0, f32 u1, f32 v1,
                             s32 colour, struct numtl_s *mtl);
-extern void NuMtxInvR(struct numtx_s *dst, struct numtx_s *src);
-extern void NuMtxScale(struct numtx_s *m, struct nuvec_s *s);
 extern s32 NuRndrSetFxMtx(struct numtx_s *m);
 
 

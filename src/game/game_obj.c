@@ -47,6 +47,10 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 /* Level data record; only flags at +0x24 is touched here. */
@@ -111,13 +115,10 @@ extern s32 FIZZLEVOL;
 extern struct nuvec_s v000;
 f32 NewShadow(struct nuvec_s *pos, f32 y);
 f32 NewShadowMaskPlat(struct nuvec_s *pos, f32 y, s32 extramask);
-f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
-f32 NuVecMag(struct nuvec_s *v);
 s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *ray, f32 size);
 extern f32 GRAVITY;
 extern f32 D_005F28F8[];
 #define terminal_fall_speed D_005F28F8[0]
-void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 s32 HitCrates(struct obj_s *obj, s32 destroy);
 s32 HitWumpa(struct obj_s *obj, s32 destroy);
 void AddKaboom(s32 type, struct nuvec_s *pos, f32 radius);
@@ -129,13 +130,8 @@ void PickupItem(struct obj_s *obj);
 s32 CylinderCuboidOverlapXZ(struct nuvec_s *pos, struct obj_s *obj,
                             struct nuvec_s *p2, f32 radius);
 void AddGameDebris(s32 type, struct nuvec_s *pos);
-void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 s);
-void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 void GameSfx(s32 sfx, struct nuvec_s *pos);
-s32 NuAtan2D(f32 x, f32 z);
 f32 NuFsqrt(f32 x);
-void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 s32 GetDieAnim(struct obj_s *obj, s32 anim);
 void ObjectToAtlas(struct obj_s *obj, struct creature_s *player);
 
@@ -284,14 +280,6 @@ void ResetAnimPacket(struct anim_s *anim, s32 action);
 void AddExtraLife(struct nuvec_s *pos, s32 pdeb);
 void AddMechanicalDebris(struct nuvec_s *pos, s32 vehicle);
 
-void NuMtxSetRotationX(struct numtx_s *m, s32 r);
-void NuMtxSetRotationY(struct numtx_s *m, s32 r);
-void NuMtxRotateX(struct numtx_s *m, s32 r);
-void NuMtxRotateY(struct numtx_s *m, s32 r);
-void NuMtxRotateZ(struct numtx_s *m, s32 r);
-void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
-void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
 s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 void NuLightAddSpot(struct nuvec_s *pos, f32 size, u32 colour, s32 mode);
 void NuRndrAddShadow(struct nuvec_s *pos, s32 alpha, s32 xrot, s32 yrot, s32 zrot, f32 size);

@@ -35,6 +35,7 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numathtypes.h"
 
 struct nurndrstream_s {
     void *start;
@@ -64,12 +65,6 @@ struct numtluv_s {
     int row_v;
     int row_z;
     int row_w;
-};
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
 };
 
 typedef struct NuMtl {
