@@ -134,6 +134,31 @@ class TestCensus(unittest.TestCase):
         self.assertEqual(result["libc_prototypes"]["value"], 0)
 
 
+class TestHeaderLayout(unittest.TestCase):
+    SOURCES = {"src/nu3d/nugscn.c": "", "src/game/creature.c": ""}
+
+    def why(self, header):
+        return check_types.header_misplaced(header, self.SOURCES)
+
+    def test_platform_headers_in_root(self):
+        self.assertIsNone(self.why("include/nu_types.h"))
+        self.assertIsNone(self.why("include/nu_libc.h"))
+        self.assertIn("platform headers only", self.why("include/creature.h"))
+
+    def test_module_and_types_headers(self):
+        self.assertIsNone(self.why("include/nu3d/nugscn.h"))
+        self.assertIsNone(self.why("include/nu3d/nu3dtypes.h"))
+        self.assertIsNone(self.why("include/game/creature.h"))
+        self.assertIn("no src/nu3d/nustuff.c", self.why("include/nu3d/nustuff.h"))
+        self.assertIn("deeper", self.why("include/nu3d/sub/x.h"))
+
+    def test_metric(self):
+        result = run({**self.SOURCES, "include/nu_types.h": "",
+                      "include/creature.h": "", "include/nu3d/nugscn.h": "",
+                      "include/nu3d/bad.h": ""})
+        self.assertEqual(result["misplaced_headers"]["value"], 2)
+
+
 class TestRatchet(unittest.TestCase):
     def test_check(self):
         result = {name: {"value": 5, "findings": []} for name in check_types.METRICS}

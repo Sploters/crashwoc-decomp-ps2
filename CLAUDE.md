@@ -53,12 +53,15 @@ python tools/dispatch.py ninja verify-promoted     # re-verify every "matching" 
 python tools/dispatch.py ninja report              # objdiff-cli progress report
 python tools/check_codegen.py --build --snapshot   # before a type refactor (on the base)
 python tools/check_codegen.py --build --compare    # after it: must report 0 objects differ
+python tools/dispatch.py python tools/probe_layout.py --check  # header offset comments vs compiler
 python tools/dispatch.py ninja report-public       # whitelist-sanitized report (decomp.dev)
 
 # Promotion (the only writer of state = "matching")
 python tools/promote.py <FunctionName>             # flip manifest, verify, roll back on failure
 python tools/promote.py --init src/<unit>.c        # scaffold an all-asm manifest for a new unit
 ```
+
+Headers live in `include/` (layout and rules: docs/decomp_agent.md, "Types and shared headers").
 
 **After adding a source file, status manifest, or header, regenerate the build graph**: `python tools/gen_ninja.py` (ninja cannot discover new edges; configure.py also regenerates it).
 

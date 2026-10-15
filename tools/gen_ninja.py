@@ -37,6 +37,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+from cc import header_files
 from declib.toolchain import AS, BINUTILS_DIR, OBJDIFF_CLI
 from declib.tu import load_tu_runs, load_units
 from gen_expected_s import unit_stem
@@ -101,8 +102,7 @@ def emit_ninja(version="pal103", out_path=None):
     as_rel = (BINUTILS_DIR.relative_to(ROOT) / AS).as_posix()
     registries = [f"config/{version}/functions.toml",
                   f"config/{version}/units.toml"]
-    headers = [f"include/{h.name}"
-               for h in sorted((ROOT / "include").glob("*.h"))]
+    headers = [h.relative_to(ROOT).as_posix() for h in header_files()]
     profiles = f"config/{version}/profiles.toml"
     fallback_stamp = f"build/{version}/fallback/.stamp"
 

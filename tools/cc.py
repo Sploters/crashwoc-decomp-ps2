@@ -121,12 +121,28 @@ def _workdir_for(out_path):
     return Path(tempfile.gettempdir()) / "crashwoc-cc" / token
 
 
+def header_files(root=None):
+    """Every committed header, include/ subdirectories included."""
+    include_dir = (root or ROOT) / "include"
+    return sorted(include_dir.rglob("*.h")) if include_dir.is_dir() else []
+
+
 def _stage_headers(work):
-    """Committed headers the source may #include, staged next to it."""
+    """Committed headers the source may #include, staged next to it.
+
+    The include/ tree keeps its layout under the scratch dir, which is also
+    the compiler's cwd, so `#include "nu3d/nugscn.h"` resolves from the source
+    and, through -I. (INCLUDE_ARGS), from inside another header.
+    """
     include_dir = ROOT / "include"
-    if include_dir.is_dir():
-        for header in include_dir.glob("*.h"):
-            shutil.copy(header, work / header.name)
+    for header in header_files():
+        dest = work / header.relative_to(include_dir)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(header, dest)
+
+
+# Search path for the staged include/ tree.
+INCLUDE_ARGS = ["-I."]
 
 
 def _run_driver(src, out_name, extra_args, out_path, profile, version):
@@ -143,7 +159,7 @@ def _run_driver(src, out_name, extra_args, out_path, profile, version):
         shutil.copy(src, work / src.name)
         _stage_headers(work)
         produced = work / out_name
-        subprocess.run([*argv, *spec["flags"], *extra_args,
+        subprocess.run([*argv, *spec["flags"], *INCLUDE_ARGS, *extra_args,
                         "-o", str(produced), str(work / src.name)],
                        check=True, capture_output=True, text=True, cwd=work)
         out_path.parent.mkdir(parents=True, exist_ok=True)

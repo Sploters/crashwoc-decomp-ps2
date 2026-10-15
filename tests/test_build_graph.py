@@ -57,6 +57,16 @@ class TestEmitNinja(unittest.TestCase):
         cc_edges = self.edges("cc")
         self.assertEqual(len(cc_edges), len(srcs))
 
+    def test_every_header_is_a_compile_input(self):
+        """A header edit anywhere under include/ rebuilds every object."""
+        headers = [h.relative_to(ROOT).as_posix()
+                   for h in sorted((ROOT / "include").rglob("*.h"))]
+        self.assertTrue(headers)
+        for edge in self.edges("cc") + self.edges("hybrid"):
+            implicit = edge.split(" | ", 1)[1].split()
+            for header in headers:
+                self.assertIn(header, implicit, edge)
+
     def test_hybrid_edges_reflect_function_states(self):
         # A hybrid is emitted per link set only where a function reaches the
         # state that set links from C: `matching` earns matching + report-current
@@ -118,6 +128,37 @@ class TestEmitNinja(unittest.TestCase):
 
     def test_escaping(self):
         self.assertEqual(_esc("a b:c$d"), "a$ b$:c$$d")
+
+
+class TestHeaderStaging(unittest.TestCase):
+    def test_tree_is_staged_with_its_layout(self):
+        import cc
+        with tempfile.TemporaryDirectory() as tmp:
+            repo, work = Path(tmp) / "repo", Path(tmp) / "work"
+            (repo / "include" / "nu3d").mkdir(parents=True)
+            (repo / "include" / "nu_types.h").write_text("/* root */\n")
+            (repo / "include" / "nu3d" / "nugscn.h").write_text("/* sub */\n")
+            (repo / "include" / "nu3d" / "notes.txt").write_text("ignored\n")
+            work.mkdir()
+            saved = cc.ROOT
+            cc.ROOT = repo
+            try:
+                self.assertEqual(
+                    [h.relative_to(repo).as_posix() for h in cc.header_files()],
+                    ["include/nu3d/nugscn.h", "include/nu_types.h"])
+                cc._stage_headers(work)
+            finally:
+                cc.ROOT = saved
+            self.assertEqual((work / "nu3d" / "nugscn.h").read_text(), "/* sub */\n")
+            self.assertTrue((work / "nu_types.h").is_file())
+            self.assertFalse((work / "nu3d" / "notes.txt").exists())
+
+    def test_include_path_is_not_a_profile_flag(self):
+        """-I. is passed by cc.py, so the profiles fingerprint is unchanged."""
+        import cc
+        self.assertEqual(cc.INCLUDE_ARGS, ["-I."])
+        for spec in cc.load_profiles("pal103").values():
+            self.assertFalse(any(f.startswith("-I") for f in spec["flags"]))
 
 
 class TestClassify(unittest.TestCase):
