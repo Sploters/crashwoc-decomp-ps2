@@ -398,8 +398,8 @@ void AddExtraLife(struct nuvec_s *pos, s32 pdeb) {
     AddPanelDebris(scr.x, scr.y, pdeb, dptofp(dpmul(d, D_0061EFB8[0])), 1);
 }
 
-/* Faithful near-match (state=asm): same +0.5f column-search assembler wall as
- * CrateOnTop/HopCratesAbove (gcc .p2align 3 inner-loop padding vs retail SN-as). */
+/* Whether another live crate in the same column of `group` sits above
+ * `crate` and overlaps the object's vertical extent. */
 s32 CrateAbove(struct obj_s *obj, struct CrateCubeGroup *group,
                struct CrateCube *crate) {
     struct CrateCube *crate2;
@@ -407,12 +407,12 @@ s32 CrateAbove(struct obj_s *obj, struct CrateCubeGroup *group,
 
     crate2 = &Crate[group->iCrate];
     for (i = 0; i < group->nCrates; i++, crate2++) {
-        if ((((crate2 != crate) && (crate2->on != 0)) &&
-             (GetCrateType(crate2, 0) != 0)) &&
-            ((crate2->dx == crate->dx) && (crate2->dz == crate->dz))) {
-            if ((crate2->pos.y > crate->pos.y) &&
-                (!(obj->objtop < crate2->pos.y) &&
-                 !(obj->objbot > (crate2->pos.y + 0.5f)))) {
+        if (crate2 != crate && crate2->on != 0 &&
+            GetCrateType(crate2, 0) != 0 &&
+            crate2->dx == crate->dx && crate2->dz == crate->dz) {
+            if (crate2->pos.y > crate->pos.y &&
+                !(obj->objtop < crate2->pos.y) &&
+                !(obj->objbot > crate2->pos.y + 0.5f)) {
                 return 1;
             }
         }
@@ -420,7 +420,8 @@ s32 CrateAbove(struct obj_s *obj, struct CrateCubeGroup *group,
     return 0;
 }
 
-/* Faithful near-match (state=asm): same +0.5f column-search assembler wall. */
+/* Whether another live crate in the same column of `group` sits below
+ * `crate` and overlaps the object's vertical extent. */
 s32 CrateBelow(struct obj_s *obj, struct CrateCubeGroup *group,
                struct CrateCube *crate) {
     struct CrateCube *crate2;
@@ -428,13 +429,14 @@ s32 CrateBelow(struct obj_s *obj, struct CrateCubeGroup *group,
 
     crate2 = &Crate[group->iCrate];
     for (i = 0; i < group->nCrates; i++, crate2++) {
-        if (((((crate2 != crate) && (crate2->on != 0)) &&
-              (GetCrateType(crate2, 0) != 0)) &&
-             ((crate2->dx == crate->dx) && (crate2->dz == crate->dz))) &&
-            ((crate2->pos.y < crate->pos.y) &&
-             (!(obj->objtop < crate2->pos.y ||
-                (obj->objbot > (crate2->pos.y + 0.5f)))))) {
-            return 1;
+        if (crate2 != crate && crate2->on != 0 &&
+            GetCrateType(crate2, 0) != 0 &&
+            crate2->dx == crate->dx && crate2->dz == crate->dz) {
+            if (crate2->pos.y < crate->pos.y &&
+                !(obj->objtop < crate2->pos.y) &&
+                !(obj->objbot > crate2->pos.y + 0.5f)) {
+                return 1;
+            }
         }
     }
     return 0;
@@ -3429,28 +3431,26 @@ s32 CrateInTheWay(struct obj_s *obj, struct CrateCubeGroup *group,
     return 0;
 }
 
-/* Faithful near-match (state=asm): structure/offsets exact vs retail, but the
- * `+ 0.5f` FP-equality inner loop assembles one instruction over the extent
- * (decompals-as loop .p2align / FP-hazard nop). Same class as the documented
- * .org-backwards wall; kept for reference. */
+/* Whether another live crate in `group` rests directly on top of `crate`:
+ * same column, exactly half a unit higher. */
 s32 CrateOnTop(struct CrateCubeGroup *group, struct CrateCube *crate) {
     s32 i;
     struct CrateCube *crate2;
 
     crate2 = &Crate[group->iCrate];
     for (i = 0; i < group->nCrates; i++, crate2++) {
-        if ((((crate2 != crate) && (crate2->on != 0)) &&
-             (GetCrateType(crate2, 0) != 0)) &&
-            (((crate2->dx == crate->dx && (crate2->dz == crate->dz)) &&
-              (crate2->pos.y == crate->pos.y + 0.5f)))) {
+        if (crate2 != crate && crate2->on != 0 &&
+            GetCrateType(crate2, 0) != 0 &&
+            crate2->dx == crate->dx && crate2->dz == crate->dz &&
+            crate2->pos.y == crate->pos.y + 0.5f) {
             return 1;
         }
     }
     return 0;
 }
 
-/* Faithful near-match (state=asm): same `+ 0.5f` inner-loop assembler wall as
- * CrateOnTop; structure (outer goto restart, column match) is exact. */
+/* Gives every crate stacked directly above `crate` (same column, each half a
+ * unit above the last) the upward momentum `speed`. */
 void HopCratesAbove(f32 speed, struct CrateCubeGroup *group,
                     struct CrateCube *crate) {
     struct CrateCube *crate2;
@@ -3459,9 +3459,9 @@ void HopCratesAbove(f32 speed, struct CrateCubeGroup *group,
 Loop:
     crate2 = &Crate[group->iCrate];
     for (i = 0; i < group->nCrates; i++, crate2++) {
-        if (((crate2->on != 0) && (crate2->dx == crate->dx) &&
-             (crate2->dz == crate->dz)) &&
-            (crate->pos.y + 0.5f == crate2->pos.y)) {
+        if (crate2->on != 0 && crate2->dx == crate->dx &&
+            crate2->dz == crate->dz &&
+            crate2->pos.y == crate->pos.y + 0.5f) {
             crate2->mom = speed;
             crate = crate2;
             goto Loop;

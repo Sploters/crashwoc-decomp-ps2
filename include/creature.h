@@ -446,9 +446,15 @@ struct glider_s {
     struct creature_s *Cre;    /* 0x00 */
     char pad_04[0x10 - 0x04];
     s32 Dead;                  /* 0x10 */
-    char pad_14[0x30 - 0x14];
+    s32 CocoDead;              /* 0x14  shot down, spinning out (DeadGliderCoco) */
+    f32 CocoDeadTimer;         /* 0x18 */
+    f32 CocoDeathSpinX;        /* 0x1C  degrees per second */
+    f32 CocoDeathSpinZ;        /* 0x20 */
+    char pad_24[0x30 - 0x24];
     struct nuvec_s Position;   /* 0x30 */
-    char pad_3C[0x6C - 0x3C];
+    char pad_3C[0x48 - 0x3C];
+    struct nuvec_s Velocity;   /* 0x48 */
+    char pad_54[0x6C - 0x54];
     f32 RailAngle;             /* 0x6C */
     f32 TiltX;                 /* 0x70  pitch (NuMtxRotateX) */
     f32 TiltZ;                 /* 0x74  roll (NuMtxSetRotationZ) */
@@ -456,14 +462,15 @@ struct glider_s {
     f32 DestTiltZ;             /* 0x7C */
     f32 AngleY;                /* 0x80  heading (NuMtxRotateY) */
     char pad_84[0x98 - 0x84];
-    s32 BarrelRoll;            /* 0x98 */
-    char pad_9C[0xA4 - 0x9C];
+    s32 BarrelRoll;            /* 0x98  >1 rolling one way, <-1 the other */
+    char pad_9C[0xA0 - 0x9C];
+    f32 BarrelSpeedX;          /* 0xA0  sideways speed of a barrel roll */
     s32 TerminalDive;          /* 0xA4 */
     char pad_A8[0xAC - 0xA8];
     f32 FireTimer;             /* 0xAC */
     f32 HitTimer;              /* 0xB0 */
     s32 AutoPilot;             /* 0xB4 */
-    char pad_B8[0xBC - 0xB8];
+    s32 ForceTurn;             /* 0xB8 */
     s32 HitPoints;             /* 0xBC  0..100 */
     char LocatorList[16];      /* 0xC0 */
     f32 LocatorTime[16];       /* 0xD0 */

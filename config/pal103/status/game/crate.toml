@@ -165,15 +165,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f85d8:HopCratesAbove"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f8670:CrateAbove"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f8790:CrateBelow"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f88b0:LowestCrate"
@@ -189,7 +189,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f8a40:CrateOnTop"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f8b28:AddExtraLife"

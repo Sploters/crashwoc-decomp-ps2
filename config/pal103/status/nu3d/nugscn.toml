@@ -233,7 +233,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c6d8:CvtNuIFFNodeHierarchy"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0044:0014c768:FindSplinePtSize"
