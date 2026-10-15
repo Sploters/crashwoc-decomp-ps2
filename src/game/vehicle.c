@@ -1440,11 +1440,9 @@ extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);
 extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 size);
 extern void InitBattleShip(struct nuvec_s *pos, f32 angle, s32 index);
 
-/* Whether `target` is still worth a lock-on: more than 10 units ahead of the
- * camera, within ~25 degrees of its view and with a clear line to the glider.
- * Near-match (state=asm): with NuVecSub prototyped (it used to be implicitly
- * declared here) the instruction stream equals retail's apart from the two
- * SN-as mtc1 hazard nops. */
+/* Whether `target` is still worth a lock-on: more than 10 units from the
+ * camera, within ~25 degrees of its view, and nothing solid within 3 units
+ * along the ray from the target towards the glider. */
 s32 StillLockedOnTarget(struct nuvec_s *target)
 {
     struct nuvec_s *fwd;
@@ -2646,6 +2644,59 @@ inline struct gliderbullet_s *GrabGliderBullet(s32 enemy)
         return b;
     }
     return 0;
+}
+
+/* Render every live bullet with its level's model: object 0x6F for the
+ * player and 0x6E for enemies on level 0x1A, objects 0 and 0xE elsewhere. */
+/* Near-match (156 bytes): retail tests each count once, before setting up
+ * the list pointer; this compiles the guard and the loop entry as two
+ * tests. Stays asm. */
+void DrawGliderBullets(void)
+{
+    s32 i;
+    struct gliderbullet_s **bp;
+
+    if (Level == 0x1A) {
+        if (UsedGliderBulletNum > 0) {
+            bp = UsedGliderBulletList - 1;
+            for (i = 0; i < UsedGliderBulletNum; i++) {
+                NuRndrGScnObj(ObjTab[0x6F].obj.scene->gobjs[ObjTab[0x6F].obj.special->instance->objid],
+                          &(*++bp)->mtx);
+            }
+        }
+        if (UsedEnemyGliderBulletNum > 0) {
+            bp = UsedEnemyGliderBulletList - 1;
+            for (i = 0; i < UsedEnemyGliderBulletNum; i++) {
+                NuRndrGScnObj(ObjTab[0x6E].obj.scene->gobjs[ObjTab[0x6E].obj.special->instance->objid],
+                          &(*++bp)->mtx);
+            }
+        }
+    } else {
+        if (UsedGliderBulletNum > 0) {
+            bp = UsedGliderBulletList - 1;
+            for (i = 0; i < UsedGliderBulletNum; i++) {
+                NuRndrGScnObj(ObjTab[0].obj.scene->gobjs[ObjTab[0].obj.special->instance->objid],
+                          &(*++bp)->mtx);
+            }
+        }
+        if (Level == 0x24) {
+            if (UsedEnemyGliderBulletNum > 0) {
+                bp = UsedEnemyGliderBulletList - 1;
+                for (i = 0; i < UsedEnemyGliderBulletNum; i++) {
+                    NuRndrGScnObj(ObjTab[0xE].obj.scene->gobjs[ObjTab[0xE].obj.special->instance->objid],
+                              &(*++bp)->mtx);
+                }
+            }
+        } else {
+            if (UsedEnemyGliderBulletNum > 0) {
+                bp = UsedEnemyGliderBulletList - 1;
+                for (i = 0; i < UsedEnemyGliderBulletNum; i++) {
+                    NuRndrGScnObj(ObjTab[0xE].obj.scene->gobjs[ObjTab[0xE].obj.special->instance->objid],
+                              &(*++bp)->mtx);
+                }
+            }
+        }
+    }
 }
 
 extern void InitSpaceStation(struct nuvec_s *pos, f32 xrot, f32 yrot, f32 zrot, s32 type);
