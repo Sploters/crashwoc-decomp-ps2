@@ -238,6 +238,7 @@
 #include "numath/nuvec.h"
 
 #include "creature.h"
+#include "game/vehsupp.h"
 
 extern s32 Level;
 extern struct numtx_s mTEMP;
@@ -415,7 +416,7 @@ struct weatherboss_s {
     s32 objectives[4];         /* 0x5EC */
     char pad_5FC[0x600 - 0x5FC];
     f32 dist;                  /* 0x600 */
-    f32 lastdist;              /* 0x604 */
+    f32 distdest;              /* 0x604 */
     s32 nextaction;            /* 0x608 */
     char pad_60C[0x618 - 0x60C];
     s32 action;                /* 0x618 */
@@ -1420,7 +1421,7 @@ struct battleship_s {
     char pad_528[0x540 - 0x528];
     f32 goospeed;              /* 0x540 */
     struct nuvec_s gootimer;   /* 0x544 */
-    char pad_550[0x554 - 0x550];
+    s32 killmenow;             /* 0x550 */
 };
 extern struct battleship_s BattleShipList[6];
 
@@ -1518,8 +1519,54 @@ void InitBattleShips(void)
     InitBattleShip(SetNuVecPntr(60.0f, 0.0f, -6.0f), 160.0f, 4);
     InitBattleShip(SetNuVecPntr(20.0f, 0.0f, -3.0f), -150.0f, 5);
 }
-extern s32 CollideWithBattleShip(struct nuvec_s *pos, struct battleship_s *ship,
-                                 f32 radius);
+/* The battleship's collision ellipsoid radii. */
+extern struct nuvec_s D_005A6E90;
+#define BattleShipCollScale D_005A6E90
+extern s32 InvincibilityCHEAT;
+
+/* Whether `pos` lies inside the ship's ellipsoid; with the invincibility
+ * cheat on, touching a ship destroys it. `radius` is unused. */
+s32 CollideWithBattleShip(struct nuvec_s *pos, struct battleship_s *ship,
+                          f32 radius)
+{
+    struct nuvec_s *scale;
+    struct nuvec_s *shippos;
+    f32 max;
+    f32 negmax;
+    struct nuvec_s rel;
+
+    scale = &BattleShipCollScale;
+    shippos = &ship->pos;
+    if (scale->x > scale->y) {
+        max = scale->x;
+    } else {
+        max = scale->y;
+    }
+    if (scale->z > max) {
+        max = scale->z;
+    }
+    negmax = -max;
+    rel.x = pos->x - shippos->x;
+    if (rel.x <= max && rel.x >= negmax) {
+        rel.y = pos->y - shippos->y;
+        if (rel.y <= max && rel.y >= negmax) {
+            rel.z = pos->z - shippos->z;
+            if (rel.z <= max && rel.z >= negmax) {
+                NuVecRotateY(&rel, &rel, (s32)(-ship->yaw * 182.04445f));
+                rel.x /= scale->x;
+                rel.y /= scale->y;
+                rel.z /= scale->z;
+                if (rel.x * rel.x + rel.y * rel.y + rel.z * rel.z <= 1.0f) {
+                    if (InvincibilityCHEAT != 0) {
+                        ship->killmenow = 1;
+                    }
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
 
 s32 CollideWithBattleShips(struct nuvec_s *pos, f32 radius)
 {
@@ -1549,13 +1596,15 @@ struct biggun_s {
     s32 active;                /* 0x000 */
     char pad_004[0x0E4 - 0x004];
     struct nuvec_s pos;        /* 0x0E4 */
-    char pad_0F0[0x0F8 - 0x0F0];
+    s32 type;                  /* 0x0F0 */
+    s32 hitpoints;             /* 0x0F4 */
     f32 yaw;                   /* 0x0F8 */
     f32 pitch;                 /* 0x0FC */
     f32 yawwobble;             /* 0x100 */
     char pad_104[0x120 - 0x104];
     s32 field120;              /* 0x120 */
-    char pad_124[0x154 - 0x124];
+    char pad_124[0x148 - 0x124];
+    struct nuvec_s terrpos;    /* 0x148 */
 };
 extern struct biggun_s BigGunList[];
 
@@ -2302,7 +2351,8 @@ struct zoffa_s {
     s32 active;                /* 0x0E0 */
     f32 respawntimer;          /* 0x0E4 */
     struct nuvec_s pos;        /* 0x0E8 */
-    char pad_0F4[0x10C - 0xF4];
+    struct nuvec_s vel;        /* 0x0F4 */
+    char pad_100[0x10C - 0x100];
     f32 pitch;                 /* 0x10C */
     f32 roll;                  /* 0x110 */
     char pad_114[0x11C - 0x114];
@@ -3625,19 +3675,9 @@ struct spltab_s {
     char pad_04[0x18 - 0x04];
 };
 
-struct splinepath_s {
-    struct spline_s *spl;      /* 0x00 */
-    f32 ratio;                 /* 0x04 */
-    f32 oldratio;              /* 0x08 */
-    char pad_0C[0x10 - 0x0C];
-    f32 speed;                 /* 0x10 */
-    struct nuvec_s pos;        /* 0x14 */
-    struct nuvec_s lastpos;    /* 0x20 */
-    s32 finished;              /* 0x2C */
-};
 
 extern struct spltab_s SplTab[];
-extern struct splinepath_s WeatherBossIntroSpline;
+extern struct MYSPLINE WeatherBossIntroSpline;
 extern f32 WBBOSSINTRODIST;
 extern f32 WBIntroTweenTime;
 extern f32 WBIntroTweenTimer;
@@ -3646,24 +3686,56 @@ extern void PointAlongSpline(struct spline_s *spl, f32 ratio, struct nuvec_s *ds
 
 void InitWBIntro(void)
 {
-    struct splinepath_s *path = &WeatherBossIntroSpline;
+    struct MYSPLINE *path = &WeatherBossIntroSpline;
     u16 angle;
 
     WBIntroOn = 0;
-    path->spl = SplTab[72].spl;
-    if (path->spl != 0) {
-        path->ratio = 0.0f;
-        path->speed = 0.00002f;
-        path->oldratio = 0.0f;
-        PointAlongSpline(path->spl, path->ratio, &WBIntroGliderPos, &angle, 0);
-        path->pos = WBIntroGliderPos;
-        path->lastpos = WBIntroGliderPos;
+    path->Spline = SplTab[72].spl;
+    if (path->Spline != 0) {
+        path->Cur = 0.0f;
+        path->Inc = 0.00002f;
+        path->Nex = 0.0f;
+        PointAlongSpline(path->Spline, path->Cur, &WBIntroGliderPos, &angle, 0);
+        path->CurPos = WBIntroGliderPos;
+        path->NexPos = WBIntroGliderPos;
         WeatherBoss.dist = WBBOSSINTRODIST;
-        WeatherBoss.lastdist = WBBOSSINTRODIST;
-        path->finished = 0;
+        WeatherBoss.distdest = WBBOSSINTRODIST;
+        path->LookaheadDist = 0.0f;
         WeatherBossTargetAppearTimer = WeatherBossTargetAppearTime;
         WBIntroTweenTimer = WBIntroTweenTime;
         WBIntroOn = 1;
+    }
+}
+
+extern f32 WBINTROLOOKAHEAD;
+extern f32 WBIntroDestTiltX;
+extern f32 WBIntroDestTiltZ;
+extern f32 WBITILTXSCALE;
+extern f32 WBITILTZSCALE;
+
+/* The glider flies itself in along the intro spline until the boss fight
+ * starts. */
+void ProcessWBIntro(void)
+{
+    struct nuvec_s intropos;
+    struct nuvec_s target;
+    struct nuvec_s dest;
+
+    if (WBIntroOn != 0) {
+        intropos = WBIntroGliderPos;
+        intropos.z -= WBINTROLOOKAHEAD;
+        FindSplineClosestPointAndDist(&WeatherBossIntroSpline, 0x300,
+                                      &intropos, &target, 0, 0);
+        NuVecSub(&dest, &target, &WBIntroGliderPos);
+        NuVecScale(&dest, &dest, 96.0 / fabs(dest.z));
+        NuVecScaleAccum(&WBIntroGliderPos, &dest, 0.02f);
+        WBIntroDestTiltZ = dest.x * WBITILTZSCALE;
+        WBIntroDestTiltX = dest.y * WBITILTXSCALE;
+        PlayerGlider.Velocity = dest;
+        if (WeatherBossIntroSpline.Nex >= 0.99f) {
+            WBIntroOn = 0;
+            WeatherBoss.distdest = 96.0f;
+        }
     }
 }
 
@@ -3720,6 +3792,32 @@ inline void ExplodeGlider(struct glider_s *glider)
 void DeadGliderWB(struct glider_s *glider)
 {
     if (glider->Dead == 0) {
+        ExplodeGlider(glider);
+    }
+}
+
+/* Coco's glider was shot down: it tumbles away for three seconds, then
+ * explodes. */
+void DeadGliderCoco(struct glider_s *glider)
+{
+    if (glider->CocoDead == 0) {
+        glider->CocoDead = 1;
+        glider->CocoDeadTimer = 3.0f;
+        glider->Velocity.x = frand() - 0.5f;
+        glider->Velocity.y = frand() - 0.5f;
+        glider->Velocity.z = frand() - 0.5f;
+        glider->CocoDeathSpinX = (frand() - 0.5f) * 360.0f;
+        glider->CocoDeathSpinZ = (frand() - 0.5f) * 360.0f;
+        NuVecNorm(&glider->Velocity, &glider->Velocity);
+        NuVecScale(&glider->Velocity, &glider->Velocity, 2.0f);
+        AddGameDebris(0x18, &glider->Position);
+    }
+    glider->HitPoints = 0;
+    NuVecScaleAccum(&glider->Position, &glider->Velocity, 0.02f);
+    glider->TiltX += glider->CocoDeathSpinX * 0.02f;
+    glider->TiltZ += glider->CocoDeathSpinZ * 0.02f;
+    if (ProcessTimer(&glider->CocoDeadTimer) != 0) {
+        glider->CocoDeadTimer = 1000000.0f;
         ExplodeGlider(glider);
     }
 }
@@ -3997,4 +4095,142 @@ void ProcessWeatherResearchLevel(struct pad_s *pad)
     ProcessGliderBullets();
     ProcessGliderBombs();
     ProcessBigGuns();
+}
+
+/* The auto-aim candidates: each returns the best dot product between the
+ * camera's forward axis and the direction to one of its targets, starting
+ * from `best`, and points `pos`/`vel` at the winner. */
+f32 GetBattleShipBestTarget(f32 best, struct nuvec_s **pos,
+                            struct nuvec_s **vel, s32 *type)
+{
+    struct nuvec_s camdir;
+    struct nuvec_s rel;
+    s32 i;
+    f32 dot;
+    f32 mag;
+
+    NuVecMtxRotate(&camdir, SetNuVecPntr(0.0f, 0.0f, 1.0f), &GameCam.m);
+    for (i = 0; i < 6; i++) {
+        if (BattleShipList[i].active != 0) {
+            if (BattleShipList[i].hitpoints > 0) {
+                NuVecSub(&rel, &BattleShipList[i].pos, &GameCam.pos);
+                mag = NuVecMag(&rel);
+                if (mag > 10.0f) {
+                    NuVecScale(&rel, &rel, 1.0f / mag);
+                    dot = DotProduct(&camdir, &rel);
+                    if (dot > best) {
+                        *pos = &BattleShipList[i].pos;
+                        *vel = &v000;
+                        *type = 0;
+                        best = dot;
+                    }
+                }
+            }
+        }
+    }
+    return best;
+}
+
+f32 GetGunBoatBestTarget(f32 best, struct nuvec_s **pos,
+                         struct nuvec_s **vel, s32 *type)
+{
+    struct nuvec_s camdir;
+    struct nuvec_s rel;
+    s32 i;
+    f32 mag;
+    f32 dot;
+
+    NuVecMtxRotate(&camdir, SetNuVecPntr(0.0f, 0.0f, 1.0f), &GameCam.m);
+    for (i = 0; i < 4; i++) {
+        if (GunBoatList[i].active != 0) {
+            if (GunBoatList[i].action != 2) {
+                NuVecSub(&rel, &GunBoatList[i].pos, &GameCam.pos);
+                mag = NuVecMag(&rel);
+                if (mag > 10.0f) {
+                    NuVecScale(&rel, &rel, 1.0f / mag);
+                    dot = DotProduct(&camdir, &rel);
+                    if (dot > best) {
+                        *pos = &GunBoatList[i].pos;
+                        *vel = &v000;
+                        *type = 0;
+                        best = dot;
+                    }
+                }
+            }
+        }
+    }
+    return best;
+}
+
+f32 GetZoffaBestTarget(f32 best, struct nuvec_s **pos,
+                       struct nuvec_s **vel, s32 *type)
+{
+    struct nuvec_s camdir;
+    struct nuvec_s rel;
+    s32 i;
+    f32 dot;
+    f32 mag;
+
+    NuVecMtxRotate(&camdir, SetNuVecPntr(0.0f, 0.0f, 1.0f), &GameCam.m);
+    for (i = 0; i < 4; i++) {
+        if (EnemyZoffa[i].active != 0) {
+            NuVecSub(&rel, &EnemyZoffa[i].pos, &GameCam.pos);
+            mag = NuVecMag(&rel);
+            if (mag > 10.0f) {
+                NuVecScale(&rel, &rel, 1.0f / mag);
+                dot = DotProduct(&camdir, &rel);
+                if (dot > best) {
+                    *pos = &EnemyZoffa[i].pos;
+                    *vel = &EnemyZoffa[i].vel;
+                    *type = 1;
+                    best = dot;
+                }
+            }
+        }
+    }
+    return best;
+}
+
+/* Near-match (52 bytes): retail reads `hitpoints` through an index register
+ * (BigGunList + i*0x154) while this compiles it through the loop pointer,
+ * which also swaps $s2/$s3. Stays asm. */
+f32 GetBigGunBestTarget(f32 best, struct nuvec_s **pos,
+                        struct nuvec_s **vel, s32 *type)
+{
+    struct nuvec_s camdir;
+    struct nuvec_s rel;
+    struct nuvec_s shootdir;
+    s32 i;
+    f32 dot;
+    f32 mag;
+
+    NuVecMtxRotate(&camdir, SetNuVecPntr(0.0f, 0.0f, 1.0f), &GameCam.m);
+    for (i = 0; i < 12; i++) {
+        if (BigGunList[i].active != 0) {
+            if (BigGunList[i].hitpoints > 0) {
+                NuVecSub(&rel, &BigGunList[i].pos, &GameCam.pos);
+                mag = NuVecMag(&rel);
+                if (mag > 10.0f) {
+                    NuVecScale(&rel, &rel, 1.0f / mag);
+                    dot = DotProduct(&camdir, &rel);
+                    if (dot > best) {
+                        /* Only a gun with a clear line of fire to the
+                         * glider is worth locking on to. */
+                        NuVecSub(&shootdir, &PlayerGlider.Position,
+                                 &BigGunList[i].terrpos);
+                        NuVecNorm(&shootdir, &shootdir);
+                        NuVecScale(&shootdir, &shootdir, 3.0f);
+                        if (NewRayCast(&BigGunList[i].terrpos, &shootdir,
+                                       0.0f) == 0) {
+                            *pos = &BigGunList[i].terrpos;
+                            best = dot;
+                            *vel = &v000;
+                            *type = 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return best;
 }

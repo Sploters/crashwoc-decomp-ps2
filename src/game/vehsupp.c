@@ -55,6 +55,7 @@
 #include "numath/nuvec.h"
 
 #include "creature.h"
+#include "game/vehsupp.h"
 
 extern s32 Level;
 extern s32 Paused;
@@ -695,16 +696,6 @@ f32 ControlledDist(struct nuvec_s *A, struct nuvec_s *B, s32 control) {
     return NuFsqrt(dist);
 }
 
-struct MYSPLINE {
-    struct spline_s *Spline;   /* 0x00 verified in FindSplineClosestPointAndDist (lw 0(s2)->PointAlongSpline) */
-    f32 Cur;                   /* 0x04 verified (swc1/lwc1 0x4) */
-    f32 Nex;                   /* 0x08 verified (lwc1/swc1 0x8) */
-    f32 Act;                   /* 0x0C */
-    f32 Inc;                   /* 0x10 verified (lwc1 0x10) */
-    struct nuvec_s CurPos;     /* 0x14 verified (addiu s2,0x14; sdl/sdr copy) */
-    struct nuvec_s NexPos;     /* 0x20 verified (addiu s2,0x20) */
-    f32 LookaheadDist;         /* 0x2C */
-};
 
 extern void PointAlongSpline(struct spline_s *spl, f32 ratio,
                              struct nuvec_s *out, void *a3, void *a4);

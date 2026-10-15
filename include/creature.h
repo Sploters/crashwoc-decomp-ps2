@@ -446,9 +446,15 @@ struct glider_s {
     struct creature_s *Cre;    /* 0x00 */
     char pad_04[0x10 - 0x04];
     s32 Dead;                  /* 0x10 */
-    char pad_14[0x30 - 0x14];
+    s32 CocoDead;              /* 0x14  shot down, spinning out (DeadGliderCoco) */
+    f32 CocoDeadTimer;         /* 0x18 */
+    f32 CocoDeathSpinX;        /* 0x1C  degrees per second */
+    f32 CocoDeathSpinZ;        /* 0x20 */
+    char pad_24[0x30 - 0x24];
     struct nuvec_s Position;   /* 0x30 */
-    char pad_3C[0x6C - 0x3C];
+    char pad_3C[0x48 - 0x3C];
+    struct nuvec_s Velocity;   /* 0x48 */
+    char pad_54[0x6C - 0x54];
     f32 RailAngle;             /* 0x6C */
     f32 TiltX;                 /* 0x70  pitch (NuMtxRotateX) */
     f32 TiltZ;                 /* 0x74  roll (NuMtxSetRotationZ) */
