@@ -30,6 +30,8 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/nustream.h"
+
 typedef struct SkinDmaTag {
     u16 qwc;
     u8 mode;
@@ -79,7 +81,6 @@ typedef struct NuGobj {
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *NuStreamGetOutputBuffer(int stream);
 extern void NuPs2CreateSkinNorm(NuGobj *gobj);
 extern void NuPs2CreateSkinSmooth(NuGobj *gobj);
 

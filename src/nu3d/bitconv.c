@@ -13,16 +13,10 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nutex.h"
+
 typedef unsigned char u_char;
 typedef unsigned int u_int;
-
-typedef struct NuTex {
-    int type;
-    int width;
-    int height;
-    int mmcnt;
-    u_char *bits;
-} NuTex;
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
@@ -344,7 +338,7 @@ int Conv8to32(int width, int height, u_char *in, u_char *out)
     return 0;
 }
 
-void NuTexSwizzelBits(NuTex *tex)
+void NuTexSwizzelBits(struct nutex_s *tex)
 {
     int maxlevel;
     int level;

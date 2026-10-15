@@ -256,9 +256,10 @@ Four tools gate this work:
   do not compile on their own. Legacy root headers are reported but do not
   fail `--check`.
 - `python tools/dispatch.py python tools/merge_views.py <tag> [alias...]`
-  measures every local copy of a struct in its own file and prints the sizes,
-  the distinct layouts and the field names that differ at the same offset:
-  the starting point for unifying a struct.
+  measures every local copy of a struct in its own file (bit-fields included,
+  by bit position) and prints the sizes, the distinct layouts and the field
+  names that differ at the same offset: the starting point for unifying a
+  struct.
 
 Rules for type refactors:
 
@@ -271,8 +272,11 @@ Rules for type refactors:
 3. A unit's local copy of a tag is removed in the same commit that includes the
    header defining it.
 4. Merging two views of a struct is a type decision (`s16`/`u16`, pointer/`u32`,
-   `s8`/`u8` change code); line them up by offset and let the codegen check
-   decide.
+   `s8`/`u8`, a bit-field's declared type change code); line them up by offset
+   and let the codegen check decide. Names come from the GC DWARF dump first,
+   then the module that owns the struct, then the majority. Where retail
+   provably uses the same bytes two ways (access widths in the target
+   disassembly), model it with a union rather than picking one view.
 5. Where retail provably used an implicit declaration or a mismatched
    prototype, the PS2 build keeps it; host-only fixes go behind a guard.
 6. Headers hold types, `extern` declarations and prototypes only, and no

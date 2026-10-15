@@ -20,6 +20,8 @@
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nutrig.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
 
 #define BRIDGE_MAX 8
 #define BRIDGE_MAX_SECTIONS 24
@@ -54,13 +56,6 @@ struct nucamera_s {
     float aspect;
     float nearclip;
     float farclip;
-};
-
-struct numtl_s;
-
-struct nurndrstream_s {
-    u8 *start;
-    u8 *cur;
 };
 
 union giftag_u {
@@ -128,12 +123,6 @@ extern void PlatInstRotate(int platinst, int rotate);
 extern int PlatInstGetHit(int platinst);
 extern int NuRndrGScnObj(void *gobj, struct numtx_s *m);
 extern void NuRndrStreamLink(struct nurndrstream_s *rs);
-extern void NuRndrStreamSetMisc(struct nurndrstream_s *rs);
-extern int NuRndrStreamAddMtl(struct nurndrstream_s *rs, struct numtl_s *mtl);
-extern void NuRndrSetLocalMtx(struct numtx_s *mtx, int mode);
-extern int NuRndrStreamSetViewMtxScissorClip(struct nurndrstream_s *rs);
-extern int NuRndrStreamSetLocalMtx(struct nurndrstream_s *rs);
-extern void NuRndrStreamFxMPG(int microcode);
 extern u8 *vpDmaTag_Cnt(u8 *cur);
 extern u8 *vpDmaTag_Close(u8 *cur);
 extern u8 *vpDmaTag_Next(u8 *cur, int mode);
@@ -194,7 +183,7 @@ inline void NuBrdigeDrawRope(struct numtl_s *mtl, struct nuvec_s *left, struct n
         NuBridgeStreamRope(rndrstream_fx, &left[breaks[i]], breaks[i + 1] - breaks[i], colour);
         NuBridgeStreamRope(rndrstream_fx, &right[breaks[i]], breaks[i + 1] - breaks[i], colour);
     }
-    rndrstream_free = vpDmaTag_Next(rndrstream_fx->cur, 0);
+    rndrstream_free = vpDmaTag_Next(rndrstream_fx->cur.b, 0);
 }
 
 
@@ -456,81 +445,81 @@ int NuBridgeStreamRope(struct nurndrstream_s *rs, struct nuvec_s *points, int np
     headgif.dw[0] = 0x3002C00000008000LL;
     headgif.dw[1] = 0x512;
     remaining = (npoints - 1) * 16;
-    rs->cur = vpDmaTag_Cnt(rs->cur);
-    rs->cur[-14] = 0x12;
+    rs->cur.b = vpDmaTag_Cnt(rs->cur.b);
+    rs->cur.b[-14] = 0x12;
     base = 0;
-    *((u32 *)rs->cur)++ = 0x6C010056;
-    *((u32 *)rs->cur)++ = headgif.w[0];
-    *((u32 *)rs->cur)++ = headgif.w[1];
-    *((u32 *)rs->cur)++ = headgif.w[2];
-    *((u32 *)rs->cur)++ = headgif.w[3];
+    *((u32 *)rs->cur.b)++ = 0x6C010056;
+    *((u32 *)rs->cur.b)++ = headgif.w[0];
+    *((u32 *)rs->cur.b)++ = headgif.w[1];
+    *((u32 *)rs->cur.b)++ = headgif.w[2];
+    *((u32 *)rs->cur.b)++ = headgif.w[3];
     while (remaining != 0) {
         count = (remaining > ROPE_BATCH_VERTS) ? ROPE_BATCH_VERTS : remaining;
         count &= 0xF0;
         stripgif.tag.nloop = count;
-        *((u32 *)rs->cur)++ = 0x6C0180D2;
-        *((u32 *)rs->cur)++ = stripgif.w[0];
-        *((u32 *)rs->cur)++ = stripgif.w[1];
-        *((u32 *)rs->cur)++ = stripgif.w[2];
-        *((u32 *)rs->cur)++ = stripgif.w[3];
-        *((u32 *)rs->cur)++ = 0x6D018002;
-        *((u16 *)rs->cur)++ = count * 3;
-        *((u16 *)rs->cur)++ = 0;
-        *((u16 *)rs->cur)++ = 0;
-        *((u16 *)rs->cur)++ = 0;
-        *((u32 *)rs->cur)++ = 0x01000103;
-        *((u32 *)rs->cur)++ = (count << 16) | 0x6E00C005;
+        *((u32 *)rs->cur.b)++ = 0x6C0180D2;
+        *((u32 *)rs->cur.b)++ = stripgif.w[0];
+        *((u32 *)rs->cur.b)++ = stripgif.w[1];
+        *((u32 *)rs->cur.b)++ = stripgif.w[2];
+        *((u32 *)rs->cur.b)++ = stripgif.w[3];
+        *((u32 *)rs->cur.b)++ = 0x6D018002;
+        *((u16 *)rs->cur.b)++ = count * 3;
+        *((u16 *)rs->cur.b)++ = 0;
+        *((u16 *)rs->cur.b)++ = 0;
+        *((u16 *)rs->cur.b)++ = 0;
+        *((u32 *)rs->cur.b)++ = 0x01000103;
+        *((u32 *)rs->cur.b)++ = (count << 16) | 0x6E00C005;
         for (i = 0; i < count; i += 4) {
-            *((u32 *)rs->cur)++ = colour;
-            *((u32 *)rs->cur)++ = colour;
-            *((u32 *)rs->cur)++ = colour;
-            *((u32 *)rs->cur)++ = colour;
+            *((u32 *)rs->cur.b)++ = colour;
+            *((u32 *)rs->cur.b)++ = colour;
+            *((u32 *)rs->cur.b)++ = colour;
+            *((u32 *)rs->cur.b)++ = colour;
         }
-        *((u32 *)rs->cur)++ = 0x01000203;
-        *((u32 *)rs->cur)++ = (count << 17) | 0x6C008003;
+        *((u32 *)rs->cur.b)++ = 0x01000203;
+        *((u32 *)rs->cur.b)++ = (count << 17) | 0x6C008003;
         for (i = 0; i < count; i += 4) {
             p0 = &points[(base + i) >> 4];
             p1 = p0 + 1;
-            *((float *)rs->cur)++ = p0->x + side.x;
-            *((float *)rs->cur)++ = p0->y + side.y;
-            *((float *)rs->cur)++ = p0->z + side.z;
-            *((u32 *)rs->cur)++ = 0x8000;
-            *((u32 *)rs->cur)++ = 0x400;
-            *((u32 *)rs->cur)++ = 0xC00;
-            rs->cur += 8;
-            *((float *)rs->cur)++ = p0->x + up.x;
-            *((float *)rs->cur)++ = p0->y + up.y;
-            *((float *)rs->cur)++ = p0->z + up.z;
-            *((u32 *)rs->cur)++ = 0x8000;
-            *((u32 *)rs->cur)++ = 0x5F0;
-            *((u32 *)rs->cur)++ = 0xC00;
-            rs->cur += 8;
-            *((float *)rs->cur)++ = p1->x + side.x;
-            *((float *)rs->cur)++ = p1->y + side.y;
-            *((float *)rs->cur)++ = p1->z + side.z;
-            *((u32 *)rs->cur)++ = 0;
-            *((u32 *)rs->cur)++ = 0x400;
-            *((u32 *)rs->cur)++ = 0xFF0;
-            rs->cur += 8;
-            *((float *)rs->cur)++ = p1->x + up.x;
-            *((float *)rs->cur)++ = p1->y + up.y;
-            *((float *)rs->cur)++ = p1->z + up.z;
-            *((u32 *)rs->cur)++ = 0;
-            *((u32 *)rs->cur)++ = 0x5F0;
-            *((u32 *)rs->cur)++ = 0xFF0;
-            rs->cur += 8;
+            *((float *)rs->cur.b)++ = p0->x + side.x;
+            *((float *)rs->cur.b)++ = p0->y + side.y;
+            *((float *)rs->cur.b)++ = p0->z + side.z;
+            *((u32 *)rs->cur.b)++ = 0x8000;
+            *((u32 *)rs->cur.b)++ = 0x400;
+            *((u32 *)rs->cur.b)++ = 0xC00;
+            rs->cur.b += 8;
+            *((float *)rs->cur.b)++ = p0->x + up.x;
+            *((float *)rs->cur.b)++ = p0->y + up.y;
+            *((float *)rs->cur.b)++ = p0->z + up.z;
+            *((u32 *)rs->cur.b)++ = 0x8000;
+            *((u32 *)rs->cur.b)++ = 0x5F0;
+            *((u32 *)rs->cur.b)++ = 0xC00;
+            rs->cur.b += 8;
+            *((float *)rs->cur.b)++ = p1->x + side.x;
+            *((float *)rs->cur.b)++ = p1->y + side.y;
+            *((float *)rs->cur.b)++ = p1->z + side.z;
+            *((u32 *)rs->cur.b)++ = 0;
+            *((u32 *)rs->cur.b)++ = 0x400;
+            *((u32 *)rs->cur.b)++ = 0xFF0;
+            rs->cur.b += 8;
+            *((float *)rs->cur.b)++ = p1->x + up.x;
+            *((float *)rs->cur.b)++ = p1->y + up.y;
+            *((float *)rs->cur.b)++ = p1->z + up.z;
+            *((u32 *)rs->cur.b)++ = 0;
+            *((u32 *)rs->cur.b)++ = 0x5F0;
+            *((u32 *)rs->cur.b)++ = 0xFF0;
+            rs->cur.b += 8;
             tmp = side;
             side.x = -up.x;
             side.y = -up.y;
             side.z = -up.z;
             up = tmp;
         }
-        *((u32 *)rs->cur)++ = 0x01000101;
-        *((u32 *)rs->cur)++ = 0x14000306;
+        *((u32 *)rs->cur.b)++ = 0x01000101;
+        *((u32 *)rs->cur.b)++ = 0x14000306;
         base += count;
         remaining -= count;
     }
-    rs->cur = vpDmaTag_Close(rs->cur);
+    rs->cur.b = vpDmaTag_Close(rs->cur.b);
     return 1;
 }
 

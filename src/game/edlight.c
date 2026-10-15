@@ -40,27 +40,9 @@
 #include "nu_libc.h"
 
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 #include "creature.h"
-
-struct numtlattrib_s {
-    u64 pad0 : 32;
-    u64 alpha : 4;
-    u64 filter : 2;
-    u64 fx : 2;
-    u64 utc : 2;
-    u64 vtc : 2;
-    u64 cull : 2;
-    u64 zmode : 2;
-    u64 lighting : 2;
-    u64 colour : 1;
-    u64 pad51 : 13;
-};
-
-struct numtl_s {
-    u8 pad000[0x168];
-    struct numtlattrib_s attrib; /* 0x168 */
-};
 
 struct eduistyle_s {
     s32 pen[2];
@@ -262,14 +244,12 @@ extern void *eduiItemCheckCreate(s32 value, struct eduistyle_s *style, s32 check
 extern void *eduiItemColourSliderCreate(s32 value, struct eduistyle_s *style, s32 on,
                                         void *cb, f32 min, f32 max, f32 val, s32 r,
                                         s32 g, s32 b, char *text);
-extern struct numtl_s *NuMtlCreate(s32 count);
 extern s32 eduiMenuProcess(void *menu, struct edpad_s *pad);
 extern void edlightDoInput(struct edpad_s *pad);
 extern void edcamGetPosAng(struct nuvec_s *pos, s32 *ax, s32 *ay);
 extern void edcamSetPos(struct nuvec_s *pos);
 extern void edcamMove(struct edpad_s *pad);
 extern void eduiItemSliderSetVal(struct slider_s *item, f32 val);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void edlightcb_r_sliderval(void *menu, struct slider_s *slider);
 extern void edlightcb_g_sliderval(void *menu, struct slider_s *slider);
 extern void edlightcb_b_sliderval(void *menu, struct slider_s *slider);

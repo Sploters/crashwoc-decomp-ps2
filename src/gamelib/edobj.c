@@ -109,24 +109,7 @@
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
-
-struct numtlattrib_s {
-    unsigned long long : 32;
-    unsigned long long alpha : 4;
-    unsigned long long : 8;
-    unsigned long long cull : 2;
-    unsigned long long zmode : 2;
-    unsigned long long : 16;
-};
-
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x180 - 0x170];
-    struct nucolour3_s diffuse;
-    char pad18c[0x1A0 - 0x18C];
-    float alpha;
-};
+#include "nu3d/numtl.h"
 
 struct camera_s {
     struct numtx_s mtx;
@@ -679,7 +662,6 @@ extern void edobjcbCancelBouncyMenu(void);
 extern void edobjcbSetBouncyPlayerGrav(void *menu, struct edobjitem_s *item);
 extern void edobjcbSetBouncyTension(void *menu, struct edobjitem_s *item);
 extern void edobjcbSetBouncyDamping(void *menu, struct edobjitem_s *item);
-extern struct numtl_s *NuMtlCreate(int count);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);
 extern int EdFileClose(void);
@@ -692,7 +674,6 @@ extern int EdFileReadInt(void);
 extern float EdFileReadFloat(void);
 extern short EdFileReadShort(void);
 extern int edobjLookupInstance(char *name);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void edobjcbCancelOptMenu(void);
 extern void edobjcbParticleMenu(struct eduimenu_s *menu);
 extern void edobjcbSoundMenu(struct eduimenu_s *menu);

@@ -30,6 +30,7 @@
 #include "nu_types.h"
 
 #include "numath/numathtypes.h"
+#include "nu3d/numtl.h"
 
 typedef struct nucolourref_s {
     unsigned int addr;
@@ -53,18 +54,6 @@ typedef union NuFloatBits {
     float f;
     int i;
 } NuFloatBits;
-
-typedef struct NuMtl {
-    u8 pad000[0x168];
-    unsigned int attrib_lo;
-    unsigned int attrib_mid : 16;
-    unsigned int alpha : 2;
-    unsigned int attrib_hi : 14;
-    u8 pad170[0x1A8 - 0x170];
-    u64 alpha_reg;
-    u8 pad1B0[0x1C5 - 0x1B0];
-    u8 fxid;
-} NuMtl;
 
 
 extern void NuMemFreeFn(void *ptr, char *file, int line);
@@ -132,11 +121,11 @@ unsigned int NuCvtSizeDmaBezTriCFromIdx(void *dma, int count) {
 }
 
 
-void NuCvtCalcFastPoint(struct nuvec_s *a, struct nuvec_s *b, NuMtl *mtl) {
+void NuCvtCalcFastPoint(struct nuvec_s *a, struct nuvec_s *b, struct numtl_s *mtl) {
     int point;
 
     if (mtl) {
-        if (mtl->alpha == NUMTL_ALPHA_BLEND && mtl->fxid == 0
+        if (mtl->attrib.lighting == NUMTL_ALPHA_BLEND && mtl->fxid == 0
             && (mtl->alpha_reg & ALPHA_REG_TOP_MASK) == 0) {
             point = 1;
         } else {

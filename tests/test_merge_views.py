@@ -5,7 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-from merge_views import field_decls, find_views, probe_lines, report, spelling  # noqa: E402
+from merge_views import (bit_probes, field_decls, find_views, probe_lines,  # noqa: E402
+                         read_data, report, set_bits, spelling)
 
 SOURCE = """
 struct numtx_s {
@@ -58,6 +59,40 @@ class TestFindViews(unittest.TestCase):
                                  "    (int)&((NuMtx *)0)->m,",
                                  "    sizeof(((NuMtx *)0)->m),"])
         self.assertEqual(order, [(0, None, "size"), (0, "m", "offset"), (0, "m", "size")])
+
+
+class TestBitFields(unittest.TestCase):
+    ATTRIB = """
+struct numtlattrib_s {
+    u64 : 32;
+    u64 alpha : 4;
+    u64 filter : 2;
+};
+"""
+
+    def test_unnamed_bitfield_is_padding(self):
+        self.assertEqual(field_decls("u64 : 32;"), [("", "u64", 32)])
+        self.assertEqual(field_decls("unsigned long long : 16;"),
+                         [("", "unsigned long long", 16)])
+        self.assertEqual(field_decls("u64 alpha : 4;"), [("alpha", "u64", 4)])
+
+    def test_probes_skip_unnamed_bits(self):
+        views = find_views(self.ATTRIB, ["numtlattrib_s"])
+        lines, order = bit_probes(views)
+        # unnamed bits take no initializer: alpha is the first positional one
+        self.assertEqual(lines[0], "struct numtlattrib_s nu_bits_0_1 = { -1 };")
+        self.assertEqual(lines[1], "struct numtlattrib_s nu_bits_0_2 = { 0, -1 };")
+        self.assertEqual([(n, s) for _k, n, s in order],
+                         [("alpha", "nu_bits_0_1"), ("filter", "nu_bits_0_2")])
+
+    def test_read_data_and_set_bits(self):
+        asm = ("nu_bits_0_1:\n\t.word\t0x0\t\t# 0\n\t.word\t0xf\n\t.space\t8\n"
+               "nu_bits_0_2:\n\t.half\t0x30\n\t.byte\t0x0,0x0\n")
+        data = read_data(asm, "nu_bits_0_1")
+        self.assertEqual(len(data), 16)
+        self.assertEqual(set_bits(data), (32, 4))
+        self.assertEqual(set_bits(read_data(asm, "nu_bits_0_2")), (4, 2))
+        self.assertIsNone(set_bits(bytes(8)))
 
 
 class TestReport(unittest.TestCase):

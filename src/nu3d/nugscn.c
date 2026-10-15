@@ -63,6 +63,9 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
+#include "nu3d/nutexanm.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
@@ -174,31 +177,12 @@ struct nutexanimenv_s {
     void *prog;                     /* 0x00 */
 };
 
-struct nutexanim_s {
-    struct nutexanim_s *succ;       /* 0x00 */
-    struct nutexanim_s *prev;       /* 0x04 */
-    short *tids;                    /* 0x08 index into texanim_tids on disk */
-    short numtids;                  /* 0x0C */
-    unsigned int dynalloc : 1;      /* 0x0E */
-    struct numtl_s *mtl;            /* 0x10 index into mtls on disk */
-    struct nutexanimenv_s *env;     /* 0x14 */
-    char *ntaname;                  /* 0x18 */
-    char *scriptname;               /* 0x1C */
-}; /* 0x20 */
-
 struct nusplinecfg_s {
     char *name;                     /* 0x00 */
     int ptsize;                     /* 0x04 */
 };
 
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
-extern void *NuTexAnimProgFind(char *name);
-extern struct nutexanimenv_s *NuTexAnimEnvCreate(void *buff, struct numtl_s *mtl, short *tids, void *prog);
-extern void NuTexAnimAddList(struct nutexanim_s *list);
-extern void NuTexAnimEnvReset(struct nutexanimenv_s *env);
-extern void NuTexAnimRemoveList(struct nutexanim_s *list);
-extern void NuMtlDestroy(struct numtl_s *mtl);
-extern void NuTexDestroy(int tid);
 extern int NuGobjApplyCrossFade(struct nugobj_s *gobj, short crossfade);
 
 extern void *NuMemAllocFn(int size, char *file, int line);
@@ -1178,24 +1162,9 @@ void CvtNuIFFTexAnimSet(int fh)
 }
 
 
-struct nutex_s {
-    int type;                       /* 0x00 */
-    int width;                      /* 0x04 */
-    int height;                     /* 0x08 */
-    int mmcnt;                      /* 0x0C */
-    void *bits;                     /* 0x10 */
-    void *pal;                      /* 0x14 */
-    int decal;                      /* 0x18 */
-    int linear;                     /* 0x1C */
-}; /* 0x20 */
-
 extern int NuFileBeginBlkRead(int fh, int blk);
 extern void NuFileEndBlkRead(int fh);
-extern int NuTexImgSizeMM(int type, int width, int height, int mmcnt);
-extern int NuTexPalSize(int type);
 extern void NuTexSwizzelBits(struct nutex_s *tex);
-extern int NuTexCreate(struct nutex_s *tex);
-extern int NuTexRecoverNativeData(int tid, void *dest, int size);
 
 extern int info_texturecount;
 extern int info_texturesize;
@@ -1564,7 +1533,6 @@ void CvtNuIFFAnimationLibrary(int fh)
 }
 
 
-extern struct numtl_s *NuMtlRead(int fh);
 extern void CvtNuIFFNodeHierarchy(int fh);
 
 extern char *nametable_base;
@@ -1901,7 +1869,6 @@ extern char D_00615060[];
 #define texset_msg D_00615060
 extern int NuFileSeek(int fh, int offset, int origin);
 extern int NuMemFileSeek(int fh, int offset, int origin);
-extern int NuTexCreateNative(void *data);
 
 /* Carves `size` bytes, aligned to `align`, off the scene load buffer. */
 static inline void *GScnBufferAlloc(int size, int align)

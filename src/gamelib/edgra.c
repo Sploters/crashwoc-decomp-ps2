@@ -35,6 +35,7 @@
 
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 struct edgraitem_s {
     char pad00[0x0C];
@@ -42,24 +43,6 @@ struct edgraitem_s {
     unsigned char toggle;
     char pad11[0x4C - 0x11];
     float fvalue;
-};
-
-struct numtlattrib_s {
-    unsigned long long unk0 : 32;
-    unsigned long long alpha : 4;
-    unsigned long long unk36 : 8;
-    unsigned long long cull : 2;
-    unsigned long long zmode : 2;
-    unsigned long long unk48 : 16;
-};
-
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x180 - 0x170];
-    struct nuvec_s diffuse;
-    char pad18c[0x1A0 - 0x18C];
-    float alpha;
 };
 
 struct nurndrvtx_s {
@@ -203,8 +186,6 @@ extern void eduiMenuDestroy(void *menu);
 extern void eduiMenuRender(struct eduimenu_s *menu);
 extern void *eduiItemSelCreate(int value, struct eduistyle_s *style, int on, int group, void *cb,
                                char *label);
-extern struct numtl_s *NuMtlCreate(int count);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuFntScale(int x, int y);
 extern void edcamSet(void);
 extern void edbitsDrawDiagonalCross(float x, float y, float z, float size, int colour, void *mtl);
@@ -700,9 +681,9 @@ void edgraInit(void)
     edgra_mtl = mtl;
     mtl->attrib.cull = 2;
     mtl->attrib.zmode = 0;
-    mtl->diffuse.x = 0.5f;
-    mtl->diffuse.y = 0.5f;
-    mtl->diffuse.z = 0.5f;
+    mtl->diffuse.r = 0.5f;
+    mtl->diffuse.g = 0.5f;
+    mtl->diffuse.b = 0.5f;
     mtl->alpha = 1.0f;
     mtl->attrib.alpha = 0;
     NuMtlUpdate(mtl);
@@ -710,9 +691,9 @@ void edgraInit(void)
     edgra_mtl_zoff = zoff;
     zoff->attrib.cull = 2;
     zoff->attrib.zmode = 3;
-    zoff->diffuse.x = 0.5f;
-    zoff->diffuse.y = 0.5f;
-    zoff->diffuse.z = 0.5f;
+    zoff->diffuse.r = 0.5f;
+    zoff->diffuse.g = 0.5f;
+    zoff->diffuse.b = 0.5f;
     zoff->alpha = 1.0f;
     zoff->attrib.alpha = 0;
     NuMtlUpdate(zoff);

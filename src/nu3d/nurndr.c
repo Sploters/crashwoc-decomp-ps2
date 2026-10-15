@@ -121,11 +121,15 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
+#include "nups2/ps2txtr.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
 
 typedef struct GsFrameReg {
@@ -215,10 +219,7 @@ extern struct numtx_s D_0067DA40[];
 #define hgobj_joint_mtx D_0067DA40
 extern int NuRndrStreamTri3dClip(void *verts, int num, void *mtx, void *strm);
 extern int NuRndrStreamTriStrip3dClip(void *verts, int num, void *mtx, void *strm);
-extern void NuMtlBuildRenderList(void);
 extern void NuRndrOTFlush(void);
-extern void NuRndrStreamFlush(void);
-extern void NuRndrStreamInit(int size);
 extern void NuFntInit(void);
 extern void NuRndrDeformerWeightsArrayInit(void);
 extern void NuRndrOTInit(void);
@@ -314,23 +315,6 @@ extern u32 D_006ACD00[];
 #define cyl_packet D_006ACD00
 
 
-/* Only the packet cursor at offset 4 is used by the 2D packet writers. */
-struct RndrPacketStream {
-    void *unknown_00;
-    u32 *cur;
-};
-
-struct numtl_s {
-    char pad000[0x124];
-    struct RndrPacketStream stream;  /* 0x124 */
-    char pad12c[0x10];
-    void *mpgtag;                   /* 0x13C */
-    char pad140[0x28];
-    struct numtl_s *next;           /* 0x168 */
-    char pad16c[0x5A];
-    unsigned char special_id;       /* 0x1C6 */
-};
-
 struct nutribatch_s {
     int count;
     int pad04[3];
@@ -370,8 +354,8 @@ struct nugobj_s {
     char pad64[8];
 };
 
-extern struct RndrPacketStream *rndrstream_2d;
-extern struct RndrPacketStream *rndrstream_3d;
+extern struct nurndrstream_s *rndrstream_2d;
+extern struct nurndrstream_s *rndrstream_3d;
 extern int nurndr_pixel_width;
 extern int nurndr_pixel_height;
 extern u32 *rndrstream_free;
@@ -381,28 +365,20 @@ extern int PS2_REZ_H;
 extern int PS2_VCNTR_X;
 extern int PS2_VCNTR_Y;
 
-extern void NuRndrStreamLink(struct RndrPacketStream *stream);
-extern struct RndrPacketStream *rndrstream_system;
+extern void NuRndrStreamLink(struct nurndrstream_s *stream);
+extern struct nurndrstream_s *rndrstream_system;
 extern int nurndr_half_offset;
-extern void NuRndrSetXYOffset(int x, int y);
-extern void NuRndrSetScissor(int x0, int y0, int x1, int y1);
 extern void NuPs2DisableAutoScreenSwap(void);
 extern int NuPs2ScreenSwap(int vsync);
-extern void NuRndrVu1Draw(void);
 extern void NuPs2FlushVRam(int a, int b, int c);
-extern void NuRndrSwapStreamBuffers(void);
 extern int debug_flush_vram;
 extern int nutex_total_xfer_this_frame;
 extern int nutex_peak_xfer_per_frame;
 extern int nurndr_tritot_this_frame;
-extern struct RndrPacketStream *rndrstream_fx;
+extern struct nurndrstream_s *rndrstream_fx;
 extern struct numtx_s numtx_identity;
-extern void NuRndrSetLocalMtx(struct numtx_s *mtx, int mode);
-extern int NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
-extern int NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
-extern void NuRndrStreamFxMPG(int microcode);
-extern int NuRndrStreamQuadShad(struct RndrPacketStream *stream);
-extern int NuRndrStreamQuadWRip(struct RndrPacketStream *stream, short *visible);
+extern int NuRndrStreamQuadShad(struct nurndrstream_s *stream);
+extern int NuRndrStreamQuadWRip(struct nurndrstream_s *stream, short *visible);
 typedef struct nurndrshadpol_s {
     struct nuvec_s pos;
     float size;
@@ -418,8 +394,6 @@ extern int NuCameraClipTestPoints(struct nuvec_s *pos, int count, struct numtx_s
 
 
 
-extern void NuRndrStreamSetMisc(struct RndrPacketStream *stream);
-extern int NuRndrStreamAddMtl(struct RndrPacketStream *stream, struct numtl_s *mtl);
 extern u32 *vpDmaTag_CntEx(u32 *packet, u32 vif0, u32 vif1);
 extern u32 *vpDmaTag_Next(u32 *packet, u32 address);
 extern u32 *vtBeginDirect(u32 *packet, u32 irq);
@@ -442,22 +416,15 @@ struct FxSprite2 {
     float channel[24][8];
 };
 
-extern void NuRndrStreamClearZBState(void);
-extern void NuRndrStreamSetZBState(u32 zbuf, u32 psm, int zmask);
-extern u32 *NuRndrStreamAddZBState(u32 *packet, int index);
 extern void NuPs2GetCurrentBackBuffer(GsFrameReg *reg);
 extern void NuPs2GetCurrentFrontBuffer(GsFrameReg *reg);
 extern void NuPs2GetCurrentZBuffer(GsZbufReg *reg);
 extern u32 *NuPs2CopyCurrentBackBuffer(u32 *packet);
 extern u32 *NuPs2CopyCurrentFrontBuffer(u32 *packet);
-extern int Ps2TxValToPowerOfTwo(int value);
-extern u32 *NuTexSetRenderTarget(u32 *packet, int tex);
 extern int nurndr_pixel_p2w;
 extern int nurndr_pixel_p2h;
 extern u32 *NuPs2CopyCurrentZBuffer(u32 *packet);
-extern u32 *NuTexSetZBuffer(u32 *packet, int tex);
 
-extern u32 *NuRndrStreamAlloc(int count);
 extern int D_0062EC60;
 #define nurndr_gscnobj_enable D_0062EC60
 extern int D_0062EC5C;
@@ -470,11 +437,7 @@ extern struct numtl_s *nurndr_forced_mtl;
 extern struct numtl_s **nurndr_forced_mtl_table;
 extern int NuCameraClipTestExtents(struct nuvec_s *min, struct nuvec_s *max, struct numtx_s *wm);
 extern void NuRndrOTInsertTriBatch(struct numtx_s *mtx, int clip, struct numtl_s *mtl, void *tris, int count);
-extern int NuRndrStreamSetViewMtx(struct RndrPacketStream *stream);
-extern int NuRndrStreamSetLocalMtxEx(struct RndrPacketStream *stream, int mode);
 extern u32 *vpDmaTag_Call(u32 *packet, void *addr);
-extern u16 *NuRndrStreamGetScissor(void);
-extern int *NuRndrStreamGetOffset(void);
 extern GsZbufPair D_002EA1A0;
 #define NuPs2ZBufReg0 D_002EA1A0
 extern u32 *vpDmaTag_Cnt(u32 *packet);
@@ -491,89 +454,89 @@ struct nuvtx2d_s {
     float u, v;
 };
 
-void NuRndrSetZBuffer(struct RndrPacketStream *stream, int zbuffer) {
+void NuRndrSetZBuffer(struct nurndrstream_s *stream, int zbuffer) {
     GsFrameReg frame;
 
     if (zbuffer <= 0) {
         NuRndrStreamClearZBState();
-        stream->cur = vpDmaTag_CntEx(stream->cur, 0x11000000, 0x50000000);
-        ((unsigned char *)stream->cur)[-14] = 0xB;
-        stream->cur--;
-        stream->cur = vtBeginDirect(stream->cur, 0);
-        stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 0, 0, 0, 1, 0xE);
+        stream->cur.w = vpDmaTag_CntEx(stream->cur.w, 0x11000000, 0x50000000);
+        ((unsigned char *)stream->cur.w)[-14] = 0xB;
+        stream->cur.w--;
+        stream->cur.w = vtBeginDirect(stream->cur.w, 0);
+        stream->cur.w = gsBeginGifPacket(stream->cur.w, 0, 1, 0, 0, 0, 1, 0xE);
         switch (zbuffer) {
         default:
             NuPs2GetCurrentBackBuffer(&frame);
             NuRndrStreamSetZBState(frame.fbp << 5, frame.psm, 0);
-            stream->cur = NuRndrStreamAddZBState(stream->cur, 1);
+            stream->cur.w = NuRndrStreamAddZBState(stream->cur.w, 1);
             break;
         case -3:
             NuPs2GetCurrentFrontBuffer(&frame);
             NuRndrStreamSetZBState(frame.fbp << 5, frame.psm, 0);
-            stream->cur = NuRndrStreamAddZBState(stream->cur, 1);
+            stream->cur.w = NuRndrStreamAddZBState(stream->cur.w, 1);
             break;
         case -2:
-            stream->cur = NuPs2CopyCurrentZBuffer(stream->cur);
+            stream->cur.w = NuPs2CopyCurrentZBuffer(stream->cur.w);
             break;
         }
-        stream->cur = gsCloseGifPacket(stream->cur);
-        stream->cur = vtCloseDirect(stream->cur);
-        stream->cur = vpDmaTag_Close(stream->cur);
+        stream->cur.w = gsCloseGifPacket(stream->cur.w);
+        stream->cur.w = vtCloseDirect(stream->cur.w);
+        stream->cur.w = vpDmaTag_Close(stream->cur.w);
     } else {
-        stream->cur = NuTexSetZBuffer(stream->cur, zbuffer);
+        stream->cur.w = NuTexSetZBuffer(stream->cur.w, zbuffer);
     }
 }
 
 
-void NuRndrSetRTarget(struct RndrPacketStream *stream, int target) {
+void NuRndrSetRTarget(struct nurndrstream_s *stream, int target) {
     GsFrameReg frame;
     GsZbufReg zbuf;
 
     if (target <= 0) {
-        stream->cur = vpDmaTag_CntEx(stream->cur, 0x13000000, 0x50000000);
-        ((unsigned char *)stream->cur)[-14] = 9;
-        stream->cur--;
-        stream->cur = vtBeginDirect(stream->cur, 0);
-        stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 0, 0, 0, 1, 0xE);
+        stream->cur.w = vpDmaTag_CntEx(stream->cur.w, 0x13000000, 0x50000000);
+        ((unsigned char *)stream->cur.w)[-14] = 9;
+        stream->cur.w--;
+        stream->cur.w = vtBeginDirect(stream->cur.w, 0);
+        stream->cur.w = gsBeginGifPacket(stream->cur.w, 0, 1, 0, 0, 0, 1, 0xE);
         switch (target) {
         default:
-            stream->cur = NuPs2CopyCurrentBackBuffer(stream->cur);
+            stream->cur.w = NuPs2CopyCurrentBackBuffer(stream->cur.w);
             break;
         case -3:
-            stream->cur = NuPs2CopyCurrentFrontBuffer(stream->cur);
+            stream->cur.w = NuPs2CopyCurrentFrontBuffer(stream->cur.w);
             break;
         case -2:
             NuPs2GetCurrentBackBuffer(&frame);
             NuPs2GetCurrentZBuffer(&zbuf);
             frame.fbp = zbuf.zbp;
             frame.psm = zbuf.psm | 0x30;
-            *((GsFrameReg *)stream->cur)++ = frame;
-            *((u64 *)stream->cur)++ = 0x4C;
+            *((GsFrameReg *)stream->cur.w)++ = frame;
+            *((u64 *)stream->cur.w)++ = 0x4C;
             break;
         case -4:
             NuPs2GetCurrentBackBuffer(&frame);
             NuPs2GetCurrentZBuffer(&zbuf);
             frame.fbp = zbuf.zbp;
             frame.psm = 0x30;
-            *((GsFrameReg *)stream->cur)++ = frame;
-            *((u64 *)stream->cur)++ = 0x4C;
+            *((GsFrameReg *)stream->cur.w)++ = frame;
+            *((u64 *)stream->cur.w)++ = 0x4C;
             break;
         }
-        stream->cur = gsCloseGifPacket(stream->cur);
-        stream->cur = vtCloseDirect(stream->cur);
-        stream->cur = vpDmaTag_Close(stream->cur);
+        stream->cur.w = gsCloseGifPacket(stream->cur.w);
+        stream->cur.w = vtCloseDirect(stream->cur.w);
+        stream->cur.w = vpDmaTag_Close(stream->cur.w);
         nurndr_pixel_width = PS2_REZ_W;
         nurndr_pixel_height = PS2_REZ_H;
         nurndr_pixel_p2w = Ps2TxValToPowerOfTwo(PS2_REZ_W);
         nurndr_pixel_p2h = Ps2TxValToPowerOfTwo(PS2_REZ_H);
     } else {
-        stream->cur = NuTexSetRenderTarget(stream->cur, target);
+        stream->cur.w = NuTexSetRenderTarget(stream->cur.w, target);
     }
 }
 
 
 void NuRndrClear(int flags, int colour, float depth) {
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     u16 *scissor;
     int *offset;
     int z;
@@ -594,73 +557,73 @@ void NuRndrClear(int flags, int colour, float depth) {
     NuRndrStreamSetMisc(stream);
     scissor = NuRndrStreamGetScissor();
     offset = NuRndrStreamGetOffset();
-    stream->cur = vpDmaTag_CntEx(stream->cur, 0, 0x50000000) - 1;
-    stream->cur = vtBeginDirect(stream->cur, 0);
-    stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 0, 0, 0, 1, 0xE);
-    *((u64 *)stream->cur)++ = NuPs2ZBufReg0.zbuf.zbp | (NuPs2ZBufReg0.zbuf.psm << 24);
-    *((u64 *)stream->cur)++ = 0x4E;
-    stream->cur = gsCloseGifPacket(stream->cur);
-    stream->cur = vtCloseDirect(stream->cur);
-    stream->cur = vpDmaTag_Close(stream->cur);
-    stream->cur = NuRndrStreamAddZBState(stream->cur, 1);
-    stream->cur = vpDmaTag_CntEx(stream->cur, 0, 0) - 1;
-    stream->cur = vtBeginDirect(stream->cur, 0);
-    stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 0, 0, 0, 1, 0xE);
-    *((u64 *)stream->cur)++ = 0;
-    *((u64 *)stream->cur)++ = 0x1B;
-    *(u64 *)stream->cur = 0;
+    stream->cur.w = vpDmaTag_CntEx(stream->cur.w, 0, 0x50000000) - 1;
+    stream->cur.w = vtBeginDirect(stream->cur.w, 0);
+    stream->cur.w = gsBeginGifPacket(stream->cur.w, 0, 1, 0, 0, 0, 1, 0xE);
+    *((u64 *)stream->cur.w)++ = NuPs2ZBufReg0.zbuf.zbp | (NuPs2ZBufReg0.zbuf.psm << 24);
+    *((u64 *)stream->cur.w)++ = 0x4E;
+    stream->cur.w = gsCloseGifPacket(stream->cur.w);
+    stream->cur.w = vtCloseDirect(stream->cur.w);
+    stream->cur.w = vpDmaTag_Close(stream->cur.w);
+    stream->cur.w = NuRndrStreamAddZBState(stream->cur.w, 1);
+    stream->cur.w = vpDmaTag_CntEx(stream->cur.w, 0, 0) - 1;
+    stream->cur.w = vtBeginDirect(stream->cur.w, 0);
+    stream->cur.w = gsBeginGifPacket(stream->cur.w, 0, 1, 0, 0, 0, 1, 0xE);
+    *((u64 *)stream->cur.w)++ = 0;
+    *((u64 *)stream->cur.w)++ = 0x1B;
+    *(u64 *)stream->cur.w = 0;
     switch (flags & 3) {
     case 1:
-        ((GsTestReg *)stream->cur)->ate = 1;
-        ((GsTestReg *)stream->cur)->atst = 0;
-        ((GsTestReg *)stream->cur)->afail = 1;
+        ((GsTestReg *)stream->cur.w)->ate = 1;
+        ((GsTestReg *)stream->cur.w)->atst = 0;
+        ((GsTestReg *)stream->cur.w)->afail = 1;
         break;
     case 2:
-        ((GsTestReg *)stream->cur)->ate = 1;
-        ((GsTestReg *)stream->cur)->atst = 0;
-        ((GsTestReg *)stream->cur)->afail = 2;
+        ((GsTestReg *)stream->cur.w)->ate = 1;
+        ((GsTestReg *)stream->cur.w)->atst = 0;
+        ((GsTestReg *)stream->cur.w)->afail = 2;
         break;
     case 3:
     default:
-        ((GsTestReg *)stream->cur)->ate = 0;
+        ((GsTestReg *)stream->cur.w)->ate = 0;
         break;
     }
-    ((GsTestReg *)stream->cur)->date = 0;
-    ((GsTestReg *)stream->cur)->zte = 1;
-    ((GsTestReg *)stream->cur)->ztst = 1;
-    ((u64 *)stream->cur)++;
-    *((u64 *)stream->cur)++ = 0x47;
-    stream->cur = gsCloseGifPacket(stream->cur);
+    ((GsTestReg *)stream->cur.w)->date = 0;
+    ((GsTestReg *)stream->cur.w)->zte = 1;
+    ((GsTestReg *)stream->cur.w)->ztst = 1;
+    ((u64 *)stream->cur.w)++;
+    *((u64 *)stream->cur.w)++ = 0x47;
+    stream->cur.w = gsCloseGifPacket(stream->cur.w);
     z = (1.0f - depth) * 8388607.0f;
-    stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 1, 6, 0, 3, 1, 5, 5);
+    stream->cur.w = gsBeginGifPacket(stream->cur.w, 0, 1, 1, 6, 0, 3, 1, 5, 5);
     x = scissor[0] * 16 + offset[0];
     xmax = scissor[1] * 16 + offset[0] + 16;
     y0 = scissor[2] * 16 + offset[1];
     y1 = scissor[3] * 16 + offset[1] + 16;
     do {
-        *stream->cur++ = colour & 0xFF;
-        *stream->cur++ = (colour >> 8) & 0xFF;
-        *stream->cur++ = (colour >> 16) & 0xFF;
-        *stream->cur++ = (colour >> 24) & 0xFF;
-        *stream->cur++ = x;
-        *stream->cur++ = y0;
-        *stream->cur++ = z;
-        *stream->cur++ = 0;
-        *stream->cur++ = (x + 0x400 < xmax) ? x + 0x400 : xmax;
-        *stream->cur++ = y1;
-        *stream->cur++ = z;
-        *stream->cur++ = 0;
+        *stream->cur.w++ = colour & 0xFF;
+        *stream->cur.w++ = (colour >> 8) & 0xFF;
+        *stream->cur.w++ = (colour >> 16) & 0xFF;
+        *stream->cur.w++ = (colour >> 24) & 0xFF;
+        *stream->cur.w++ = x;
+        *stream->cur.w++ = y0;
+        *stream->cur.w++ = z;
+        *stream->cur.w++ = 0;
+        *stream->cur.w++ = (x + 0x400 < xmax) ? x + 0x400 : xmax;
+        *stream->cur.w++ = y1;
+        *stream->cur.w++ = z;
+        *stream->cur.w++ = 0;
         x += 0x400;
     } while (x < xmax);
-    stream->cur = gsCloseGifPacket(stream->cur);
-    stream->cur = vtCloseDirect(stream->cur);
-    stream->cur = vpDmaTag_Close(stream->cur);
-    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    stream->cur.w = gsCloseGifPacket(stream->cur.w);
+    stream->cur.w = vtCloseDirect(stream->cur.w);
+    stream->cur.w = vpDmaTag_Close(stream->cur.w);
+    rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
 }
 
 
 void NuRndrGradClear(int mode, int topcolour, int bottomcolour, float depth) {
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     int z;
 
     NuMtlBuildRenderList();
@@ -669,84 +632,84 @@ void NuRndrGradClear(int mode, int topcolour, int bottomcolour, float depth) {
     stream = rndrstream_system;
     NuRndrStreamLink(stream);
     NuRndrStreamSetMisc(stream);
-    stream->cur = vpDmaTag_CntEx(stream->cur, 0, 0x50000000) - 1;
-    stream->cur = vtBeginDirect(stream->cur, 0);
-    stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 0, 0, 0, 1, 0xE);
-    *((u64 *)stream->cur)++ = NuPs2ZBufReg0.zbuf.zbp | (NuPs2ZBufReg0.zbuf.psm << 24);
-    *((u64 *)stream->cur)++ = 0x4E;
-    stream->cur = gsCloseGifPacket(stream->cur);
-    stream->cur = vtCloseDirect(stream->cur);
-    stream->cur = vpDmaTag_Close(stream->cur);
-    stream->cur = NuRndrStreamAddZBState(stream->cur, 1);
-    stream->cur = vpDmaTag_Cnt(stream->cur);
-    ((unsigned char *)stream->cur)[-14] = 0x10;
-    *stream->cur++ = 0;
-    *stream->cur++ = 0;
-    *stream->cur++ = 0x10000000;
-    *stream->cur++ = 0x5000000C;
-    *((u64 *)stream->cur)++ = 0x2002000000000001ULL;
-    *((u64 *)stream->cur)++ = 0xEEE;
-    *((u64 *)stream->cur)++ = 8;
-    *((u64 *)stream->cur)++ = 0x1B;
-    *(u64 *)stream->cur = 0;
+    stream->cur.w = vpDmaTag_CntEx(stream->cur.w, 0, 0x50000000) - 1;
+    stream->cur.w = vtBeginDirect(stream->cur.w, 0);
+    stream->cur.w = gsBeginGifPacket(stream->cur.w, 0, 1, 0, 0, 0, 1, 0xE);
+    *((u64 *)stream->cur.w)++ = NuPs2ZBufReg0.zbuf.zbp | (NuPs2ZBufReg0.zbuf.psm << 24);
+    *((u64 *)stream->cur.w)++ = 0x4E;
+    stream->cur.w = gsCloseGifPacket(stream->cur.w);
+    stream->cur.w = vtCloseDirect(stream->cur.w);
+    stream->cur.w = vpDmaTag_Close(stream->cur.w);
+    stream->cur.w = NuRndrStreamAddZBState(stream->cur.w, 1);
+    stream->cur.w = vpDmaTag_Cnt(stream->cur.w);
+    ((unsigned char *)stream->cur.w)[-14] = 0x10;
+    *stream->cur.w++ = 0;
+    *stream->cur.w++ = 0;
+    *stream->cur.w++ = 0x10000000;
+    *stream->cur.w++ = 0x5000000C;
+    *((u64 *)stream->cur.w)++ = 0x2002000000000001ULL;
+    *((u64 *)stream->cur.w)++ = 0xEEE;
+    *((u64 *)stream->cur.w)++ = 8;
+    *((u64 *)stream->cur.w)++ = 0x1B;
+    *(u64 *)stream->cur.w = 0;
     switch (mode) {
     case 1:
-        ((GsTestReg *)stream->cur)->ate = 1;
-        ((GsTestReg *)stream->cur)->atst = 0;
-        ((GsTestReg *)stream->cur)->afail = 1;
+        ((GsTestReg *)stream->cur.w)->ate = 1;
+        ((GsTestReg *)stream->cur.w)->atst = 0;
+        ((GsTestReg *)stream->cur.w)->afail = 1;
         break;
     case 2:
-        ((GsTestReg *)stream->cur)->ate = 1;
-        ((GsTestReg *)stream->cur)->atst = 0;
-        ((GsTestReg *)stream->cur)->afail = 2;
+        ((GsTestReg *)stream->cur.w)->ate = 1;
+        ((GsTestReg *)stream->cur.w)->atst = 0;
+        ((GsTestReg *)stream->cur.w)->afail = 2;
         break;
     case 3:
     default:
-        ((GsTestReg *)stream->cur)->ate = 0;
+        ((GsTestReg *)stream->cur.w)->ate = 0;
         break;
     }
-    ((GsTestReg *)stream->cur)->date = 0;
-    ((GsTestReg *)stream->cur)->zte = 1;
-    ((GsTestReg *)stream->cur)->ztst = 1;
-    ((u64 *)stream->cur)++;
-    *((u64 *)stream->cur)++ = 0x47;
+    ((GsTestReg *)stream->cur.w)->date = 0;
+    ((GsTestReg *)stream->cur.w)->zte = 1;
+    ((GsTestReg *)stream->cur.w)->ztst = 1;
+    ((u64 *)stream->cur.w)++;
+    *((u64 *)stream->cur.w)++ = 0x47;
     z = (1.0f - depth) * 8388607.0f;
-    *((u64 *)stream->cur)++ = 0x2002400000008004ULL;
-    *((u64 *)stream->cur)++ = 0x51;
-    *stream->cur++ = topcolour & 0xFF;
-    *stream->cur++ = (topcolour >> 8) & 0xFF;
-    *stream->cur++ = (topcolour >> 16) & 0xFF;
-    *stream->cur++ = 0x80;
-    *stream->cur++ = (int)NuVpPixelWidth(0.0f);
-    *stream->cur++ = (int)NuVpPixelHeight(0.0f);
-    *stream->cur++ = z;
-    *stream->cur++ = 0;
-    *stream->cur++ = topcolour & 0xFF;
-    *stream->cur++ = (topcolour >> 8) & 0xFF;
-    *stream->cur++ = (topcolour >> 16) & 0xFF;
-    *stream->cur++ = 0x80;
-    *stream->cur++ = (int)NuVpPixelWidth(1.0f);
-    *stream->cur++ = (int)NuVpPixelHeight(0.0f);
-    *stream->cur++ = z;
-    *stream->cur++ = 0;
-    *stream->cur++ = bottomcolour & 0xFF;
-    *stream->cur++ = (bottomcolour >> 8) & 0xFF;
-    *stream->cur++ = (bottomcolour >> 16) & 0xFF;
-    *stream->cur++ = 0x80;
-    *stream->cur++ = (int)NuVpPixelWidth(0.0f);
-    *stream->cur++ = (int)NuVpPixelHeight(1.0f);
-    *stream->cur++ = z;
-    *stream->cur++ = 0;
-    *stream->cur++ = bottomcolour & 0xFF;
-    *stream->cur++ = (bottomcolour >> 8) & 0xFF;
-    *stream->cur++ = (bottomcolour >> 16) & 0xFF;
-    *stream->cur++ = 0x80;
-    *stream->cur++ = (int)NuVpPixelWidth(1.0f);
-    *stream->cur++ = (int)NuVpPixelHeight(1.0f);
-    *stream->cur++ = z;
-    *stream->cur++ = 0;
-    stream->cur = vpDmaTag_Close(stream->cur);
-    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    *((u64 *)stream->cur.w)++ = 0x2002400000008004ULL;
+    *((u64 *)stream->cur.w)++ = 0x51;
+    *stream->cur.w++ = topcolour & 0xFF;
+    *stream->cur.w++ = (topcolour >> 8) & 0xFF;
+    *stream->cur.w++ = (topcolour >> 16) & 0xFF;
+    *stream->cur.w++ = 0x80;
+    *stream->cur.w++ = (int)NuVpPixelWidth(0.0f);
+    *stream->cur.w++ = (int)NuVpPixelHeight(0.0f);
+    *stream->cur.w++ = z;
+    *stream->cur.w++ = 0;
+    *stream->cur.w++ = topcolour & 0xFF;
+    *stream->cur.w++ = (topcolour >> 8) & 0xFF;
+    *stream->cur.w++ = (topcolour >> 16) & 0xFF;
+    *stream->cur.w++ = 0x80;
+    *stream->cur.w++ = (int)NuVpPixelWidth(1.0f);
+    *stream->cur.w++ = (int)NuVpPixelHeight(0.0f);
+    *stream->cur.w++ = z;
+    *stream->cur.w++ = 0;
+    *stream->cur.w++ = bottomcolour & 0xFF;
+    *stream->cur.w++ = (bottomcolour >> 8) & 0xFF;
+    *stream->cur.w++ = (bottomcolour >> 16) & 0xFF;
+    *stream->cur.w++ = 0x80;
+    *stream->cur.w++ = (int)NuVpPixelWidth(0.0f);
+    *stream->cur.w++ = (int)NuVpPixelHeight(1.0f);
+    *stream->cur.w++ = z;
+    *stream->cur.w++ = 0;
+    *stream->cur.w++ = bottomcolour & 0xFF;
+    *stream->cur.w++ = (bottomcolour >> 8) & 0xFF;
+    *stream->cur.w++ = (bottomcolour >> 16) & 0xFF;
+    *stream->cur.w++ = 0x80;
+    *stream->cur.w++ = (int)NuVpPixelWidth(1.0f);
+    *stream->cur.w++ = (int)NuVpPixelHeight(1.0f);
+    *stream->cur.w++ = z;
+    *stream->cur.w++ = 0;
+    stream->cur.w = vpDmaTag_Close(stream->cur.w);
+    rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
 }
 
 
@@ -758,7 +721,7 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
     int n;
     int vis;
     int geomidx;
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     struct numtl_s *lastmtl;
     struct numtl_s *mtl;
     struct nugeom_s *geom;
@@ -821,7 +784,7 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         lastmtl = mtl;
                         if (stream != rndrstream_3d) {
                             if (stream) {
-                                rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+                                rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
                             }
                             stream = rndrstream_3d;
                             NuRndrStreamLink(stream);
@@ -831,11 +794,11 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         }
                     }
                     if (geom->dma) {
-                        rndrstream_3d->cur = vpDmaTag_Call(rndrstream_3d->cur, geom->dma);
-                        ((unsigned char *)rndrstream_3d->cur)[-14] = 4;
+                        rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, geom->dma);
+                        ((unsigned char *)rndrstream_3d->cur.w)[-14] = 4;
                     }
                     if (geom->otbatch) {
-                        rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur, 0);
+                        rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur.w, 0);
                         if (instanced) {
                             NuRndrOTInsertTriBatch(&mtx, vis, mtl, geom->otbatch->tris, geom->otbatch->count);
                         } else {
@@ -843,7 +806,7 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         }
                         NuRndrStreamLink(rndrstream_3d);
                     }
-                    mtl = mtl->next;
+                    mtl = mtl->display_next;
                 } while (mtl);
                 } while ((geom = geom->next));
             }
@@ -857,7 +820,7 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                     lastmtl = mtl;
                     if (stream != rndrstream_3d) {
                         if (stream) {
-                            rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+                            rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
                         }
                         stream = rndrstream_3d;
                         NuRndrStreamLink(stream);
@@ -871,12 +834,12 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                     }
                 }
                 if (fgeom->dmastream) {
-                    rndrstream_3d->cur = vpDmaTag_Call(rndrstream_3d->cur, fgeom->dmastream);
-                    ((unsigned char *)rndrstream_3d->cur)[-14] = 4;
+                    rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, fgeom->dmastream);
+                    ((unsigned char *)rndrstream_3d->cur.w)[-14] = 4;
                 }
             }
             if (stream) {
-                rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur, 0);
+                rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur.w, 0);
                 stream = 0;
                 lastmtl = 0;
             }
@@ -893,7 +856,7 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
     int clip;
     int instanced;
     int vis;
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     struct numtl_s *lastmtl;
     struct numtl_s *mtl;
     struct nugeom_s *geom;
@@ -943,7 +906,7 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         lastmtl = mtl;
                         if (stream != rndrstream_3d) {
                             if (stream) {
-                                rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+                                rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
                             }
                             stream = rndrstream_3d;
                             NuRndrStreamLink(stream);
@@ -952,9 +915,9 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
                             NuRndrStreamSetLocalMtx(rndrstream_3d);
                         }
                     }
-                    rndrstream_3d->cur = vpDmaTag_Call(rndrstream_3d->cur, geom->dma);
-                    ((unsigned char *)rndrstream_3d->cur)[-14] = 4;
-                    mtl = mtl->next;
+                    rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, geom->dma);
+                    ((unsigned char *)rndrstream_3d->cur.w)[-14] = 4;
+                    mtl = mtl->display_next;
                 } while (mtl);
             }
             for (fgeom = gobj->faceon_geom; fgeom; fgeom = fgeom->next) {
@@ -967,7 +930,7 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
                     lastmtl = faceonmtl;
                     if (stream != rndrstream_3d) {
                         if (stream) {
-                            rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+                            rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
                         }
                         stream = rndrstream_3d;
                         NuRndrStreamLink(stream);
@@ -980,11 +943,11 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         }
                     }
                 }
-                rndrstream_3d->cur = vpDmaTag_Call(rndrstream_3d->cur, fgeom->dmastream);
-                ((unsigned char *)rndrstream_3d->cur)[-14] = 4;
+                rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, fgeom->dmastream);
+                ((unsigned char *)rndrstream_3d->cur.w)[-14] = 4;
             }
             if (stream) {
-                rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur, 0);
+                rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur.w, 0);
                 stream = 0;
                 lastmtl = 0;
             }
@@ -1315,30 +1278,30 @@ int NuRndrLine2d(struct nuvtx2d_s *vtx, struct numtl_s *mtl) {
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_Cnt(rndrstream_2d->cur);
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0x11000000;
-    *rndrstream_2d->cur++ = 0x50000007;
-    *((u64 *)rndrstream_2d->cur)++ = 0x3000C00000008002ULL;
-    *((u64 *)rndrstream_2d->cur)++ = 0x512;
+    rndrstream_2d->cur.w = vpDmaTag_Cnt(rndrstream_2d->cur.w);
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0x11000000;
+    *rndrstream_2d->cur.w++ = 0x50000007;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x3000C00000008002ULL;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x512;
     for (i = 0; i < 2; i++) {
-        *((float *)rndrstream_2d->cur)++ = vtx->u;
-        *((float *)rndrstream_2d->cur)++ = vtx->v;
-        *((float *)rndrstream_2d->cur)++ = vtx->rhw;
-        rndrstream_2d->cur++;
-        *rndrstream_2d->cur++ = vtx->rgba[0];
-        *rndrstream_2d->cur++ = vtx->rgba[1];
-        *rndrstream_2d->cur++ = vtx->rgba[2];
-        *rndrstream_2d->cur++ = vtx->rgba[3];
-        *rndrstream_2d->cur++ = (int)NuVpPixelWidth(vtx->x);
-        *rndrstream_2d->cur++ = (int)NuVpPixelHeight(vtx->y);
-        *rndrstream_2d->cur++ = (int)vtx->z;
-        *rndrstream_2d->cur++ = 0;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->u;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->v;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->rhw;
+        rndrstream_2d->cur.w++;
+        *rndrstream_2d->cur.w++ = vtx->rgba[0];
+        *rndrstream_2d->cur.w++ = vtx->rgba[1];
+        *rndrstream_2d->cur.w++ = vtx->rgba[2];
+        *rndrstream_2d->cur.w++ = vtx->rgba[3];
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelWidth(vtx->x);
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelHeight(vtx->y);
+        *rndrstream_2d->cur.w++ = (int)vtx->z;
+        *rndrstream_2d->cur.w++ = 0;
         vtx++;
     }
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
     return 1;
 }
 
@@ -1352,30 +1315,30 @@ int NuRndrLineStrip2d(struct nuvtx2d_s *vtx, struct numtl_s *mtl, int count) {
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_Cnt(rndrstream_2d->cur);
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0x10000000;
-    *rndrstream_2d->cur++ = (count * 3 + 1) | 0x50000000;
-    *((u64 *)rndrstream_2d->cur)++ = (count | 0x8000) | 0x3000C00000000000ULL;
-    *((u64 *)rndrstream_2d->cur)++ = 0x512;
+    rndrstream_2d->cur.w = vpDmaTag_Cnt(rndrstream_2d->cur.w);
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0x10000000;
+    *rndrstream_2d->cur.w++ = (count * 3 + 1) | 0x50000000;
+    *((u64 *)rndrstream_2d->cur.w)++ = (count | 0x8000) | 0x3000C00000000000ULL;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x512;
     for (i = 0; i < count; i++) {
-        *((float *)rndrstream_2d->cur)++ = vtx->u;
-        *((float *)rndrstream_2d->cur)++ = vtx->v;
-        *((float *)rndrstream_2d->cur)++ = vtx->rhw;
-        rndrstream_2d->cur++;
-        *rndrstream_2d->cur++ = vtx->rgba[0];
-        *rndrstream_2d->cur++ = vtx->rgba[1];
-        *rndrstream_2d->cur++ = vtx->rgba[2];
-        *rndrstream_2d->cur++ = vtx->rgba[3];
-        *rndrstream_2d->cur++ = (int)NuVpPixelWidth(vtx->x);
-        *rndrstream_2d->cur++ = (int)NuVpPixelHeight(vtx->y);
-        *rndrstream_2d->cur++ = (int)vtx->z;
-        *rndrstream_2d->cur++ = 0;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->u;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->v;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->rhw;
+        rndrstream_2d->cur.w++;
+        *rndrstream_2d->cur.w++ = vtx->rgba[0];
+        *rndrstream_2d->cur.w++ = vtx->rgba[1];
+        *rndrstream_2d->cur.w++ = vtx->rgba[2];
+        *rndrstream_2d->cur.w++ = vtx->rgba[3];
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelWidth(vtx->x);
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelHeight(vtx->y);
+        *rndrstream_2d->cur.w++ = (int)vtx->z;
+        *rndrstream_2d->cur.w++ = 0;
         vtx++;
     }
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
     return 1;
 }
 
@@ -1389,30 +1352,30 @@ int NuRndrTri2d(struct nuvtx2d_s *vtx, struct numtl_s *mtl) {
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_Cnt(rndrstream_2d->cur);
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0x10000000;
-    *rndrstream_2d->cur++ = 0x5000000A;
-    *((u64 *)rndrstream_2d->cur)++ = 0x3001C00000008003ULL;
-    *((u64 *)rndrstream_2d->cur)++ = 0x512;
+    rndrstream_2d->cur.w = vpDmaTag_Cnt(rndrstream_2d->cur.w);
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0x10000000;
+    *rndrstream_2d->cur.w++ = 0x5000000A;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x3001C00000008003ULL;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x512;
     for (i = 0; i < 3; i++) {
-        *((float *)rndrstream_2d->cur)++ = vtx->u;
-        *((float *)rndrstream_2d->cur)++ = vtx->v;
-        *((float *)rndrstream_2d->cur)++ = vtx->rhw;
-        rndrstream_2d->cur++;
-        *rndrstream_2d->cur++ = vtx->rgba[0];
-        *rndrstream_2d->cur++ = vtx->rgba[1];
-        *rndrstream_2d->cur++ = vtx->rgba[2];
-        *rndrstream_2d->cur++ = vtx->rgba[3];
-        *rndrstream_2d->cur++ = (int)NuVpPixelWidth(vtx->x);
-        *rndrstream_2d->cur++ = (int)NuVpPixelHeight(vtx->y);
-        *rndrstream_2d->cur++ = (int)vtx->z;
-        *rndrstream_2d->cur++ = 0;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->u;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->v;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->rhw;
+        rndrstream_2d->cur.w++;
+        *rndrstream_2d->cur.w++ = vtx->rgba[0];
+        *rndrstream_2d->cur.w++ = vtx->rgba[1];
+        *rndrstream_2d->cur.w++ = vtx->rgba[2];
+        *rndrstream_2d->cur.w++ = vtx->rgba[3];
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelWidth(vtx->x);
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelHeight(vtx->y);
+        *rndrstream_2d->cur.w++ = (int)vtx->z;
+        *rndrstream_2d->cur.w++ = 0;
         vtx++;
     }
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
     return 1;
 }
 
@@ -1426,30 +1389,30 @@ int NuRndrTriStrip2d(struct nuvtx2d_s *vtx, struct numtl_s *mtl, int count) {
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_Cnt(rndrstream_2d->cur);
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0x10000000;
-    *rndrstream_2d->cur++ = (count * 3 + 1) | 0x50000000;
-    *((u64 *)rndrstream_2d->cur)++ = (count | 0x8000) | 0x3002400000000000ULL;
-    *((u64 *)rndrstream_2d->cur)++ = 0x512;
+    rndrstream_2d->cur.w = vpDmaTag_Cnt(rndrstream_2d->cur.w);
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0x10000000;
+    *rndrstream_2d->cur.w++ = (count * 3 + 1) | 0x50000000;
+    *((u64 *)rndrstream_2d->cur.w)++ = (count | 0x8000) | 0x3002400000000000ULL;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x512;
     for (i = 0; i < count; i++) {
-        *((float *)rndrstream_2d->cur)++ = vtx->u;
-        *((float *)rndrstream_2d->cur)++ = vtx->v;
-        *((float *)rndrstream_2d->cur)++ = vtx->rhw;
-        rndrstream_2d->cur++;
-        *rndrstream_2d->cur++ = vtx->rgba[0];
-        *rndrstream_2d->cur++ = vtx->rgba[1];
-        *rndrstream_2d->cur++ = vtx->rgba[2];
-        *rndrstream_2d->cur++ = vtx->rgba[3];
-        *rndrstream_2d->cur++ = (int)NuVpPixelWidth(vtx->x);
-        *rndrstream_2d->cur++ = (int)NuVpPixelHeight(vtx->y);
-        *rndrstream_2d->cur++ = (int)vtx->z;
-        *rndrstream_2d->cur++ = 0;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->u;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->v;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->rhw;
+        rndrstream_2d->cur.w++;
+        *rndrstream_2d->cur.w++ = vtx->rgba[0];
+        *rndrstream_2d->cur.w++ = vtx->rgba[1];
+        *rndrstream_2d->cur.w++ = vtx->rgba[2];
+        *rndrstream_2d->cur.w++ = vtx->rgba[3];
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelWidth(vtx->x);
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelHeight(vtx->y);
+        *rndrstream_2d->cur.w++ = (int)vtx->z;
+        *rndrstream_2d->cur.w++ = 0;
         vtx++;
     }
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
     return 1;
 }
 
@@ -1465,56 +1428,56 @@ void NuRndrGradRect2di(int x, int y, int width, int height,
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_CntEx(rndrstream_2d->cur,
+    rndrstream_2d->cur.w = vpDmaTag_CntEx(rndrstream_2d->cur.w,
                                       0x10000000, 0x50000000) - 1;
-    rndrstream_2d->cur = vtBeginDirect(rndrstream_2d->cur, 0);
-    rndrstream_2d->cur = gsBeginGifPacket(rndrstream_2d->cur,
+    rndrstream_2d->cur.w = vtBeginDirect(rndrstream_2d->cur.w, 0);
+    rndrstream_2d->cur.w = gsBeginGifPacket(rndrstream_2d->cur.w,
         0, 1, 1, 4, 0, 9, 1, 2, 5, 1, 5, 1, 5, 1, 5);
 
-    *rndrstream_2d->cur++ = colours[0];
-    *rndrstream_2d->cur++ = colours[1];
-    *rndrstream_2d->cur++ = colours[2];
-    *rndrstream_2d->cur++ = colours[3];
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *(float *)rndrstream_2d->cur++ = 1.0f;
-    rndrstream_2d->cur++;
-    *rndrstream_2d->cur++ = x;
-    *rndrstream_2d->cur++ = y;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur.w++ = colours[0];
+    *rndrstream_2d->cur.w++ = colours[1];
+    *rndrstream_2d->cur.w++ = colours[2];
+    *rndrstream_2d->cur.w++ = colours[3];
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *(float *)rndrstream_2d->cur.w++ = 1.0f;
+    rndrstream_2d->cur.w++;
+    *rndrstream_2d->cur.w++ = x;
+    *rndrstream_2d->cur.w++ = y;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
 
-    *rndrstream_2d->cur++ = colours[4];
-    *rndrstream_2d->cur++ = colours[5];
-    *rndrstream_2d->cur++ = colours[6];
-    *rndrstream_2d->cur++ = colours[7];
-    *rndrstream_2d->cur++ = x + width;
-    *rndrstream_2d->cur++ = y;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur.w++ = colours[4];
+    *rndrstream_2d->cur.w++ = colours[5];
+    *rndrstream_2d->cur.w++ = colours[6];
+    *rndrstream_2d->cur.w++ = colours[7];
+    *rndrstream_2d->cur.w++ = x + width;
+    *rndrstream_2d->cur.w++ = y;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
 
-    *rndrstream_2d->cur++ = colours[8];
-    *rndrstream_2d->cur++ = colours[9];
-    *rndrstream_2d->cur++ = colours[10];
-    *rndrstream_2d->cur++ = colours[11];
-    *rndrstream_2d->cur++ = x;
-    *rndrstream_2d->cur++ = y + height;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur.w++ = colours[8];
+    *rndrstream_2d->cur.w++ = colours[9];
+    *rndrstream_2d->cur.w++ = colours[10];
+    *rndrstream_2d->cur.w++ = colours[11];
+    *rndrstream_2d->cur.w++ = x;
+    *rndrstream_2d->cur.w++ = y + height;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
 
-    *rndrstream_2d->cur++ = colours[12];
-    *rndrstream_2d->cur++ = colours[13];
-    *rndrstream_2d->cur++ = colours[14];
-    *rndrstream_2d->cur++ = colours[15];
-    *rndrstream_2d->cur++ = x + width;
-    *rndrstream_2d->cur++ = y + height;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
+    *rndrstream_2d->cur.w++ = colours[12];
+    *rndrstream_2d->cur.w++ = colours[13];
+    *rndrstream_2d->cur.w++ = colours[14];
+    *rndrstream_2d->cur.w++ = colours[15];
+    *rndrstream_2d->cur.w++ = x + width;
+    *rndrstream_2d->cur.w++ = y + height;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
 
-    rndrstream_2d->cur = gsCloseGifPacket(rndrstream_2d->cur);
-    rndrstream_2d->cur = vtCloseDirect(rndrstream_2d->cur);
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = gsCloseGifPacket(rndrstream_2d->cur.w);
+    rndrstream_2d->cur.w = vtCloseDirect(rndrstream_2d->cur.w);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
 }
 
 
@@ -1527,30 +1490,30 @@ int NuRndrQuad2d(struct nuvtx2d_s *vtx, struct numtl_s *mtl) {
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_Cnt(rndrstream_2d->cur);
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0x10000000;
-    *rndrstream_2d->cur++ = 0x5000000D;
-    *((u64 *)rndrstream_2d->cur)++ = 0x3002400000008004ULL;
-    *((u64 *)rndrstream_2d->cur)++ = 0x512;
+    rndrstream_2d->cur.w = vpDmaTag_Cnt(rndrstream_2d->cur.w);
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0x10000000;
+    *rndrstream_2d->cur.w++ = 0x5000000D;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x3002400000008004ULL;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x512;
     for (i = 0; i < 4; i++) {
-        *((float *)rndrstream_2d->cur)++ = vtx->u * vtx->rhw;
-        *((float *)rndrstream_2d->cur)++ = vtx->v * vtx->rhw;
-        *((float *)rndrstream_2d->cur)++ = vtx->rhw;
-        rndrstream_2d->cur++;
-        *rndrstream_2d->cur++ = vtx->rgba[0];
-        *rndrstream_2d->cur++ = vtx->rgba[1];
-        *rndrstream_2d->cur++ = vtx->rgba[2];
-        *rndrstream_2d->cur++ = vtx->rgba[3];
-        *rndrstream_2d->cur++ = (int)NuVpPixelWidth(vtx->x);
-        *rndrstream_2d->cur++ = (int)NuVpPixelHeight(vtx->y);
-        *rndrstream_2d->cur++ = (int)vtx->z;
-        *rndrstream_2d->cur++ = 0;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->u * vtx->rhw;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->v * vtx->rhw;
+        *((float *)rndrstream_2d->cur.w)++ = vtx->rhw;
+        rndrstream_2d->cur.w++;
+        *rndrstream_2d->cur.w++ = vtx->rgba[0];
+        *rndrstream_2d->cur.w++ = vtx->rgba[1];
+        *rndrstream_2d->cur.w++ = vtx->rgba[2];
+        *rndrstream_2d->cur.w++ = vtx->rgba[3];
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelWidth(vtx->x);
+        *rndrstream_2d->cur.w++ = (int)NuVpPixelHeight(vtx->y);
+        *rndrstream_2d->cur.w++ = (int)vtx->z;
+        *rndrstream_2d->cur.w++ = 0;
         vtx++;
     }
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
     return 1;
 }
 
@@ -1564,29 +1527,29 @@ int NuRndrTriStripGif(u32 *data, int count, struct numtl_s *mtl) {
     NuRndrStreamLink(rndrstream_2d);
     NuRndrStreamSetMisc(rndrstream_2d);
     NuRndrStreamAddMtl(rndrstream_2d, mtl);
-    rndrstream_2d->cur = vpDmaTag_Cnt(rndrstream_2d->cur);
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0;
-    *rndrstream_2d->cur++ = 0x10000000;
-    *rndrstream_2d->cur++ = (count * 3 + 1) | 0x50000000;
-    *((u64 *)rndrstream_2d->cur)++ = (count | 0x8000) | 0x3002400000000000ULL;
-    *((u64 *)rndrstream_2d->cur)++ = 0x512;
+    rndrstream_2d->cur.w = vpDmaTag_Cnt(rndrstream_2d->cur.w);
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0;
+    *rndrstream_2d->cur.w++ = 0x10000000;
+    *rndrstream_2d->cur.w++ = (count * 3 + 1) | 0x50000000;
+    *((u64 *)rndrstream_2d->cur.w)++ = (count | 0x8000) | 0x3002400000000000ULL;
+    *((u64 *)rndrstream_2d->cur.w)++ = 0x512;
     for (i = 0; i < count; i++) {
-        *((float *)rndrstream_2d->cur)++ = *((float *)data)++;
-        *((float *)rndrstream_2d->cur)++ = *((float *)data)++;
-        *((float *)rndrstream_2d->cur)++ = *((float *)data)++;
-        *((float *)rndrstream_2d->cur)++ = *((float *)data)++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
-        *rndrstream_2d->cur++ = *data++;
+        *((float *)rndrstream_2d->cur.w)++ = *((float *)data)++;
+        *((float *)rndrstream_2d->cur.w)++ = *((float *)data)++;
+        *((float *)rndrstream_2d->cur.w)++ = *((float *)data)++;
+        *((float *)rndrstream_2d->cur.w)++ = *((float *)data)++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
+        *rndrstream_2d->cur.w++ = *data++;
     }
-    rndrstream_2d->cur = vpDmaTag_Close(rndrstream_2d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur, 0);
+    rndrstream_2d->cur.w = vpDmaTag_Close(rndrstream_2d->cur.w);
+    rndrstream_free = vpDmaTag_Next(rndrstream_2d->cur.w, 0);
     return 1;
 }
 
@@ -1671,7 +1634,7 @@ void NuRndrClose(void) {
 
 
 int NuRndrBeginScene(int target) {
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     int onscreen;
     int offset;
 
@@ -1680,7 +1643,7 @@ int NuRndrBeginScene(int target) {
     NuRndrStreamLink(stream);
     NuRndrSetRTarget(stream, target);
     NuRndrSetZBuffer(stream, -2);
-    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
     offset = onscreen ? nurndr_half_offset : 0;
     NuRndrSetXYOffset((0x800 - (nurndr_pixel_width >> 1)) << 4,
         ((0x800 - (nurndr_pixel_height >> 1)) << 4) + offset);
@@ -1690,14 +1653,14 @@ int NuRndrBeginScene(int target) {
 
 
 int NuRndrBeginSceneEx(int target, int zbuffer, int halfoffset) {
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     int offset;
 
     stream = rndrstream_system;
     NuRndrStreamLink(stream);
     NuRndrSetRTarget(stream, target);
     NuRndrSetZBuffer(stream, zbuffer);
-    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
     offset = halfoffset ? nurndr_half_offset : 0;
     NuRndrSetXYOffset((0x800 - (nurndr_pixel_width >> 1)) << 4,
         ((0x800 - (nurndr_pixel_height >> 1)) << 4) + offset);
@@ -1947,19 +1910,19 @@ void NuRndrRectUV3diNS(int x, int y, int width, int height, u32 colour, u32 z,
                        float u0, float v0, float u1, float v1) {
     x += (PS2_VCNTR_X - (nurndr_pixel_width >> 1)) << 4;
     y += (PS2_VCNTR_Y - (nurndr_pixel_height >> 1)) << 4;
-    *((unsigned long long *)rndrstream_3d->cur)++ = 6;
-    *rndrstream_3d->cur++ = colour;
-    *((float *)rndrstream_3d->cur)++ = 1.0f;
-    *((float *)rndrstream_3d->cur)++ = u0;
-    *((float *)rndrstream_3d->cur)++ = v0;
-    *((short *)rndrstream_3d->cur)++ = x;
-    *((short *)rndrstream_3d->cur)++ = y;
-    *rndrstream_3d->cur++ = z;
-    *((float *)rndrstream_3d->cur)++ = u1;
-    *((float *)rndrstream_3d->cur)++ = v1;
-    *((short *)rndrstream_3d->cur)++ = x + width;
-    *((short *)rndrstream_3d->cur)++ = y + height;
-    *rndrstream_3d->cur++ = z;
+    *((unsigned long long *)rndrstream_3d->cur.w)++ = 6;
+    *rndrstream_3d->cur.w++ = colour;
+    *((float *)rndrstream_3d->cur.w)++ = 1.0f;
+    *((float *)rndrstream_3d->cur.w)++ = u0;
+    *((float *)rndrstream_3d->cur.w)++ = v0;
+    *((short *)rndrstream_3d->cur.w)++ = x;
+    *((short *)rndrstream_3d->cur.w)++ = y;
+    *rndrstream_3d->cur.w++ = z;
+    *((float *)rndrstream_3d->cur.w)++ = u1;
+    *((float *)rndrstream_3d->cur.w)++ = v1;
+    *((short *)rndrstream_3d->cur.w)++ = x + width;
+    *((short *)rndrstream_3d->cur.w)++ = y + height;
+    *rndrstream_3d->cur.w++ = z;
 }
 
 
@@ -2017,7 +1980,7 @@ void NuRndrShadPolys(struct numtl_s *mtl) {
         NuRndrStreamSetLocalMtx(rndrstream_fx);
         NuRndrStreamFxMPG(1);
         NuRndrStreamQuadShad(rndrstream_fx);
-        rndrstream_free = vpDmaTag_Next(rndrstream_fx->cur, 0);
+        rndrstream_free = vpDmaTag_Next(rndrstream_fx->cur.w, 0);
     }
     NuRndrShadowCnt = 0;
 }
@@ -2067,7 +2030,7 @@ void NuRndrWaterRip(struct numtl_s *mtl) {
         NuRndrStreamSetLocalMtx(rndrstream_fx);
         NuRndrStreamFxMPG(1);
         NuRndrStreamQuadWRip(rndrstream_fx, visible);
-        rndrstream_free = vpDmaTag_Next(rndrstream_fx->cur, 0);
+        rndrstream_free = vpDmaTag_Next(rndrstream_fx->cur.w, 0);
     }
 }
 
@@ -2116,12 +2079,12 @@ void NuRndrDeformerWeightsArrayInit(void) {
 
 
 
-extern struct RndrPacketStream *rndrstream_ot_sort;
+extern struct nurndrstream_s *rndrstream_ot_sort;
 
-/* Near-match (stays asm): retail loads stream->cur before materialising the
+/* Near-match (stays asm): retail loads stream->cur.w before materialising the
    ot_close_packet / bin addresses, so the quadword copy schedules differently. */
 void NuRndrOTFlush(void) {
-    struct RndrPacketStream *stream;
+    struct nurndrstream_s *stream;
     nurndrotbin_s *bin;
     nurndrotitem_s *item;
     struct numtl_s *mtl;
@@ -2140,16 +2103,16 @@ void NuRndrOTFlush(void) {
     NuRndrStreamLink(stream);
     NuRndrStreamSetMisc(stream);
     NuRndrStreamSetViewMtx(stream);
-    *((u128 *)stream->cur)++ = *(u128 *)ot_close_packet;
+    *((u128 *)stream->cur.w)++ = *(u128 *)ot_close_packet;
     bin = &ot_bins[0xFFF];
     do {
         for (item = bin->head; item != 0; item = item->next) {
             if (item->mtl != mtl) {
                 mtl = item->mtl;
                 NuRndrStreamAddMtl(stream, mtl);
-                if (mtl->mpgtag != mpgtag) {
-                    mpgtag = mtl->mpgtag;
-                    stream->cur = vpDmaTag_Call(stream->cur, mpgtag);
+                if (mtl->stream.mpgtag != mpgtag) {
+                    mpgtag = mtl->stream.mpgtag;
+                    stream->cur.w = vpDmaTag_Call(stream->cur.w, mpgtag);
                 }
             }
             if (item->mtx != mtx || item->mtxmode != mtxmode) {
@@ -2158,12 +2121,12 @@ void NuRndrOTFlush(void) {
                 NuRndrSetLocalMtx(mtx, mtxmode);
                 NuRndrStreamSetLocalMtx(stream);
             }
-            stream->cur = vpDmaTag_Call(stream->cur, item->dma);
+            stream->cur.w = vpDmaTag_Call(stream->cur.w, item->dma);
         }
         bin->head = 0;
         bin--;
     } while (bin >= ot_bins);
-    rndrstream_free = vpDmaTag_Next(stream->cur, 0);
+    rndrstream_free = vpDmaTag_Next(stream->cur.w, 0);
     ot_batch_free = 0x400;
 }
 

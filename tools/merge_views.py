@@ -38,6 +38,7 @@ from probe_layout import (PROBE_SYMBOL, drop_nested, matching_brace,  # noqa: E4
                           members, read_words, strip_comments)
 
 COMMENT = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
+TYPE_WORDS = frozenset(("char", "short", "int", "long", "signed", "unsigned"))
 
 
 def field_decls(chunk):
@@ -50,6 +51,11 @@ def field_decls(chunk):
     code = code.replace("{}", " ").strip().rstrip(";").strip()
     if not code:
         return []
+    unnamed = re.fullmatch(r"([\w\s]+?)\s*:\s*(\d+)", code)
+    if unnamed:
+        words = unnamed.group(1).split()
+        if len(words) == 1 or words[-1] in TYPE_WORDS:
+            return [("", " ".join(words), int(unnamed.group(2)))]   # padding bits
     fnptr = re.match(r"(.*?)\(\s*\*\s*(\w+)\s*\)\s*\((.*)\)\s*$", code)
     if fnptr:
         return [(fnptr.group(2), f"{' '.join(fnptr.group(1).split())} (*)()", None)]
@@ -96,9 +102,79 @@ def find_views(text, names):
         body = text[m.end():close - 1]
         fields = []
         for _off, chunk in members(body):
-            fields += field_decls(chunk)
+            decls = field_decls(chunk)
+            if not decls and strip_comments(chunk).strip(" \t\n;"):
+                # anonymous member: positional initializers can't address
+                # the fields after it, so bit-fields stay unmeasured
+                fields.append((None, "anonymous", None))
+            fields += decls
         found.append((expr, name, text.count("\n", 0, m.start()) + 1, fields))
     return found
+
+
+def bit_probes(views):
+    """Static instances that set one bit-field each to all ones.
+
+    Returns (source lines, [(view index, field name, symbol)]). A view with
+    an anonymous member is skipped (positional initializers would misalign).
+    """
+    lines, order = [], []
+    for k, (expr, _name, _line, fields) in enumerate(views):
+        if any(n is None for n, _t, _b in fields):
+            continue
+        for j, (name, _ctype, bits) in enumerate(fields):
+            if bits is None or not name:
+                continue
+            inits = []
+            for name2, ctype2, bits2 in fields[:j + 1]:
+                if name2 == "":
+                    continue                    # unnamed bits take no initializer
+                if name2 == name:
+                    inits.append("-1")
+                elif bits2 is None and ("[" in ctype2 or re.match(r"(struct|union)\b", ctype2)
+                                        and "*" not in ctype2):
+                    inits.append("{0}")
+                else:
+                    inits.append("0")
+            symbol = f"nu_bits_{k}_{j}"
+            lines.append(f"{expr} {symbol} = {{ {', '.join(inits)} }};")
+            order.append((k, name, symbol))
+    return lines, order
+
+
+def read_data(asm, symbol):
+    """Bytes of an initialized object in ee-gcc assembly output."""
+    data, inside = bytearray(), False
+    sizes = {".word": 4, ".half": 2, ".short": 2, ".byte": 1}
+    for raw in asm.splitlines():
+        line = raw.split("#")[0].strip()
+        if line == f"{symbol}:":
+            inside = True
+            continue
+        if not inside:
+            continue
+        m = re.match(r"(\.word|\.half|\.short|\.byte)\s+(.+)$", line)
+        if m:
+            for value in m.group(2).split(","):
+                data += (int(value.strip(), 0) & ((1 << (8 * sizes[m.group(1)])) - 1)
+                         ).to_bytes(sizes[m.group(1)], "little")
+            continue
+        m = re.match(r"\.(?:space|zero)\s+(\d+)$", line)
+        if m:
+            data += bytes(int(m.group(1)))
+            continue
+        if line.endswith(":") or (line and not line.startswith((".", "#"))):
+            break
+    return bytes(data)
+
+
+def set_bits(data):
+    """(first bit, count) of the set bits in little-endian data, or None."""
+    value = int.from_bytes(data, "little")
+    if not value:
+        return None
+    first = (value & -value).bit_length() - 1
+    return first, bin(value).count("1")
 
 
 def probe_lines(views):
@@ -108,7 +184,7 @@ def probe_lines(views):
         lines.append(f"    sizeof({expr}),")
         order.append((k, None, "size"))
         for name, _ctype, bits in fields:
-            if bits is not None:
+            if bits is not None or name is None:
                 continue
             lines.append(f"    (int)&(({expr} *)0)->{name},")
             order.append((k, name, "offset"))
@@ -118,9 +194,15 @@ def probe_lines(views):
 
 
 def measure(rel, text, views, version):
-    """Per view: {"size": n, "fields": [(name, type, offset, size)]}, or an error string."""
+    """Per view: {"size": n, "fields": [(name, type, offset, size)]}, or an error string.
+
+    A bit-field's offset is its byte offset and its size is "bits S+W" (first
+    bit within the struct, width); unmeasurable ones have None.
+    """
     lines, order = probe_lines(views)
-    source = text.rstrip() + f"\n\nint {PROBE_SYMBOL}[] = {{\n" + "\n".join(lines) + "\n    0\n};\n"
+    bit_lines, bit_order = bit_probes(views)
+    source = (text.rstrip() + f"\n\nint {PROBE_SYMBOL}[] = {{\n" + "\n".join(lines)
+              + "\n    0\n};\n" + "".join(f"{l}\n" for l in bit_lines))
     work = ROOT / "build" / version / "views"
     work.mkdir(parents=True, exist_ok=True)
     src = work / (re.sub(r"[^A-Za-z0-9_]", "_", rel) + ".c")
@@ -143,10 +225,26 @@ def measure(rel, text, views, version):
         else:
             ctype = next(t for n, t, _b in views[k][3] if n == name)
             result[k]["fields"].append((name, ctype, pending[(k, name)], value))
+    asm = out_s.read_text()
+    measured_bits = {}
+    for k, name, symbol in bit_order:
+        hit = set_bits(read_data(asm, symbol))
+        if hit:
+            measured_bits[(k, name)] = hit
     for k, view in enumerate(views):
         for name, ctype, bits in view[3]:
-            if bits is not None:
+            if bits is None or not name:
+                continue
+            hit = measured_bits.get((k, name))
+            if hit:
+                first, width = hit
+                result[k]["fields"].append(
+                    (name, f"{ctype}:{bits}", first // 8, f"bits {first}+{width}"))
+            else:
                 result[k]["fields"].append((name, f"{ctype}:{bits}", None, None))
+        result[k]["fields"].sort(key=lambda f: (f[2] is None, f[2] or 0,
+                                                int(f[3].split()[1].split("+")[0])
+                                                if isinstance(f[3], str) else 0))
     return result
 
 
@@ -178,20 +276,28 @@ def report(views):
         files = ", ".join(sorted({v["file"] for v in vs}))
         out.append(f"  [{len(vs)}] size {size:#x}: {files}" if size is not None
                    else f"  [{len(vs)}] {files}")
-        for off, fsize, ctype in key:
-            where = f"{off:#06x}+{fsize:#x}" if off is not None else "  bits  "
+        for (off, fsize, ctype), (fname, *_rest) in zip(key, vs[0]["fields"]):
+            ctype = f"{ctype} {fname}"
+            if off is None:
+                where = "  ?     "
+            elif isinstance(fsize, str):
+                where = f"{off:#06x} {fsize}"
+            else:
+                where = f"{off:#06x}+{fsize:#x}"
             out.append(f"      {where}  {ctype}")
 
     names = defaultdict(lambda: defaultdict(int))
     for v in views:
-        for name, _t, off, _s in v["fields"]:
-            names[off][name] += 1
+        for name, _t, off, fsize in v["fields"]:
+            if off is not None:
+                names[(off, fsize if isinstance(fsize, str) else "")][name] += 1
     clashes = {off: n for off, n in names.items() if len(n) > 1 and off is not None}
     if clashes:
         out.append("names that differ at the same offset:")
-        for off in sorted(o for o in clashes if o is not None):
-            out.append(f"  {off:#06x}: " + ", ".join(
-                f"{n} ({c})" for n, c in sorted(clashes[off].items(), key=lambda kv: -kv[1])))
+        for off, bits in sorted(clashes):
+            out.append(f"  {off:#06x}{' ' + bits if bits else ''}: " + ", ".join(
+                f"{n} ({c})" for n, c in sorted(clashes[(off, bits)].items(),
+                                                key=lambda kv: -kv[1])))
     return out
 
 

@@ -44,6 +44,7 @@
 #include "nu_libc.h"
 
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
 
 #include "creature.h"
 
@@ -139,24 +140,6 @@ struct edcrtcube_s {
 struct mcdirent_s {
     u8 pad00[0x20];
     char name[32];             /* 0x20 */
-};
-
-struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;             /* bits 32-35 */
-    u64 unk36 : 8;
-    u64 cull : 2;              /* bits 44-45 */
-    u64 zmode : 2;             /* bits 46-47 */
-    u64 unk48 : 16;
-};
-
-struct numtl_s {
-    u8 pad000[0x168];
-    struct numtlattrib_s attrib; /* 0x168 */
-    u8 pad170[0x10];
-    struct nucolour3_s diffuse;  /* 0x180 */
-    u8 pad18C[0x14];
-    f32 alpha;                   /* 0x1A0 */
 };
 
 struct nurndrvtx_s {
@@ -310,8 +293,6 @@ extern void ResetAI(void);
 extern void DrawCameraTarget(struct nuvec_s *pos);
 extern f32 NewShadowMask(struct nuvec_s *pos, f32 y, s32 flag);
 
-extern struct numtl_s *NuMtlCreate(s32 n);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl,
                          struct numtx_s *mtx);
 extern void NuFntScale(s32 x, s32 y);

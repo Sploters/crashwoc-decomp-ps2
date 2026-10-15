@@ -71,6 +71,8 @@
 
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
 
 #include "creature.h"
 
@@ -266,49 +268,6 @@ struct debrender_s {
     struct nuvec_s pos;
 };
 
-struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;
-    u64 filter : 2;
-    u64 unk38 : 2;
-    u64 utc : 2;
-    u64 vtc : 2;
-    u64 cull : 2;
-    u64 zmode : 2;
-    u64 unk48 : 16;
-};
-
-struct numtlattrib2_s {
-    u64 fx : 2;
-    u64 blend : 1;
-    u64 unk3 : 1;
-    u64 dither : 1;
-    u64 unk5 : 59;
-};
-
-struct numtl_s {
-    u8 pad000[0x168];
-    struct numtlattrib_s attrib;
-    struct numtlattrib2_s attrib2;
-    u8 pad178[8];
-    struct nucolour3_s diffuse;
-    u8 pad18C[0x14];
-    f32 alpha;
-    s32 tid;
-    s32 alpha_sort;
-};
-
-struct nutex_s {
-    s32 type;
-    s32 width;
-    s32 height;
-    s32 mmcnt;
-    void *bits;
-    void *pal;
-    s32 decal;
-    s32 linear;
-};
-
 extern struct deb_s debkeydata[];
 extern struct numtl_s *DebMat[8];
 extern s32 debris_emitter_stack_index;
@@ -369,9 +328,6 @@ void DebrisStartOffset(s32 key, s32 offset);
 void NuRndrParticleGroup(struct debchunk_s *chunk, struct debdma_s *dma, struct numtl_s *mtl, struct numtx_s *mtx, s32 flags, f32 time);
 void DebrisEmitterOrientationMtx(s32 key, struct numtx_s *mtx);
 s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
-struct numtl_s *NuMtlCreate(s32 count);
-void NuMtlUpdate(struct numtl_s *mtl);
-s32 NuTexCreate(struct nutex_s *tex);
 void LinkDmaParticalSets(struct debchunk_s **sets, s32 count);
 
 
@@ -986,13 +942,13 @@ struct numtl_s *CreateAlphaBlendTexture256(char *file, s32 blend, s32 alphamode)
     mtl->attrib.zmode = 1;
     mtl->attrib.alpha = alphamode;
     if (blend != 0) {
-        mtl->attrib2.blend = 1;
-        mtl->attrib2.dither = 0;
+        mtl->attrib2.uvmode = 1;
+        mtl->attrib2.gouraud = 0;
     }
     mtl->attrib.utc = 1;
     mtl->attrib.vtc = 1;
     mtl->tid = NuTexCreate(&tex);
-    mtl->attrib2.fx = 1;
+    mtl->attrib2.afail = 1;
     mtl->alpha_sort = 0x100;
     NuMtlUpdate(mtl);
     return mtl;
@@ -2234,14 +2190,14 @@ struct numtl_s *CreateCopyMat(struct numtl_s *src, s32 blend, s32 alphamode, s32
     mtl->attrib.filter = filter;
     mtl->attrib.alpha = alphamode;
     if (blend != 0) {
-        mtl->attrib2.blend = 1;
-        mtl->attrib2.dither = 0;
+        mtl->attrib2.uvmode = 1;
+        mtl->attrib2.gouraud = 0;
     }
     mtl->attrib.utc = 1;
     mtl->attrib.vtc = 1;
     mtl->tid = src->tid;
     mtl->alpha_sort = src->alpha_sort;
-    mtl->attrib2.fx = 1;
+    mtl->attrib2.afail = 1;
     NuMtlUpdate(mtl);
     return mtl;
 }
