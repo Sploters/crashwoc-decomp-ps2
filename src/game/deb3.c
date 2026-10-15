@@ -118,7 +118,7 @@ extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 size);
 struct gdeb_s {
     int i;                /* 0x0 */
     char *name;           /* 0x4 */
-    unsigned long levbits;          /* 0x8 */
+    u64 levbits;                    /* 0x8 */
 };
 
 extern struct gdeb_s GDeb[170];

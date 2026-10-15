@@ -27,8 +27,7 @@
  *   0x001553d8 NuCvtDestroyPacketInfo
  */
 
-typedef unsigned char u8;
-typedef unsigned long long u64;
+#include "nu_types.h"
 
 typedef struct nucolourref_s {
     unsigned int addr;

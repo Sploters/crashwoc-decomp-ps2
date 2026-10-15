@@ -130,13 +130,9 @@
  *   0x001f1120 SplinePointAngle
  */
 
-#define NULL 0
+#include "nu_types.h"
 
-typedef signed char s8;
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef int s32;
-typedef unsigned int u32;
+#define NULL 0
 
 struct nuvec_s {
     float x, y, z;
@@ -620,7 +616,6 @@ extern s32 memcard_formatfailed;
 extern s32 boss_dead;
 
 /* --- InitLevel support --- */
-typedef unsigned long long u64;
 
 /* hgobj anim packet: mtx (+0x0) verified in PlayerObjectAnimCollision,
  * ltime (+0x4C) / playing (+0x50) in ResetHGobjAnim / StartHGobjAnim. */

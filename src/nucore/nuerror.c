@@ -1,12 +1,6 @@
 /* nu2crash.ps2/nucore/nuerror.c -- error / warning / debug message output */
 
-/* gcc 2.95 va-mips.h (EABI): the register save area sits below the caller's
-   overflow slots, so va_start backs up over the unused named-arg slots. */
-typedef char *va_list;
-#define va_start(ap, last) \
-    ((ap) = ((va_list)__builtin_next_arg(last) \
-        - (__builtin_args_info(2) < 8 ? (8 - __builtin_args_info(2)) * 8 : 0)))
-#define va_end(ap)
+#include "nu_stdarg.h"
 
 typedef void (*NuErrorFunc)(const char *fmt, ...);
 

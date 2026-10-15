@@ -19,7 +19,7 @@
  *   0x001b0f70 NuTriggerPull
  */
 
-typedef float f32;
+#include "nu_types.h"
 
 struct nuvec_s {
     f32 x;
@@ -64,7 +64,7 @@ union variptr_u
     short int *s16;
     unsigned int *u32;
     unsigned int *s32;
-    long unsigned int *u64;
+    unsigned long long *u64;
     float *f32;
     struct nuvec_s* vec3;
     void* vec4;

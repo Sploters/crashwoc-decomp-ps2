@@ -14,10 +14,7 @@
  *   0x001b50c8 NuBrdigeDrawRope
  */
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+#include "nu_types.h"
 
 #define BRIDGE_MAX 8
 #define BRIDGE_MAX_SECTIONS 24

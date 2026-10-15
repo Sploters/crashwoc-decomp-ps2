@@ -10,16 +10,18 @@
  *   0x0010e6f8 NuRandSeed
  */
 
+#include "nu_types.h"
+
 struct nunrand_s {
-    long idum;
+    s64 idum;
 };
 
 extern struct nunrand_s D_0062EA60;
-extern long D_0062EA68;
+extern s64 D_0062EA68;
 #define global_rand D_0062EA60
 #define fseed D_0062EA68
 
-long int __divdi3 (long int u, long int v);
+s64 __divdi3(s64 u, s64 v);
 
 void NuRandSetSeed(struct nunrand_s *nrand,int seed) {
   struct nunrand_s *temp;
@@ -31,9 +33,9 @@ void NuRandSetSeed(struct nunrand_s *nrand,int seed) {
   temp->idum = seed;
 }
 
-long NuRand(struct nunrand_s *nrand) {
-    long seed;
-    long quotient;
+s64 NuRand(struct nunrand_s *nrand) {
+    s64 seed;
+    s64 quotient;
 
     if (nrand == 0) {
         nrand = &global_rand;
@@ -51,7 +53,7 @@ long NuRand(struct nunrand_s *nrand) {
 
 
 float NuFloatRand(struct nunrand_s *nrand) {
-    long quotient;
+    s64 quotient;
 
     if (nrand == 0) {
         nrand = &global_rand;

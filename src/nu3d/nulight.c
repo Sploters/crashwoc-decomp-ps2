@@ -30,8 +30,7 @@
  *   0x001404e8 NuLgtRand
  */
 
-typedef unsigned int u32;
-typedef unsigned long u64;
+#include "nu_types.h"
 
 typedef struct nuvec_s {
     float x;

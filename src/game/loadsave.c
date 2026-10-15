@@ -10,11 +10,7 @@
  *   0x0025b508 DrawGameSlots
  */
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef int s32;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+#include "nu_types.h"
 
 struct hub_s {
     u8 flags;

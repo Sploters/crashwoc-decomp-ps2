@@ -7,8 +7,7 @@
  *   0x0024dc20 visiReset
  */
 
-typedef unsigned int u32;
-typedef unsigned long long u64;
+#include "nu_types.h"
 
 struct nuvec_s {
     float x;

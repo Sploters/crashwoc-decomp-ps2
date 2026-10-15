@@ -66,6 +66,8 @@
  *   0x00103888 NuDatFileFindTree
  */
 
+#include "nu_stdarg.h"
+
 enum nufilemode_e {
 	NUFILE_READ = 0,
 	NUFILE_WRITE = 1,
@@ -1330,12 +1332,6 @@ int NuFileRead(int fh, void* data, int size) {
     return __n_00;
 }
 
-
-typedef char *va_list;
-#define va_start(ap, last) \
-    ((ap) = ((va_list)__builtin_next_arg(last) \
-        - (__builtin_args_info(2) < 8 ? (8 - __builtin_args_info(2)) * 8 : 0)))
-#define va_end(ap)
 
 extern int vsprintf(char *buf, const char *fmt, va_list args);
 

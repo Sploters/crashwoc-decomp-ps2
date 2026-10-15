@@ -23,9 +23,7 @@
  *   0x001b7eb8 cbmcfgCameraSpeed
  */
 
-typedef signed int s32;
-typedef unsigned int u32;
-typedef float f32;
+#include "nu_types.h"
 
 struct pad_s;
 struct nuvec_s;

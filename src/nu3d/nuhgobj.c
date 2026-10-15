@@ -26,8 +26,7 @@
  *   0x001504c8 NuGHGFixupGobj
  */
 
-typedef float f32;
-typedef unsigned char u8;
+#include "nu_types.h"
 
 struct nuvec_s {
     f32 x;
