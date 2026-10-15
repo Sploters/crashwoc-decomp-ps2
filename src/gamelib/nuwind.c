@@ -15,6 +15,7 @@
 
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
+#include "nu3d/nugobj.h"
 
 struct nucamera_s {
     struct numtx_s mtx;
@@ -28,8 +29,6 @@ struct nuinstance_s {
     struct numtx_s mtx;
     int objid;
 };
-
-struct nugobj_s;
 
 struct nugscn_s {
     int *tids;

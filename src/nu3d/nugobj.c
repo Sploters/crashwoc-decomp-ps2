@@ -35,93 +35,7 @@
 #include "numath/nuplane.h"
 #include "numath/nurand.h"
 #include "numath/nuvec.h"
-
-struct nuvtx_tc1_s {
-    struct nuvec_s pnt;             /* 0x00 */
-    struct nuvec_s nrm;             /* 0x0C */
-    int diffuse;                    /* 0x18 */
-    float tc[2];                    /* 0x1C */
-}; /* 0x24 */
-
-struct nuprim_s {
-    struct nuprim_s *next;          /* 0x00 */
-    unsigned int type;              /* 0x04 */
-    int cnt;                        /* 0x08 */
-    int max;                        /* 0x0C */
-    short *vid;                     /* 0x10 */
-    struct nuplane_s *pln;          /* 0x14 */
-}; /* 0x18 */
-
-struct nuskin_s {
-    struct nuskin_s *next;          /* 0x00 */
-    int vtxoffset;                  /* 0x04 */
-    int vtxcnt;                     /* 0x08 */
-    int mtxcnt;                     /* 0x0C */
-    int *mtxid;                     /* 0x10 */
-    float *weights;                 /* 0x14 */
-}; /* 0x18 */
-
-struct nublendgeom_s {
-    int nblends;                    /* 0x00 */
-    struct nuvec_s **blend_offsets; /* 0x04 */
-    int *ix;                        /* 0x08 */
-    struct nuvec_s *offsets;        /* 0x0C */
-}; /* 0x10 */
-
-struct nugeom_s {
-    struct nugeom_s *next;          /* 0x00 */
-    char pad04[0x14];
-    int vtxtype;                    /* 0x18 */
-    int vtxflags;                   /* 0x1C */
-    int vtxcnt;                     /* 0x20 */
-    int vtxmax;                     /* 0x24 */
-    void *vtxptr;                   /* 0x28 */
-    struct nuprim_s *prim;          /* 0x2C */
-    struct nuskin_s *skins;         /* 0x30 */
-    void *vtxskininfo;              /* 0x34 */
-    char pad38[0x10];
-    struct nublendgeom_s *blendgeom; /* 0x48 */
-    int id;                         /* 0x4C */
-}; /* 0x50 */
-
-struct nufaceon_s {
-    struct nuvec_s point;           /* 0x00 */
-    float width;                    /* 0x0C */
-    float height;                   /* 0x10 */
-    int colour;                     /* 0x14 */
-}; /* 0x18 */
-
-struct nufaceongeom_s {
-    struct nufaceongeom_s *next;    /* 0x00 */
-    char pad04[0x0C];
-    struct nufaceon_s *faceons;     /* 0x10 */
-    int nfaceons;                   /* 0x14 */
-    float faceon_radius;            /* 0x18 */
-    void *dmastream;                /* 0x1C */
-    char pad20[0x30];
-}; /* 0x50 */
-
-struct nucolourblend_s;
-
-struct nugobj_s {
-    struct nugobj_s *sysnext;       /* 0x00 */
-    struct nugobj_s *syslast;       /* 0x04 */
-    int type;                       /* 0x08 */
-    struct nugeom_s *geom;          /* 0x0C */
-    struct nufaceongeom_s *faceon_geom; /* 0x10 */
-    float r;                        /* 0x14 */
-    float r2;                       /* 0x18 */
-    struct nuvec_s min;             /* 0x1C */
-    struct nuvec_s max;             /* 0x28 */
-    struct nuvec_s cntr;            /* 0x34 */
-    float cntr_r;                   /* 0x40 */
-    float cntr_r2;                  /* 0x44 */
-    char pad48[0x14];
-    struct nucolourblend_s *blend;  /* 0x5C */
-    char pad60[0x04];
-    struct nucolourblend_s *faceon_blend; /* 0x64 */
-    char pad68[0x04];
-}; /* 0x6C */
+#include "nu3d/nugobj.h"
 
 union nugiftag_u {
     struct {
@@ -143,14 +57,6 @@ extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern u32 *vpDmaTag_RetEx(void *buf, u32 vif0, u32 vif1);
 extern void *vpDmaTag_Close(void *end);
 extern void NuPs2DestroyRenderStream(struct nugobj_s *gobj);
-extern void NuGobjDestroy(struct nugobj_s *gobj);
-void NuGobjClose(void);
-void NuGobjCalcFaceOnDims(struct nugobj_s *gobj);
-extern void NuGeomDestroy(struct nugeom_s *geom);
-extern void NuFaceOnGeomDestroy(struct nufaceongeom_s *geom);
-extern void NuGeomCalcPlanes(struct nugeom_s *geom);
-extern void NuPrimDestroy(struct nuprim_s *prim);
-extern int NuVtxStride(int type);
 extern int NuGobjColourBlendGobj(struct nucolourblend_s *blend, short fade);
 
 extern char D_00614198[];
@@ -639,8 +545,9 @@ void NuGeomDestroy(struct nugeom_s *geom) {
 struct nufaceongeom_s *NuFaceOnGeomCreate(void) {
     struct nufaceongeom_s *geom;
 
-    geom = NuMemAllocFn(sizeof(struct nufaceongeom_s), nugobj_file, 0x1E8);
-    memset(geom, 0, sizeof(struct nufaceongeom_s));
+    /* Retail allocates a nugeom_s here (GC does the same). */
+    geom = NuMemAllocFn(sizeof(struct nugeom_s), nugobj_file, 0x1E8);
+    memset(geom, 0, sizeof(struct nugeom_s));
     return geom;
 }
 

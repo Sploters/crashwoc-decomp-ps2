@@ -44,6 +44,8 @@
 #include "nu_libc.h"
 
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 #include "creature.h"
 
@@ -139,31 +141,6 @@ struct edcrtcube_s {
 struct mcdirent_s {
     u8 pad00[0x20];
     char name[32];             /* 0x20 */
-};
-
-struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;             /* bits 32-35 */
-    u64 unk36 : 8;
-    u64 cull : 2;              /* bits 44-45 */
-    u64 zmode : 2;             /* bits 46-47 */
-    u64 unk48 : 16;
-};
-
-struct numtl_s {
-    u8 pad000[0x168];
-    struct numtlattrib_s attrib; /* 0x168 */
-    u8 pad170[0x10];
-    struct nucolour3_s diffuse;  /* 0x180 */
-    u8 pad18C[0x14];
-    f32 alpha;                   /* 0x1A0 */
-};
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;        /* 0x00 */
-    u8 pad0C[0x0C];
-    s32 colour;                /* 0x18 */
-    u8 pad1C[0x08];
 };
 
 extern struct eduimenu_s *edcrt_active_menu;
@@ -310,9 +287,7 @@ extern void ResetAI(void);
 extern void DrawCameraTarget(struct nuvec_s *pos);
 extern f32 NewShadowMask(struct nuvec_s *pos, f32 y, s32 flag);
 
-extern struct numtl_s *NuMtlCreate(s32 n);
-extern void NuMtlUpdate(struct numtl_s *mtl);
-extern void NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl,
+extern void NuRndrLine3d(struct nuvtx_tc1_s *line, struct numtl_s *mtl,
                          struct numtx_s *mtx);
 extern void NuFntScale(s32 x, s32 y);
 extern void NuFntSetPen(s32 colour);
@@ -395,31 +370,31 @@ void edcrtDrawSpecialCrates(void)
         DrawCrate(lock_crate);
     }
     if (triggerorigin_crate != 0 && triggerdest_crate != 0) {
-        struct nurndrvtx_s line[2];
+        struct nuvtx_tc1_s line[2];
 
         line[0].pnt.x = triggerorigin_crate->pos.x;
         line[0].pnt.y = triggerorigin_crate->pos.y;
         line[0].pnt.z = triggerorigin_crate->pos.z;
-        line[0].colour = 0xFF0000FF;
+        line[0].diffuse = 0xFF0000FF;
         line[1].pnt.x = triggerdest_crate->pos.x;
         line[1].pnt.y = triggerdest_crate->pos.y;
         line[1].pnt.z = triggerdest_crate->pos.z;
-        line[1].colour = 0xFF0000FF;
+        line[1].diffuse = 0xFF0000FF;
         NuRndrLine3d(line, edcrt_mtl_zoff, 0);
     }
     if (edcrt_showtriggers) {
         for (crate = NextCrate(0); crate != 0; crate = NextCrate(crate)) {
             if (crate->trigger != 0 && crate != triggerorigin_crate) {
-                struct nurndrvtx_s line[2];
+                struct nuvtx_tc1_s line[2];
 
                 line[0].pnt.x = crate->pos.x;
                 line[0].pnt.y = crate->pos.y;
                 line[0].pnt.z = crate->pos.z;
-                line[0].colour = 0xFF000080;
+                line[0].diffuse = 0xFF000080;
                 line[1].pnt.x = crate->trigger->pos.x;
                 line[1].pnt.y = crate->trigger->pos.y;
                 line[1].pnt.z = crate->trigger->pos.z;
-                line[1].colour = 0xFF000080;
+                line[1].diffuse = 0xFF000080;
                 NuRndrLine3d(line, edcrt_mtl_zoff, 0);
             }
         }

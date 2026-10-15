@@ -46,13 +46,17 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/nuhgobj.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
+#include "nu3d/nutexanm.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nutrig.h"
 
 struct nugscn_s;
-struct numtl_s;
 
 /* NuCamera: view matrix at 0x00 (_32 = 0x38 is the atmospheric-pressure Z). */
 struct nucam_s {
@@ -175,12 +179,9 @@ extern void InitSpecular(void);
 extern void InitEnviro(void);
 extern void InitGlass(void);
 extern void InitClouds(void);
-extern void NuTexAnimProgSysInit(void);
 extern void *NuDatOpen(char *name, s32 a, s32 b);
 extern void NuDatSet(void *dat);
-extern s32 NuTexAnimProgReadScript(void **buf, void *script);
 extern void NuDatClose(void *dat);
-extern void NuMtlReadEventSetHandler(s32 (*handler)(struct numtl_s *mtl));
 extern struct nugscn_s *NuGScnRead(void **pptr, void *end, char *name);
 extern void InitFont3D(struct nugscn_s *scene);
 extern void LoadScreen(char *name);
@@ -782,56 +783,27 @@ void DrawWorld(void)
     }
 }
 
-/* NuMaterial: 64-bit render-flags register lives at 0x168. */
-struct numtl_s {
-    u8 unk_0x00[0x168];
-    u64 reg168;              /* 0x168 */
-    u8 unk_0x170[0x30];      /* 0x170 */
-    float f1A0;              /* 0x1A0 */
-    s32 tid;                 /* 0x1A4 texture id */
-    s32 alpha;               /* 0x1A8 */
-    u8 unk_0x1AC[0x19];      /* 0x1AC */
-    u8 fxid;                 /* 0x1C5 */
-};
-
-struct fadebits {
-    u64 pad0 : 32;
-    u64 f32 : 4;  /* bits 32-35 */
-    u64 f36 : 2;  /* bits 36-37 */
-    u64 pad38 : 2;
-    u64 f40 : 2;  /* bits 40-41 */
-    u64 f42 : 2;  /* bits 42-43 */
-    u64 pad44 : 2;
-    u64 f46 : 2;  /* bits 46-47 */
-    u64 f48 : 2;  /* bits 48-49 */
-    u64 f50 : 1;  /* bit  50    */
-    u64 pad51 : 13;
-};
-
 union fadereg {
     u64 raw;
-    struct fadebits b;
+    struct numtlattrib_s b;
 };
-
-extern struct numtl_s *NuMtlCreate(s32 a);
-extern void NuMtlUpdate(struct numtl_s *m);
 
 void CreateFadeMtl(void)
 {
     struct numtl_s *m = NuMtlCreate(1);
     union fadereg u;
 
-    u.raw = m->reg168;
-    u.b.f46 = 3;
-    u.b.f36 = 1;
-    u.b.f48 = 2;
-    u.b.f40 = 1;
-    u.b.f42 = 1;
-    u.b.f50 = 1;
-    u.b.f32 = 3;
+    u.raw = m->attrib_reg;
+    u.b.zmode = 3;
+    u.b.filter = 1;
+    u.b.lighting = 2;
+    u.b.utc = 1;
+    u.b.vtc = 1;
+    u.b.colour = 1;
+    u.b.alpha = 3;
 
     D_00633260 = m;
-    m->reg168 = u.raw;
+    m->attrib_reg = u.raw;
     NuMtlUpdate(m);
 }
 
@@ -1151,24 +1123,22 @@ void DoInput(void)
 }
 
 
-struct nuhgobj_s;
 struct nuanimdata_s;
 
 extern char D_0061B4D0[];
 extern s32 bgloadlastcharacter;
 extern char *bgloadcharnames[];
 extern char *bgloadanimnames[];
-extern struct nuhgobj_s *bgloadchr[2];
+extern struct NUHGOBJ_s *bgloadchr[2];
 extern struct nuanimdata_s *bgloadanim[2];
 
 extern void TimeTunnelInit(void *buffer, void *buffend);
-extern struct nuhgobj_s *NuGHGRead(void *buffer, char *name);
 extern struct nuanimdata_s *NuAnimDataLoadBuff(char *name, void *buffer, void *buffend);
 
 void BGLoadScreenInit(s32 loadchars)
 {
     void **buffend = &superbuffer_end;
-    void *buffer = (char *)superbuffer_end - 0x100000;
+    char *buffer = (char *)superbuffer_end - 0x100000;
     void *dat;
     s32 c;
 
@@ -1197,8 +1167,6 @@ void BGLoadScreenInit(s32 loadchars)
 extern s32 texanimbits;
 extern float WeatherBossSkeletonTimer;
 extern s32 WeatherBossDead;
-extern void NuTexAnimSetSignals(s32 bits);
-extern void NuTexAnimProcess(void);
 
 void SetTexAnimSignals(void)
 {
@@ -1324,13 +1292,9 @@ void InitLights(void)
 }
 
 
-struct nutex_s;
-
 extern struct numtl_s *pause_src_mtl;
 extern struct numtl_s *pause_rndr_mtl;
 extern struct nutex_s *pause_rt;
-extern void NuMtlDestroy(struct numtl_s *mtl);
-extern void NuTexDestroy(struct nutex_s *tex);
 
 void ClosePauseRender(void)
 {
@@ -1366,7 +1330,6 @@ extern s32 D_0062FB54;                 /* Paused state of the previous frame */
 extern s32 PS2_REZ_W;
 extern s32 PS2_REZ_H;
 extern s32 screendump;
-extern struct nutex_s *NuTexCreate(struct nutexdesc_s *desc);
 extern s32 NuRndrBeginScene(s32 a);
 extern s32 NuRndrBeginSceneEx(struct nutex_s *rt, s32 a, s32 b);
 extern void NuRndrEndScene(void);
@@ -1375,8 +1338,6 @@ extern void NuRndrFlush(s32 flags);
 extern s32 *NuVpGetCurrentViewport(void);
 extern void NuRndrRectUV2di(s32 x, s32 y, s32 w, s32 h, float u0, float v0, float u1, float v1,
                             u32 col, struct numtl_s *mtl);
-
-#define MTLATTR(m) (*(struct fadebits *)&(m)->reg168)
 
 void InitPauseRender(void)
 {
@@ -1388,29 +1349,29 @@ void InitPauseRender(void)
     pause_rt = NuTexCreate(&desc);
 
     pause_rndr_mtl = NuMtlCreate(1);
-    pause_rndr_mtl->f1A0 = 1.0f;
+    pause_rndr_mtl->alpha = 1.0f;
     pause_rndr_mtl->tid = (s32)pause_rt;
-    MTLATTR(pause_rndr_mtl).f46 = 3;
-    MTLATTR(pause_rndr_mtl).f40 = 1;
-    MTLATTR(pause_rndr_mtl).f42 = 1;
-    MTLATTR(pause_rndr_mtl).f36 = 1;
-    MTLATTR(pause_rndr_mtl).f48 = 2;
-    MTLATTR(pause_rndr_mtl).f50 = 1;
-    MTLATTR(pause_rndr_mtl).f32 = 0;
-    pause_rndr_mtl->alpha = 0x7FFF;
+    pause_rndr_mtl->attrib.zmode = 3;
+    pause_rndr_mtl->attrib.utc = 1;
+    pause_rndr_mtl->attrib.vtc = 1;
+    pause_rndr_mtl->attrib.filter = 1;
+    pause_rndr_mtl->attrib.lighting = 2;
+    pause_rndr_mtl->attrib.colour = 1;
+    pause_rndr_mtl->attrib.alpha = 0;
+    pause_rndr_mtl->alpha_sort = 0x7FFF;
     NuMtlUpdate(pause_rndr_mtl);
 
     pause_src_mtl = NuMtlCreate(1);
-    pause_src_mtl->f1A0 = 1.0f;
+    pause_src_mtl->alpha = 1.0f;
     pause_src_mtl->tid = -1;
-    MTLATTR(pause_src_mtl).f46 = 3;
-    MTLATTR(pause_src_mtl).f40 = 1;
-    MTLATTR(pause_src_mtl).f42 = 1;
-    MTLATTR(pause_src_mtl).f36 = 1;
-    MTLATTR(pause_src_mtl).f48 = 2;
-    MTLATTR(pause_src_mtl).f50 = 1;
-    MTLATTR(pause_src_mtl).f32 = 0;
-    pause_src_mtl->alpha = 0x7FFE;
+    pause_src_mtl->attrib.zmode = 3;
+    pause_src_mtl->attrib.utc = 1;
+    pause_src_mtl->attrib.vtc = 1;
+    pause_src_mtl->attrib.filter = 1;
+    pause_src_mtl->attrib.lighting = 2;
+    pause_src_mtl->attrib.colour = 1;
+    pause_src_mtl->attrib.alpha = 0;
+    pause_src_mtl->alpha_sort = 0x7FFE;
     NuMtlUpdate(pause_src_mtl);
 
     pause_rndr_on = 0;
@@ -1452,9 +1413,6 @@ void HandlePauseRender(void)
     }
 }
 
-extern s32 NuTexReadBitmapMM(char *name, s32 mipmaps);
-extern s32 NuTexReadBitmapMMEx(char *name, s32 mipmaps, s32 *addr, s32 *addrend);
-extern s32 NuTexCreateEx(s32 spec, void *extmem, s32 extsize);
 extern void NuMemSetExternal(void *addr, s32 size);
 
 void TextureCreate(char *name, struct numtl_s **mtl, s32 *tid)
@@ -1466,13 +1424,13 @@ void TextureCreate(char *name, struct numtl_s **mtl, s32 *tid)
     }
     *tid = NuTexReadBitmapMM(name, 0);
     *mtl = NuMtlCreate(1);
-    MTLATTR(*mtl).f46 = 3;
-    MTLATTR(*mtl).f36 = 1;
-    MTLATTR(*mtl).f48 = 2;
-    MTLATTR(*mtl).f40 = 1;
-    MTLATTR(*mtl).f42 = 1;
-    MTLATTR(*mtl).f50 = 1;
-    MTLATTR(*mtl).f32 = 0;
+    (*mtl)->attrib.zmode = 3;
+    (*mtl)->attrib.filter = 1;
+    (*mtl)->attrib.lighting = 2;
+    (*mtl)->attrib.utc = 1;
+    (*mtl)->attrib.vtc = 1;
+    (*mtl)->attrib.colour = 1;
+    (*mtl)->attrib.alpha = 0;
     (*mtl)->tid = (s32)NuTexCreate((struct nutexdesc_s *)*tid);
     NuMtlUpdate(*mtl);
     NuMemSetExternal(0, 0);
@@ -1496,13 +1454,13 @@ void TextureCreateEx(char *name, struct numtl_s **mtl, s32 *tid, void *extmem, s
         *tid = NuTexReadBitmapMM(name, 0);
     }
     *mtl = NuMtlCreate(1);
-    MTLATTR(*mtl).f46 = 3;
-    MTLATTR(*mtl).f36 = 1;
-    MTLATTR(*mtl).f48 = 2;
-    MTLATTR(*mtl).f40 = 1;
-    MTLATTR(*mtl).f42 = 1;
-    MTLATTR(*mtl).f50 = 1;
-    MTLATTR(*mtl).f32 = 0;
+    (*mtl)->attrib.zmode = 3;
+    (*mtl)->attrib.filter = 1;
+    (*mtl)->attrib.lighting = 2;
+    (*mtl)->attrib.utc = 1;
+    (*mtl)->attrib.vtc = 1;
+    (*mtl)->attrib.colour = 1;
+    (*mtl)->attrib.alpha = 0;
     if (extmem != 0) {
         (*mtl)->tid = NuTexCreateEx(*tid, extmem, extsize);
     } else {
@@ -1624,8 +1582,6 @@ extern void TimeTunnelRender(void);
 extern void TimeTunnelClose(void);
 extern void DrawGameMessage(char *text, s32 frame, float y);
 extern void UpdateTimer(struct timer_s *timer);
-extern void NuRndrVu1Draw(void);
-extern void NuRndrSwapStreamBuffers(void);
 
 s32 BGLoadCutMovie(s32 movie)
 {

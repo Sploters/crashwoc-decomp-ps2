@@ -8,59 +8,15 @@
  *   0x001a0fd8 CreateAlphaBlendTexturewh_32
  */
 
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
+
 #include "creature.h"
-
-struct numtlattrib_s {
-    u64 unk0 : 32;
-    u64 alpha : 4;
-    u64 filter : 2;
-    u64 unk38 : 2;
-    u64 utc : 2;
-    u64 vtc : 2;
-    u64 cull : 2;
-    u64 zmode : 2;
-    u64 unk48 : 16;
-};
-
-struct numtlattrib2_s {
-    u64 fx : 2;
-    u64 blend : 1;
-    u64 unk3 : 1;
-    u64 dither : 1;
-    u64 unk5 : 59;
-};
-
-struct numtl_s {
-    u8 pad000[0x168];
-    struct numtlattrib_s attrib;
-    struct numtlattrib2_s attrib2;
-    u8 pad178[8];
-    struct nucolour3_s diffuse;
-    u8 pad18C[0x14];
-    f32 alpha;
-    s32 tid;
-    s32 alpha_sort;
-};
-
-struct nutex_s {
-    s32 type;
-    s32 width;
-    s32 height;
-    s32 mmcnt;
-    void *bits;
-    void *pal;
-    s32 decal;
-    s32 linear;
-};
 
 extern char D_00619210[];
 #define glutils_file D_00619210
 
 s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
-struct nutex_s *NuTexReadBitmap(char *name);
-s32 NuTexCreate(struct nutex_s *tex);
-struct numtl_s *NuMtlCreate(s32 count);
-void NuMtlUpdate(struct numtl_s *mtl);
 void NuMemFreeFn(void *ptr, char *file, s32 line);
 
 
@@ -96,7 +52,7 @@ struct numtl_s *CreateAlphaBlendTexture256_32(char *file, s32 blend, s32 alphamo
     mtl->attrib.zmode = zmode;
     mtl->attrib.alpha = alphamode;
     if (blend != 0) {
-        mtl->attrib2.blend = 1;
+        mtl->attrib2.uvmode = 1;
     }
     mtl->tid = NuTexCreate(&tex);
     mtl->alpha_sort = alpha_sort;
@@ -136,7 +92,7 @@ struct numtl_s *CreateAlphaBlendTexture64(char *file, s32 blend, s32 alphamode, 
     mtl->attrib.zmode = 1;
     mtl->attrib.alpha = alphamode;
     if (blend != 0) {
-        mtl->attrib2.blend = 1;
+        mtl->attrib2.uvmode = 1;
     }
     mtl->tid = NuTexCreate(&tex);
     mtl->alpha_sort = alpha_sort;
@@ -201,7 +157,7 @@ struct numtl_s *CreateAlphaBlendTexturewh_32(char *file, s32 blend, s32 alphamod
     mtl->attrib.zmode = zmode;
     mtl->attrib.alpha = alphamode;
     if (blend != 0) {
-        mtl->attrib2.blend = 1;
+        mtl->attrib2.uvmode = 1;
     }
     mtl->tid = NuTexCreate(&tex);
     mtl->alpha_sort = alpha_sort;

@@ -3,6 +3,7 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nuhgobj.h"
 #include "nucore/nuerror.h"
 #include "numath/nufloat.h"
 #include "numath/numtx.h"
@@ -181,9 +182,6 @@ void GameSfx(s32 sfx, struct nuvec_s *pos);
 
 void RemoveGameObject(struct obj_s *obj);
 s32 AddGameObject(struct obj_s *obj, struct creature_s *c);
-void NuHGobjDestroy(struct NUHGOBJ_s *hobj);
-void NuHGobjPOIMtx(struct NUHGOBJ_s *hobj, u8 i, struct numtx_s *mC,
-                   struct numtx_s *tmtx, struct numtx_s *m);
 void ResetLights(struct Nearest_Light_s *lights);
 void GetLights(struct nuvec_s *pos, struct Nearest_Light_s *lights, s32 mode);
 void GetTopBot(struct creature_s *c);
@@ -758,7 +756,7 @@ extern s8 CLetter[191];
 extern s32 gamecut;
 extern struct space_s *SpaceGameCutTab[][2];
 extern struct CharacterModel *bgload_model[2];
-extern void *superbuffer_ptr;
+extern char *superbuffer_ptr;
 extern char tbuf[];
 extern struct font3dobj_s Font3DObjTab[];
 extern struct MoveInfo MineCartMoveInfo;
@@ -786,10 +784,8 @@ void NuDatClose(void *dat);
 void LoadScreen(char *name);
 void NuStrCpy(char *dst, char *src);
 void NuStrCat(char *dst, char *src);
-struct NUHGOBJ_s* NuGHGRead(void* buff, char* name);
 void *InstShadDataLoad(char *name);
 struct NUSHADOWDATA_s *ShadFindData(int *hdr, char *name);
-struct NUPOINTOFINTEREST_s *NuHGobjGetPOI(struct NUHGOBJ_s *hobj, u8 i);
 struct nuanimdata_s *InstAnimDataLoad(char *name);
 
 

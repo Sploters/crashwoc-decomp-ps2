@@ -43,9 +43,11 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nustream.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
+#include "nu3d/nunode.h"
 
 typedef struct nuanimkey_s {
     float time;
@@ -170,28 +172,6 @@ typedef struct nujointanim_s {
     signed char flags;
     char pad[2];
 } NuJointAnim;
-
-typedef struct nunode_s {
-    char *name;
-    int id;
-    int type;
-    int num_children;
-    struct nunode_s *parent;
-    struct nunode_s *child;
-    struct nunode_s *next;
-    void *data;
-} NuNode;
-
-typedef struct nujointnode_s {
-    NuNode node;
-    struct numtx_s orient;
-    struct numtx_s mtx;
-    struct numtx_s wmtx;
-    char pad_e0[0x18];
-    struct nuvec_s scale;
-    struct nuvec_s pivot;
-    unsigned char flags;
-} NuJointNode;
 
 
 extern void *NuMemAllocFn(int size, char *file, int line);
@@ -617,7 +597,7 @@ float NuAnimCurve2CalcVal(NuAnimCurve2 *curve, NuAnimTime *atime, int keytype) {
 }
 
 
-void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int node, NuJointNode *joint) {
+void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int node, struct nujointnode_s *joint) {
     struct nuvec_s t;
     struct nuvec_s r;
     struct nuvec_s p;
@@ -625,7 +605,7 @@ void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int n
     struct nuvec_s s;
     struct numtx_s *m;
     NuAnimCurveSet *curveset;
-    NuJointNode *parent;
+    struct nujointnode_s *parent;
 
     m = &joint->mtx;
     if (node < 0 || node >= chunk->numnodes) {
@@ -680,7 +660,7 @@ void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int n
         NuMtxPreScale(m, &joint->scale);
     }
     if (curveset->flags & 0x10) {
-        parent = (NuJointNode *)joint->node.parent;
+        parent = (struct nujointnode_s *)joint->node.parent;
         s.x = 1.0f / parent->scale.x;
         s.y = 1.0f / parent->scale.y;
         s.z = 1.0f / parent->scale.z;
@@ -719,7 +699,7 @@ void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int n
 
 
 void NuAnimCurveSetApplyBlendToJoint(NuAnimDataChunk *chunk1, NuAnimTime *atime1, NuAnimDataChunk *chunk2,
-                                     NuAnimTime *atime2, float blend, int node, NuJointNode *joint) {
+                                     NuAnimTime *atime2, float blend, int node, struct nujointnode_s *joint) {
     struct nuvec_s lo;
     struct nuangvec_s rf;
     float r[3];
@@ -733,7 +713,7 @@ void NuAnimCurveSetApplyBlendToJoint(NuAnimDataChunk *chunk1, NuAnimTime *atime1
     struct numtx_s *m;
     NuAnimCurveSet *curveset1;
     NuAnimCurveSet *curveset2;
-    NuJointNode *parent;
+    struct nujointnode_s *parent;
 
     m = &joint->mtx;
     omblend = 1.0f - blend;
@@ -796,7 +776,7 @@ void NuAnimCurveSetApplyBlendToJoint(NuAnimDataChunk *chunk1, NuAnimTime *atime1
         NuMtxPreScale(m, &joint->scale);
     }
     if ((curveset1->flags & 0x10) || (curveset2->flags & 0x10)) {
-        parent = (NuJointNode *)joint->node.parent;
+        parent = (struct nujointnode_s *)joint->node.parent;
         invscale.x = 1.0f / parent->scale.x;
         invscale.y = 1.0f / parent->scale.y;
         invscale.z = 1.0f / parent->scale.z;
@@ -1719,7 +1699,6 @@ void NuAnimCurve2SetApplyToMatrix(NuAnimCurve2 *curves, signed char *curveflags,
 }
 
 
-extern void *NuStreamGetOutputBuffer(int stream);
 extern int NuMemFileOpen(void *buf, int size, int mode);
 extern char D_00614A80[];
 extern char D_00614AA0[];

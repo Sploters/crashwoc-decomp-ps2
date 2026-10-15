@@ -32,6 +32,7 @@
 
 #include "nu_types.h"
 
+#include "nu3d/nustream.h"
 #include "numath/numathtypes.h"
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
@@ -113,8 +114,6 @@ extern void *vpDmaTag_RetEx(void *packet, u32 vif0, u32 vif1);
 extern void *vpDmaTag_Close(void *packet);
 extern void *vtBeginDirect(void *packet, u32 irq);
 extern void *vtCloseDirect(void *packet);
-extern int NuRndrSetDirectionalLights(struct nuvec_s *d0, struct nuvec_s *c0, struct nuvec_s *d1, struct nuvec_s *c1,
-                                      struct nuvec_s *d2, struct nuvec_s *c2);
 
 extern int D_00633088;
 extern int D_006AD5E0[];

@@ -44,6 +44,7 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nustream.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
@@ -180,8 +181,6 @@ extern float NuTrigTable[];
 
 extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern int NuVecClipTestPointVU0(struct nuvec_s *pos, struct numtx_s *clipmtx);
-extern void FaceYDirStream(int angle);
-extern int NuRndrSetViewMtx(struct numtx_s *vpcs, struct numtx_s *vpc, struct numtx_s *scissor);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuCameraInitClipTestVU0(struct numtx_s *vpc, struct numtx_s *scissor);
 extern int NuCameraClipTestExtentsVU0(struct nuvec_s *min, struct nuvec_s *max);
@@ -192,7 +191,6 @@ extern void NuVpGetScalingMtx(struct numtx_s *m);
 extern void NuMtxInvVU0(struct numtx_s *dst, struct numtx_s *src);
 extern void NuMtxScaleVU0(struct numtx_s *m, struct nuvec_s *scale);
 extern void NuVec4MtxTransformHVU0(struct nuvec4_s *dst, struct nuvec4_s *src, struct numtx_s *m);
-extern int NuRndrSetSpecularLight(struct nuvec_s *dir, struct NuColour4 *colour);
 extern struct numtx_s numtx_identity;
 
 

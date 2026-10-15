@@ -63,26 +63,14 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nutex.h"
+#include "nu3d/nutexanm.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
-
-struct nufaceon_s {
-    struct nuvec_s point;           /* 0x00 */
-    float width;                    /* 0x0C */
-    float height;                   /* 0x10 */
-    int colour;                     /* 0x14 */
-}; /* 0x18 */
-
-struct nufaceongeom_s {
-    char pad00[0x0C];
-    int faceontype;                 /* 0x0C */
-    struct nufaceon_s *faceons;     /* 0x10 */
-    int nfaceons;                   /* 0x14 */
-    float faceonradius;             /* 0x18 */
-    int pad1C;
-}; /* 0x20 */
+#include "nu3d/nugobj.h"
 
 struct nuinstance_s {
     struct numtx_s matrix;          /* 0x00 */
@@ -174,32 +162,12 @@ struct nutexanimenv_s {
     void *prog;                     /* 0x00 */
 };
 
-struct nutexanim_s {
-    struct nutexanim_s *succ;       /* 0x00 */
-    struct nutexanim_s *prev;       /* 0x04 */
-    short *tids;                    /* 0x08 index into texanim_tids on disk */
-    short numtids;                  /* 0x0C */
-    unsigned int dynalloc : 1;      /* 0x0E */
-    struct numtl_s *mtl;            /* 0x10 index into mtls on disk */
-    struct nutexanimenv_s *env;     /* 0x14 */
-    char *ntaname;                  /* 0x18 */
-    char *scriptname;               /* 0x1C */
-}; /* 0x20 */
-
 struct nusplinecfg_s {
     char *name;                     /* 0x00 */
     int ptsize;                     /* 0x04 */
 };
 
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
-extern void *NuTexAnimProgFind(char *name);
-extern struct nutexanimenv_s *NuTexAnimEnvCreate(void *buff, struct numtl_s *mtl, short *tids, void *prog);
-extern void NuTexAnimAddList(struct nutexanim_s *list);
-extern void NuTexAnimEnvReset(struct nutexanimenv_s *env);
-extern void NuTexAnimRemoveList(struct nutexanim_s *list);
-extern void NuMtlDestroy(struct numtl_s *mtl);
-extern void NuTexDestroy(int tid);
-extern int NuGobjApplyCrossFade(struct nugobj_s *gobj, short crossfade);
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
@@ -455,16 +423,6 @@ void CvtNuIFFGeomDef(int fh)
 }
 
 
-struct nuskin_s {
-    struct nuskin_s *next;          /* 0x00 */
-    int vtxoffset;                  /* 0x04 */
-    int vtxcnt;                     /* 0x08 */
-    int mtxcnt;                     /* 0x0C */
-    int *mtxid;                     /* 0x10 */
-    float *weights;                 /* 0x14 */
-    char pad18[0x10];
-}; /* 0x28 */
-
 extern char NuFileReadChar(int fh);
 extern char D_00614E40[];
 #define skin_in_scene_msg D_00614E40
@@ -504,14 +462,7 @@ void ReadNuIFFGeomSkin(int fh)
 }
 
 
-struct nuvtx_s {
-    struct nuvec_s pnt;             /* 0x00 */
-    struct nuvec_s nrm;             /* 0x0C */
-    struct nucolour_s diffuse;      /* 0x18 */
-    float tc[2];                    /* 0x1C */
-}; /* 0x24 */
-
-extern struct nuvtx_s *D_006330CC;
+extern struct nuvtx_tc1_s *D_006330CC;
 extern int D_006330D0;
 extern char D_00614E58[];
 #define cvt_vtxbuff D_006330CC
@@ -521,7 +472,7 @@ extern char D_00614E58[];
 
 void ReadNuIFFGeomVtx(int fh)
 {
-    struct nuvtx_s *vtx;
+    struct nuvtx_tc1_s *vtx;
     struct nucolour_s src;
     struct nucolour_s dst;
     int count;
@@ -534,7 +485,7 @@ void ReadNuIFFGeomVtx(int fh)
         NuDebugMsgProlog(nugscn_srcfile, 0x4FE)(vtxcnt_msg);
     }
     if (count) {
-        size = count * sizeof(struct nuvtx_s);
+        size = count * sizeof(struct nuvtx_tc1_s);
         cvt_vtxbuff = NuMemAllocFn(size, nugscn_srcfile, 0x501);
         if (!cvt_vtxbuff) {
             NuErrorProlog(nugscn_srcfile, 0x504)(alloc_error_msg);
@@ -560,12 +511,12 @@ void ReadNuIFFGeomVtx(int fh)
             if (vtx->pnt.z > nugscn_gobj_max.z) {
                 nugscn_gobj_max.z = vtx->pnt.z;
             }
-            src = vtx->diffuse;
+            src = vtx->rgba;
             dst.r = src.b;
             dst.g = src.g;
             dst.b = src.r;
             dst.a = src.a;
-            vtx->diffuse = dst;
+            vtx->rgba = dst;
         }
     }
 }
@@ -648,7 +599,7 @@ void MakeFaceOnDma(int fh, struct nufaceongeom_s *geom, int mtlid)
     pos = NuFilePos(cvt_fh);
     dmastart = (int)cvt_dmaptr - 4;
     NuCvtGeoSetColourRefOffset(pos - dmastart);
-    switch (geom->faceontype) {
+    switch (geom->faceon_type) {
     case 0:
         NuCvtDmaFaceOn(dma, geom->faceons, geom->nfaceons, &cvt_mtls[mtlid]);
         break;
@@ -670,10 +621,10 @@ void MakeFaceOnDma(int fh, struct nufaceongeom_s *geom, int mtlid)
 
 
 extern void NuCvtCalcFastPoint(struct nuvec_s *min, struct nuvec_s *max, struct nucvtmtl_s *mtl);
-extern int NuCvtTriStreamCFromIdx(char **dma, struct nuvtx_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
-extern void NuCvtDmaTriCFromIdx(char **dma, struct nuvtx_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
-extern int NuCvtTriStripStreamCFromIdx(char **dma, struct nuvtx_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
-extern int NuCvtDmaTriStripCFromIdx(char **dma, struct nuvtx_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
+extern int NuCvtTriStreamCFromIdx(char **dma, struct nuvtx_tc1_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
+extern void NuCvtDmaTriCFromIdx(char **dma, struct nuvtx_tc1_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
+extern int NuCvtTriStripStreamCFromIdx(char **dma, struct nuvtx_tc1_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
+extern int NuCvtDmaTriStripCFromIdx(char **dma, struct nuvtx_tc1_s *vtx, short *idx, int nidx, struct nucvtmtl_s *mtl);
 
 extern short *D_006330D4;
 extern char D_00614EC8[];
@@ -1178,24 +1129,9 @@ void CvtNuIFFTexAnimSet(int fh)
 }
 
 
-struct nutex_s {
-    int type;                       /* 0x00 */
-    int width;                      /* 0x04 */
-    int height;                     /* 0x08 */
-    int mmcnt;                      /* 0x0C */
-    void *bits;                     /* 0x10 */
-    void *pal;                      /* 0x14 */
-    int decal;                      /* 0x18 */
-    int linear;                     /* 0x1C */
-}; /* 0x20 */
-
 extern int NuFileBeginBlkRead(int fh, int blk);
 extern void NuFileEndBlkRead(int fh);
-extern int NuTexImgSizeMM(int type, int width, int height, int mmcnt);
-extern int NuTexPalSize(int type);
 extern void NuTexSwizzelBits(struct nutex_s *tex);
-extern int NuTexCreate(struct nutex_s *tex);
-extern int NuTexRecoverNativeData(int tid, void *dest, int size);
 
 extern int info_texturecount;
 extern int info_texturesize;
@@ -1331,10 +1267,10 @@ void CvtNuIFFFaceOnGeom(int fh)
     mtlid = NuFileReadInt(fh);
     NuFileWriteInt(cvt_fh, mtlid);
     geom.nfaceons = NuFileReadInt(fh);
-    geom.faceontype = NuFileReadInt(fh);
-    NuFileWriteInt(cvt_fh, geom.faceontype);
-    geom.faceonradius = NuFileReadFloat(fh);
-    NuFileWriteFloat(cvt_fh, geom.faceonradius);
+    geom.faceon_type = NuFileReadInt(fh);
+    NuFileWriteInt(cvt_fh, geom.faceon_type);
+    geom.faceon_radius = NuFileReadFloat(fh);
+    NuFileWriteFloat(cvt_fh, geom.faceon_radius);
     size = geom.nfaceons * sizeof(struct nufaceon_s);
     geom.faceons = NuMemAllocFn(size, nugscn_srcfile, 0x4D9);
     NuFileRead(fh, geom.faceons, size);
@@ -1564,7 +1500,6 @@ void CvtNuIFFAnimationLibrary(int fh)
 }
 
 
-extern struct numtl_s *NuMtlRead(int fh);
 extern void CvtNuIFFNodeHierarchy(int fh);
 
 extern char *nametable_base;
@@ -1901,7 +1836,6 @@ extern char D_00615060[];
 #define texset_msg D_00615060
 extern int NuFileSeek(int fh, int offset, int origin);
 extern int NuMemFileSeek(int fh, int offset, int origin);
-extern int NuTexCreateNative(void *data);
 
 /* Carves `size` bytes, aligned to `align`, off the scene load buffer. */
 static inline void *GScnBufferAlloc(int size, int align)

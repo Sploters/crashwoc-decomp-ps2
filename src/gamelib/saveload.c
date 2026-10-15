@@ -24,6 +24,8 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/nustream.h"
+
 extern s32 NuFileSize(char *name);
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
 extern s32 sceMcSync(s32 mode, s32 *cmd, s32 *result);
@@ -138,8 +140,6 @@ extern char D_00619BA0[];
 
 extern s32 sceMcMkdir(s32 port, s32 slot, const char *name);
 extern s32 sceMcWrite(s32 fd, const void *buf, s32 size);
-extern void *NuStreamGetOutputBuffer(s32 stream);
-extern void NuRndrSwapStreamBuffers(void);
 extern char D_004A8C28[];               /* icon.sys image */
 extern char D_00619B90[];
 #define saveload_iconsysdata D_004A8C28

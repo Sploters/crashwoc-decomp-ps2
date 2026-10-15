@@ -16,6 +16,8 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
 #include "numath/nurand.h"
 #include "numath/nuvec.h"
 
@@ -38,8 +40,6 @@ extern struct nuivec_s grphase[];
 extern struct nuivec_s grphaserate[];
 
 extern void cloudInit();
-extern void NuMtlDestroy(void *mtl);
-extern void *NuRndrStreamAllocStream(void *a0, void *a1, s32 a2);
 
 /* ---- cloudInit support ---- */
 
@@ -79,7 +79,6 @@ extern u8 D_00625260[];
 extern u8 D_00625278[];
 
 extern void TextureCreate(void *desc, void *mtl, void *tex);
-extern void NuMtlUpdateEx(struct cloudmtl_s *mtl, s32 flag);
 extern void NuMemFreeFn(void *ptr, void *src, s32 id);
 
 void cloudInit() {
@@ -128,18 +127,10 @@ void cloudRender(void *m, struct nuvec_s *off, f32 size, f32 rng, s32 density,
 
 /* ---- cloudRender support ---- */
 
-struct rndrstream_s {
-    u8 *pad0;     /* 0x0 */
-    u8 *cur;      /* 0x4  DMA write cursor */
-};
-
 extern s32 PS2_REZ_H;
 extern u8 *rndrstream_free;
 
-extern void NuRndrStreamLink(struct rndrstream_s *rs);
-extern void NuRndrStreamSetMisc(struct rndrstream_s *rs);
-extern int NuRndrStreamAddMtl(struct rndrstream_s *rs, struct cloudmtl_s *mtl);
-extern int NuRndrStreamSetViewMtx(struct rndrstream_s *rs);
+extern void NuRndrStreamLink(struct nurndrstream_s *rs);
 extern u8 *vpDmaTag_CntEx(u8 *cur, s32 qwc, u32 tag);
 extern u8 *vpDmaTag_Close(u8 *cur);
 extern u8 *vpDmaTag_RefEx(u8 *cur, u32 addr, s32 a2, u32 tag);
@@ -221,7 +212,7 @@ void cloudRender(void *m, struct nuvec_s *off, f32 size, f32 rng, s32 density,
                  struct nuvec_s *col) {
     struct nuvec_s scaled;
     u64 gt[2];
-    struct rndrstream_s *rs;
+    struct nurndrstream_s *rs;
     struct nuvec_s *target;
     struct cloud_s *clptr;
     u8 *p;
@@ -239,45 +230,45 @@ void cloudRender(void *m, struct nuvec_s *off, f32 size, f32 rng, s32 density,
     NuRndrStreamAddMtl(rs, mtl);
     NuRndrStreamSetViewMtx(rs);
 
-    p = vpDmaTag_CntEx(rs->cur, 0, 0x6C068002);
-    rs->cur = p;
-    ((f32 *)p)[0] = target->x;  rs->cur = p + 0x4;
-    ((f32 *)p)[1] = target->y;  rs->cur = p + 0x8;
-    ((f32 *)p)[2] = target->z;  rs->cur = p + 0xC;
-    ((f32 *)p)[3] = rng;        rs->cur = p + 0x10;
+    p = vpDmaTag_CntEx(rs->cur.b, 0, 0x6C068002);
+    rs->cur.b = p;
+    ((f32 *)p)[0] = target->x;  rs->cur.b = p + 0x4;
+    ((f32 *)p)[1] = target->y;  rs->cur.b = p + 0x8;
+    ((f32 *)p)[2] = target->z;  rs->cur.b = p + 0xC;
+    ((f32 *)p)[3] = rng;        rs->cur.b = p + 0x10;
     NuVecScale(&scaled, off, rng);
 
     twoRng = rng + rng;
-    p = rs->cur;
+    p = rs->cur.b;
     cx = target->x + scaled.x;
     cx = cx - twoRng * (f32)(s32)(cx / twoRng);
-    ((f32 *)p)[0] = cx;         rs->cur = p + 0x4;
+    ((f32 *)p)[0] = cx;         rs->cur.b = p + 0x4;
     cy = target->y + scaled.y;
     cy = cy - twoRng * (f32)(s32)(cy / twoRng);
-    ((f32 *)p)[1] = cy;         rs->cur = p + 0x8;
+    ((f32 *)p)[1] = cy;         rs->cur.b = p + 0x8;
     cz = target->z + scaled.z;
     cz = cz - twoRng * (f32)(s32)(cz / twoRng);
-    ((f32 *)p)[2] = cz;         rs->cur = p + 0xC;
-    ((s32 *)p)[3] = 0;          rs->cur = p + 0x10;
-    ((f32 *)p)[4] = size;       rs->cur = p + 0x14;
-    ((f32 *)p)[5] = size * 0.5f; rs->cur = p + 0x18;
-    ((f32 *)p)[6] = (f32)density; rs->cur = p + 0x1C;
-    ((s32 *)p)[7] = 0;          rs->cur = p + 0x20;
-    ((s32 *)p)[8] = 0;          rs->cur = p + 0x24;
-    ((s32 *)p)[9] = 0;          rs->cur = p + 0x28;
-    ((s32 *)p)[10] = 0;         rs->cur = p + 0x2C;
-    ((s32 *)p)[11] = 0;         rs->cur = p + 0x30;
-    ((f32 *)p)[12] = col->x;    rs->cur = p + 0x34;
-    ((f32 *)p)[13] = col->y;    rs->cur = p + 0x38;
-    ((f32 *)p)[14] = col->z;    rs->cur = p + 0x3C;
-    ((s32 *)p)[15] = 0;         rs->cur = p + 0x40;
-    ((f32 *)p)[16] = 38912.0f;  rs->cur = p + 0x44;
-    ((f32 *)p)[17] = ((f32)(PS2_REZ_H >> 1) + 2048.0f) * 16.0f; rs->cur = p + 0x48;
-    ((f32 *)p)[18] = 27648.0f;  rs->cur = p + 0x4C;
-    ((f32 *)p)[19] = (2048.0f - (f32)(PS2_REZ_H >> 1)) * 16.0f; rs->cur = p + 0x50;
-    ((s32 *)p)[20] = 0x14000300; rs->cur = p + 0x54;
-    ((s32 *)p)[21] = 0x17000000; rs->cur = p + 0x58;
-    rs->cur = vpDmaTag_Close(rs->cur);
+    ((f32 *)p)[2] = cz;         rs->cur.b = p + 0xC;
+    ((s32 *)p)[3] = 0;          rs->cur.b = p + 0x10;
+    ((f32 *)p)[4] = size;       rs->cur.b = p + 0x14;
+    ((f32 *)p)[5] = size * 0.5f; rs->cur.b = p + 0x18;
+    ((f32 *)p)[6] = (f32)density; rs->cur.b = p + 0x1C;
+    ((s32 *)p)[7] = 0;          rs->cur.b = p + 0x20;
+    ((s32 *)p)[8] = 0;          rs->cur.b = p + 0x24;
+    ((s32 *)p)[9] = 0;          rs->cur.b = p + 0x28;
+    ((s32 *)p)[10] = 0;         rs->cur.b = p + 0x2C;
+    ((s32 *)p)[11] = 0;         rs->cur.b = p + 0x30;
+    ((f32 *)p)[12] = col->x;    rs->cur.b = p + 0x34;
+    ((f32 *)p)[13] = col->y;    rs->cur.b = p + 0x38;
+    ((f32 *)p)[14] = col->z;    rs->cur.b = p + 0x3C;
+    ((s32 *)p)[15] = 0;         rs->cur.b = p + 0x40;
+    ((f32 *)p)[16] = 38912.0f;  rs->cur.b = p + 0x44;
+    ((f32 *)p)[17] = ((f32)(PS2_REZ_H >> 1) + 2048.0f) * 16.0f; rs->cur.b = p + 0x48;
+    ((f32 *)p)[18] = 27648.0f;  rs->cur.b = p + 0x4C;
+    ((f32 *)p)[19] = (2048.0f - (f32)(PS2_REZ_H >> 1)) * 16.0f; rs->cur.b = p + 0x50;
+    ((s32 *)p)[20] = 0x14000300; rs->cur.b = p + 0x54;
+    ((s32 *)p)[21] = 0x17000000; rs->cur.b = p + 0x58;
+    rs->cur.b = vpDmaTag_Close(rs->cur.b);
 
     gt[0] = 0x5003400000008000ULL;
     gt[1] = 0x0000000000052521ULL;
@@ -288,30 +279,30 @@ void cloudRender(void *m, struct nuvec_s *off, f32 size, f32 rng, s32 density,
             n = maxc;
         }
         maxc -= 0x20;
-        q = vpDmaTag_CntEx(rs->cur, 0, 0x6D018002);
-        rs->cur = q;
-        ((u16 *)q)[0] = (u16)n;     rs->cur = q + 0x2;
-        ((u16 *)q)[1] = 0;          rs->cur = q + 0x4;
-        ((u16 *)q)[2] = 0;          rs->cur = q + 0x6;
-        ((u16 *)q)[3] = 0;          rs->cur = q + 0x8;
-        ((u32 *)q)[2] = 0x6C0180D2; rs->cur = q + 0xC;
-        ((u32 *)q)[3] = ((u32 *)gt)[0]; rs->cur = q + 0x10;
-        ((u32 *)q)[4] = ((u32 *)gt)[1]; rs->cur = q + 0x14;
-        ((u32 *)q)[5] = ((u32 *)gt)[2]; rs->cur = q + 0x18;
-        ((u32 *)q)[6] = ((u32 *)gt)[3]; rs->cur = q + 0x1C;
-        ((u32 *)q)[7] = 0;          rs->cur = q + 0x20;
-        ((u32 *)q)[8] = 0;          rs->cur = q + 0x24;
-        ((u32 *)q)[9] = 0;          rs->cur = q + 0x28;
-        rs->cur = vpDmaTag_Close(rs->cur);
-        r2 = vpDmaTag_RefEx(rs->cur, (u32)clptr, 0, (n << 16) | 0x69008003);
-        rs->cur = r2;
+        q = vpDmaTag_CntEx(rs->cur.b, 0, 0x6D018002);
+        rs->cur.b = q;
+        ((u16 *)q)[0] = (u16)n;     rs->cur.b = q + 0x2;
+        ((u16 *)q)[1] = 0;          rs->cur.b = q + 0x4;
+        ((u16 *)q)[2] = 0;          rs->cur.b = q + 0x6;
+        ((u16 *)q)[3] = 0;          rs->cur.b = q + 0x8;
+        ((u32 *)q)[2] = 0x6C0180D2; rs->cur.b = q + 0xC;
+        ((u32 *)q)[3] = ((u32 *)gt)[0]; rs->cur.b = q + 0x10;
+        ((u32 *)q)[4] = ((u32 *)gt)[1]; rs->cur.b = q + 0x14;
+        ((u32 *)q)[5] = ((u32 *)gt)[2]; rs->cur.b = q + 0x18;
+        ((u32 *)q)[6] = ((u32 *)gt)[3]; rs->cur.b = q + 0x1C;
+        ((u32 *)q)[7] = 0;          rs->cur.b = q + 0x20;
+        ((u32 *)q)[8] = 0;          rs->cur.b = q + 0x24;
+        ((u32 *)q)[9] = 0;          rs->cur.b = q + 0x28;
+        rs->cur.b = vpDmaTag_Close(rs->cur.b);
+        r2 = vpDmaTag_RefEx(rs->cur.b, (u32)clptr, 0, (n << 16) | 0x69008003);
+        rs->cur.b = r2;
         nb = n * 6;
         clptr = (struct cloud_s *)((u8 *)clptr + nb);
         *(u16 *)(r2 - 0x10) = (u16)(nb >> 4);
-        rs->cur = vpDmaTag_CntEx(rs->cur, 0, 0x17000000);
+        rs->cur.b = vpDmaTag_CntEx(rs->cur.b, 0, 0x17000000);
     }
-    rs->cur = vpDmaTag_CntEx(rs->cur, 0, 0x10000000);
-    rndrstream_free = vpDmaTag_Next(rs->cur);
+    rs->cur.b = vpDmaTag_CntEx(rs->cur.b, 0, 0x10000000);
+    rndrstream_free = vpDmaTag_Next(rs->cur.b);
 }
 
 void TimeTunnelInit(void *buffer, void *buffend) {

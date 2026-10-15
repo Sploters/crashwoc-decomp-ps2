@@ -47,64 +47,25 @@
 #include "numath/nufloat.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
-
-typedef enum nunodetype_e {
-    NUNODETYPE_NODE,
-    NUNODETYPE_MESH,
-    NUNODETYPE_TRANSFORM,
-    NUNODETYPE_JOINT,
-    NUNODETYPE_SKIN,
-    NUNODETYPE_SPLINE
-} NuNodeType;
-
-typedef struct nunode_s {
-    char *name;
-    int id;
-    NuNodeType type;
-    int num_children;
-    struct nunode_s *parent;
-    struct nunode_s *child;
-    struct nunode_s *next;
-    void *data;
-} NuNode;
+#include "nu3d/nunode.h"
 
 typedef struct numeshnode_s {
-    NuNode node;
+    struct nunode_s node;
     void *geometry;
     char pad_24[4];
     int flags;
 } NuMeshNode;
 
 typedef struct nutransformnode_s {
-    NuNode node;
+    struct nunode_s node;
     struct numtx_s mtx;
     struct numtx_s wmtx;
     int flags;
     char pad_a4[4];
 } NuTransformNode;
 
-typedef struct nujointnode_s {
-    NuNode node;
-    struct numtx_s orient;
-    struct numtx_s mtx;
-    struct numtx_s wmtx;
-    char pad_e0[0x18];
-    float scale[3];
-    float rot[3];
-    char locked;
-} NuJointNode;
-
-typedef struct nuskinnode_s {
-    NuNode node;
-    void *geometry;
-    char pad_24[4];
-    int num_joints;
-    struct numtx_s **joints;
-    struct numtx_s *joint_mtxs;
-} NuSkinNode;
-
 typedef struct nusplinenode_s {
-    NuNode node;
+    struct nunode_s node;
     int num_splines;
     void **splines;
     void **spline_data;
@@ -112,19 +73,19 @@ typedef struct nusplinenode_s {
 
 
 typedef void (*NuNodeDataFunc)(void *data);
-typedef void (*NuNodeIterFunc)(NuNode *node, void *data);
+typedef void (*NuNodeIterFunc)(struct nunode_s *node, void *data);
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void *NuMemReAllocFn(void *ptr, int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
 extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 
-void NuMeshNodeDestroy(NuNode *node);
-void NuTransformNodeDestroy(NuNode *node);
-void NuJointNodeDestroy(NuNode *node);
-void NuSkinNodeDestroy(NuSkinNode *skin);
+void NuMeshNodeDestroy(struct nunode_s *node);
+void NuTransformNodeDestroy(struct nunode_s *node);
+void NuJointNodeDestroy(struct nunode_s *node);
+void NuSkinNodeDestroy(struct nuskinnode_s *skin);
 void NuSplineNodeDestroy(NuSplineNode *spline);
-void NuNodeUpdateXfms(NuNode *node, struct numtx_s *parent_mtx);
+void NuNodeUpdateXfms(struct nunode_s *node, struct numtx_s *parent_mtx);
 
 extern char D_006141E0[];
 #define nunode_file D_006141E0
@@ -182,7 +143,7 @@ inline char *NuNodeStrCat(char **str, char *append)
 }
 
 
-inline void NuNodeDestroy(NuNode *node)
+inline void NuNodeDestroy(struct nunode_s *node)
 {
     if (!keep_names && node->name != 0) {
         NuMemFreeFn(node->name, nunode_file, 0xCB);
@@ -201,7 +162,7 @@ inline void NuNodeDestroy(NuNode *node)
         NuJointNodeDestroy(node);
         break;
     case NUNODETYPE_SKIN:
-        NuSkinNodeDestroy((NuSkinNode *)node);
+        NuSkinNodeDestroy((struct nuskinnode_s *)node);
         break;
     case NUNODETYPE_SPLINE:
         NuSplineNodeDestroy((NuSplineNode *)node);
@@ -213,11 +174,11 @@ inline void NuNodeDestroy(NuNode *node)
 }
 
 
-inline void NuNodeDestroyHierarchy(NuNode *node)
+inline void NuNodeDestroyHierarchy(struct nunode_s *node)
 {
     NuTransformNode *xform;
-    NuNode *child;
-    NuNode *cur;
+    struct nunode_s *child;
+    struct nunode_s *cur;
 
     xform = (NuTransformNode *)node;
     child = node->child;
@@ -232,10 +193,10 @@ inline void NuNodeDestroyHierarchy(NuNode *node)
 }
 
 
-inline NuNode *NuNodeFindByID(NuNode *node, int id)
+inline struct nunode_s *NuNodeFindByID(struct nunode_s *node, int id)
 {
-    NuNode *child;
-    NuNode *found;
+    struct nunode_s *child;
+    struct nunode_s *found;
 
     child = node->child;
     if (node->id == id) {
@@ -251,11 +212,11 @@ inline NuNode *NuNodeFindByID(NuNode *node, int id)
 }
 
 
-static inline void resolveReferenceNodes(NuNode *root, NuNode *node)
+static inline void resolveReferenceNodes(struct nunode_s *root, struct nunode_s *node)
 {
     NuTransformNode *xform;
-    NuNode *child;
-    NuNode *cur;
+    struct nunode_s *child;
+    struct nunode_s *cur;
 
     xform = (NuTransformNode *)node;
     if (node->type == NUNODETYPE_TRANSFORM && (xform->flags & 2)) {
@@ -271,23 +232,23 @@ static inline void resolveReferenceNodes(NuNode *root, NuNode *node)
 }
 
 
-inline void NuNodeResolveReferenceNodes(NuNode *root)
+inline void NuNodeResolveReferenceNodes(struct nunode_s *root)
 {
     resolveReferenceNodes(root, root);
 }
 
 
-static inline void resolveSkinNodes(NuNode *node, NuNode *root)
+static inline void resolveSkinNodes(struct nunode_s *node, struct nunode_s *root)
 {
-    NuSkinNode *skin;
-    NuJointNode *joint;
-    NuNode *child;
+    struct nuskinnode_s *skin;
+    struct nujointnode_s *joint;
+    struct nunode_s *child;
     int i;
 
     if (node->type == NUNODETYPE_SKIN) {
-        skin = (NuSkinNode *)node;
+        skin = (struct nuskinnode_s *)node;
         for (i = 0; i < skin->num_joints; i++) {
-            joint = (NuJointNode *)NuNodeFindByID(root, (int)skin->joints[i]);
+            joint = (struct nujointnode_s *)NuNodeFindByID(root, (int)skin->joints[i]);
             skin->joints[i] = &joint->wmtx;
             NuMtxInv(&skin->joint_mtxs[i], skin->joints[i]);
         }
@@ -298,20 +259,20 @@ static inline void resolveSkinNodes(NuNode *node, NuNode *root)
 }
 
 
-inline void NuNodeResolveSkinNodes(NuNode *root)
+inline void NuNodeResolveSkinNodes(struct nunode_s *root)
 {
     resolveSkinNodes(root, root);
 }
 
 
-void NuNodeDestroyChildren(NuNode *node)
+void NuNodeDestroyChildren(struct nunode_s *node)
 {
     NuNodeDestroyHierarchy(node->child);
     node->child = 0;
 }
 
 
-void NuNodeGraphInit(NuNode *root)
+void NuNodeGraphInit(struct nunode_s *root)
 {
     struct numtx_s mtx;
 
@@ -339,12 +300,12 @@ int NuMtxEqual(struct numtx_s *a, struct numtx_s *b)
 }
 
 
-NuNode *NuNodeCreate(void)
+struct nunode_s *NuNodeCreate(void)
 {
-    NuNode *node;
+    struct nunode_s *node;
 
-    node = NuMemAllocFn(sizeof(NuNode), nunode_file, 0xDC);
-    memset(node, 0, sizeof(NuNode));
+    node = NuMemAllocFn(sizeof(struct nunode_s), nunode_file, 0xDC);
+    memset(node, 0, sizeof(struct nunode_s));
     node->type = NUNODETYPE_NODE;
     node->id = next_node_id++;
     node->num_children = 0;
@@ -357,7 +318,7 @@ NuNode *NuNodeCreate(void)
 }
 
 
-void NuNodeSetName(NuNode *node, char *name)
+void NuNodeSetName(struct nunode_s *node, char *name)
 {
     if (node->name != 0) {
         NuMemFreeFn(node->name, nunode_file, 0x119);
@@ -366,9 +327,9 @@ void NuNodeSetName(NuNode *node, char *name)
 }
 
 
-void NuNodePreAddChild(NuNode *parent, NuNode *child)
+void NuNodePreAddChild(struct nunode_s *parent, struct nunode_s *child)
 {
-    NuNode *first;
+    struct nunode_s *first;
 
     if (parent != 0 && child != 0) {
         switch (parent->type) {
@@ -389,9 +350,9 @@ void NuNodePreAddChild(NuNode *parent, NuNode *child)
 }
 
 
-void NuNodeAddChild(NuNode *parent, NuNode *child)
+void NuNodeAddChild(struct nunode_s *parent, struct nunode_s *child)
 {
-    NuNode *last;
+    struct nunode_s *last;
 
     if (parent != 0 && child != 0) {
         switch (parent->type) {
@@ -418,9 +379,9 @@ void NuNodeAddChild(NuNode *parent, NuNode *child)
 }
 
 
-void NuNodeRemoveChild(NuNode *parent, NuNode *child)
+void NuNodeRemoveChild(struct nunode_s *parent, struct nunode_s *child)
 {
-    NuNode *node;
+    struct nunode_s *node;
 
     if (parent != 0 && child != 0) {
         node = parent->child;
@@ -448,10 +409,10 @@ int NuNodeNumChildren(struct nunode_s *node)
 }
 
 
-NuNode *NuNodeFindByName(NuNode *node, char *name)
+struct nunode_s *NuNodeFindByName(struct nunode_s *node, char *name)
 {
-    NuNode *child;
-    NuNode *found;
+    struct nunode_s *child;
+    struct nunode_s *found;
 
     child = node->child;
     if (node->name != 0 && strcmp(node->name, name) == 0) {
@@ -467,9 +428,9 @@ NuNode *NuNodeFindByName(NuNode *node, char *name)
 }
 
 
-void NuNodeIterator(NuNode *node, void *context, NuNodeType type, NuNodeIterFunc func, void *data)
+void NuNodeIterator(struct nunode_s *node, void *context, enum nunodetype_e type, NuNodeIterFunc func, void *data)
 {
-    NuNode *child;
+    struct nunode_s *child;
 
     if (type == NUNODETYPE_NODE || node->type == type) {
         func(node, data);
@@ -480,9 +441,9 @@ void NuNodeIterator(NuNode *node, void *context, NuNodeType type, NuNodeIterFunc
 }
 
 
-void NuNodeDestroyHierarchyData(NuNode *node, NuNodeDataFunc destroy)
+void NuNodeDestroyHierarchyData(struct nunode_s *node, NuNodeDataFunc destroy)
 {
-    NuNode *child;
+    struct nunode_s *child;
 
     if (node->data != 0) {
         destroy(node->data);
@@ -493,9 +454,9 @@ void NuNodeDestroyHierarchyData(NuNode *node, NuNodeDataFunc destroy)
 }
 
 
-int NuNodeNumBranchNodesOfType(NuNode *node, NuNodeType type)
+int NuNodeNumBranchNodesOfType(struct nunode_s *node, enum nunodetype_e type)
 {
-    NuNode *child;
+    struct nunode_s *child;
     int count;
 
     count = node->type == type;
@@ -506,9 +467,9 @@ int NuNodeNumBranchNodesOfType(NuNode *node, NuNodeType type)
 }
 
 
-int NuNodeNumSubNodes(NuNode *node)
+int NuNodeNumSubNodes(struct nunode_s *node)
 {
-    NuNode *child;
+    struct nunode_s *child;
     int count;
 
     count = 1;
@@ -521,12 +482,12 @@ int NuNodeNumSubNodes(NuNode *node)
 }
 
 
-void NuNodeUpdateXfms(NuNode *node, struct numtx_s *parent_mtx)
+void NuNodeUpdateXfms(struct nunode_s *node, struct numtx_s *parent_mtx)
 {
     struct numtx_s mtx;
     NuTransformNode *xform;
-    NuJointNode *joint;
-    NuNode *child;
+    struct nujointnode_s *joint;
+    struct nunode_s *child;
 
     if (parent_mtx != 0) {
         mtx = *parent_mtx;
@@ -540,7 +501,7 @@ void NuNodeUpdateXfms(NuNode *node, struct numtx_s *parent_mtx)
         xform->wmtx = mtx;
         break;
     case NUNODETYPE_JOINT:
-        joint = (NuJointNode *)node;
+        joint = (struct nujointnode_s *)node;
         NuMtxMulVU0(&mtx, &joint->mtx, &mtx);
         joint->wmtx = mtx;
         break;
@@ -571,7 +532,7 @@ NuMeshNode *NuMeshNodeCreate(void *geometry)
 }
 
 
-void NuMeshNodeDestroy(NuNode *node)
+void NuMeshNodeDestroy(struct nunode_s *node)
 {
     NuMemFreeFn(node, nunode_file, 0x377);
 }
@@ -598,18 +559,18 @@ NuTransformNode *NuTransformNodeCreate(struct numtx_s *mtx)
 }
 
 
-void NuTransformNodeDestroy(NuNode *node)
+void NuTransformNodeDestroy(struct nunode_s *node)
 {
     NuMemFreeFn(node, nunode_file, 0x2EB);
 }
 
 
-NuJointNode *NuJointNodeCreate(struct numtx_s *mtx)
+struct nujointnode_s *NuJointNodeCreate(struct numtx_s *mtx)
 {
-    NuJointNode *joint;
+    struct nujointnode_s *joint;
 
-    joint = NuMemAllocFn(sizeof(NuJointNode), nunode_file, 0x2FC);
-    memset(joint, 0, sizeof(NuJointNode));
+    joint = NuMemAllocFn(sizeof(struct nujointnode_s), nunode_file, 0x2FC);
+    memset(joint, 0, sizeof(struct nujointnode_s));
     joint->node.type = NUNODETYPE_JOINT;
     joint->node.id = next_node_id++;
     joint->node.num_children = 0;
@@ -621,29 +582,29 @@ NuJointNode *NuJointNodeCreate(struct numtx_s *mtx)
     if (mtx != 0) {
         joint->mtx = *mtx;
     }
-    joint->locked = 0;
-    joint->scale[0] = 1.0f;
-    joint->scale[1] = 1.0f;
-    joint->scale[2] = 1.0f;
-    joint->rot[0] = 0.0f;
-    joint->rot[1] = 0.0f;
-    joint->rot[2] = 0.0f;
+    joint->flags = 0;
+    joint->scale.x = 1.0f;
+    joint->scale.y = 1.0f;
+    joint->scale.z = 1.0f;
+    joint->pivot.x = 0.0f;
+    joint->pivot.y = 0.0f;
+    joint->pivot.z = 0.0f;
     return joint;
 }
 
 
-void NuJointNodeDestroy(NuNode *node)
+void NuJointNodeDestroy(struct nunode_s *node)
 {
     NuMemFreeFn(node, nunode_file, 0x31A);
 }
 
 
-NuSkinNode *NuSkinNodeCreate(int num_joints)
+struct nuskinnode_s *NuSkinNodeCreate(int num_joints)
 {
-    NuSkinNode *skin;
+    struct nuskinnode_s *skin;
 
-    skin = NuMemAllocFn(sizeof(NuSkinNode), nunode_file, 0x32A);
-    memset(skin, 0, sizeof(NuSkinNode));
+    skin = NuMemAllocFn(sizeof(struct nuskinnode_s), nunode_file, 0x32A);
+    memset(skin, 0, sizeof(struct nuskinnode_s));
     skin->node.type = NUNODETYPE_SKIN;
     skin->node.id = next_node_id++;
     skin->node.num_children = 0;
@@ -662,7 +623,7 @@ NuSkinNode *NuSkinNodeCreate(int num_joints)
 }
 
 
-void NuSkinNodeDestroy(NuSkinNode *skin)
+void NuSkinNodeDestroy(struct nuskinnode_s *skin)
 {
     if (skin->num_joints != 0) {
         NuMemFreeFn(skin->joints, nunode_file, 0x346);

@@ -179,6 +179,8 @@
 
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 struct edptlitem_s {
     char pad00[0xC];
@@ -326,13 +328,6 @@ struct debtypedef_s {
     char pad31D[0x3];
     int key;
     struct debsound_s sounds[4];
-};
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;
-    char pad0C[0x18 - 0x0C];
-    int colour;
-    char pad1C[0x24 - 0x1C];
 };
 
 struct edptlgradkey_s {
@@ -719,7 +714,7 @@ extern void edcamGetPosAng(struct nuvec_s *pos, float *ax, float *ay);
 extern void edcamGetPosAngSnap(struct nuvec_s *pos, float *ax, float *ay);
 extern void SphereDraw(struct nuvec_s *pos, float radius, float scale);
 extern void *edpp_boxmtl;
-extern void NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, void *mtx);
+extern void NuRndrLine3d(struct nuvtx_tc1_s *line, void *mtl, void *mtx);
 extern void NuRndrRect2di(int x, int y, int w, int h, int colour, void *mtl);
 extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl);
 extern void NuFntSet(void *fnt);
@@ -955,26 +950,7 @@ extern char D_00618840[];
 #define memcardmergecharlabel D_00618808
 #define memcarddeletelabel D_00618828
 #define memcarderaselabel D_00618840
-struct numtlattrib_s {
-    unsigned long long : 32;
-    unsigned long long alpha : 4;
-    unsigned long long : 8;
-    unsigned long long cull : 2;
-    unsigned long long zmode : 2;
-    unsigned long long : 16;
-};
 
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x180 - 0x170];
-    struct nucolour3_s diffuse;
-    char pad18C[0x1A0 - 0x18C];
-    float alpha;
-};
-
-extern struct numtl_s *NuMtlCreate(int count);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void *eduiItemToggleCreate(int value, struct edptlfont_s *font, int on, int group, void *cb,
                                   char *label);
 extern int edpp_curr;
@@ -1454,7 +1430,7 @@ void edppDrawSpheres(struct debtypedef_s *dt, int key) {
 
 
 void edppDrawCursor(void) {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     struct nuvec_s v;
     struct debtypedef_s *dt;
 
@@ -1469,8 +1445,8 @@ void edppDrawCursor(void) {
     line[1].pnt.x = edpp_cam_pos.x + v.x;
     line[1].pnt.y = edpp_cam_pos.y + v.y;
     line[1].pnt.z = edpp_cam_pos.z + v.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edpp_mtl, 0);
     v.x = 0.0f;
     v.y = 0.5f;
@@ -1483,8 +1459,8 @@ void edppDrawCursor(void) {
     line[1].pnt.x = edpp_cam_pos.x;
     line[1].pnt.y = edpp_cam_pos.y;
     line[1].pnt.z = edpp_cam_pos.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edpp_mtl, 0);
     line[0].pnt.x = edpp_cam_pos.x;
     line[0].pnt.y = edpp_cam_pos.y;
@@ -1492,8 +1468,8 @@ void edppDrawCursor(void) {
     line[1].pnt.x = edpp_cam_pos.x + v.x;
     line[1].pnt.y = edpp_cam_pos.y + v.y;
     line[1].pnt.z = edpp_cam_pos.z + v.z;
-    line[0].colour = 0xFF00FF00;
-    line[1].colour = 0xFF00FF00;
+    line[0].diffuse = 0xFF00FF00;
+    line[1].diffuse = 0xFF00FF00;
     NuRndrLine3d(line, edpp_mtl, 0);
     v.x = 0.0f;
     v.y = 0.0f;
@@ -1506,8 +1482,8 @@ void edppDrawCursor(void) {
     line[1].pnt.x = edpp_cam_pos.x + v.x;
     line[1].pnt.y = edpp_cam_pos.y + v.y;
     line[1].pnt.z = edpp_cam_pos.z + v.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edpp_mtl, 0);
     v.x = 0.0f;
     v.y = 0.375f;
@@ -1522,8 +1498,8 @@ void edppDrawCursor(void) {
     line[1].pnt.x = edpp_cam_pos.x + v.x;
     line[1].pnt.y = edpp_cam_pos.y + v.y;
     line[1].pnt.z = edpp_cam_pos.z + v.z;
-    line[0].colour = 0xFF0000FF;
-    line[1].colour = 0xFF0000FF;
+    line[0].diffuse = 0xFF0000FF;
+    line[1].diffuse = 0xFF0000FF;
     NuRndrLine3d(line, edpp_mtl, 0);
     if (edpp_dpad_mode == 3) {
         v.x = 0.0f;
@@ -1539,8 +1515,8 @@ void edppDrawCursor(void) {
         line[1].pnt.x = edpp_cam_pos.x + v.x;
         line[1].pnt.y = edpp_cam_pos.y + v.y;
         line[1].pnt.z = edpp_cam_pos.z + v.z;
-        line[0].colour = 0xFFFF0000;
-        line[1].colour = 0xFFFF0000;
+        line[0].diffuse = 0xFFFF0000;
+        line[1].diffuse = 0xFFFF0000;
         NuRndrLine3d(line, edpp_mtl, 0);
         if (edpp_nearest != -1) {
             v.x = 0.0f;

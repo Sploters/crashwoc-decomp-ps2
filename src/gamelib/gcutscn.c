@@ -82,6 +82,7 @@
 #include "numath/nuquat.h"
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
+#include "nu3d/nugobj.h"
 
 #include "creature.h"
 #include "gcutscn.h"
@@ -707,17 +708,10 @@ inline int NuGCutLocatorIsVisble(NuGCutLocatorData *data, float time, NuAnimTime
 }
 
 
-typedef struct NuRndrVtx {
-    struct nuvec_s pnt;           /* 0x00 */
-    char pad0C[0xC];              /* 0x0C */
-    int colour;                   /* 0x18 */
-    char pad1C[0x8];              /* 0x1C */
-} NuRndrVtx;                      /* 0x24 */
-
 extern int D_0062F7D8;
 #define cutscene_rndr_emitters D_0062F7D8
 
-extern void NuRndrLine3d(NuRndrVtx *line, void *mtl, struct numtx_s *mtx);
+extern void NuRndrLine3d(struct nuvtx_tc1_s *line, void *mtl, struct numtx_s *mtx);
 
 void DebugRndrEmitter(struct nuvec_s *pos, short rotz, short roty) {
     struct nuvec_s tip = { 0.0f, 2.0f, 0.0f };
@@ -725,11 +719,11 @@ void DebugRndrEmitter(struct nuvec_s *pos, short rotz, short roty) {
     struct nuvec_s right = { -0.2f, 1.8f, 0.0f };
     struct nuvec_s front = { 0.0f, 1.8f, 0.2f };
     struct nuvec_s back = { 0.0f, 1.8f, -0.2f };
-    NuRndrVtx line[2];
+    struct nuvtx_tc1_s line[2];
 
     if (cutscene_rndr_emitters) {
-        line[1].colour = -1;
-        line[0].colour = -1;
+        line[1].diffuse = -1;
+        line[0].diffuse = -1;
         NuVecRotateZ(&tip, &tip, rotz);
         NuVecRotateY(&tip, &tip, roty);
         NuVecAdd(&tip, &tip, pos);

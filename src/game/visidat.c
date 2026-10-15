@@ -13,34 +13,10 @@
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
-struct nugeom_s;
-struct nufaceongeom_s;
-struct nucolourref_s;
-struct numtl_s;
 struct nuspecial_s;
-
-struct nugobj_s {
-    struct nugobj_s *sysnext;
-    struct nugobj_s *syslast;
-    int type;
-    struct nugeom_s *geom;
-    struct nufaceongeom_s *faceon_geom;
-    float r;
-    float r2;
-    struct nuvec_s min;
-    struct nuvec_s max;
-    struct nuvec_s cntr;
-    float cntr_r;
-    float cntr_r2;
-    int ngobjs;
-    struct nugobj_s *next_gobj;
-    struct nuvec_s origin;
-    struct nucolourref_s *colourref;
-    int colourref_size;
-    struct nucolourref_s *focolourref;
-    int focolourref_size;
-};
 
 struct nuinstflags_s {
     u32 visible : 1;

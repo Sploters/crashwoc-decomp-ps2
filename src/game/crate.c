@@ -65,6 +65,8 @@
 #include "numath/nufloat.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
 
 #include "creature.h"
 
@@ -258,11 +260,7 @@ extern struct numtl_s *CrateMat;
 extern f32 D_0062D798;
 extern f32 D_0062D79C;
 
-struct rndrstream_s {
-    u8 *pad_00;              /* 0x00 */
-    u8 *cur;                 /* 0x04 */
-};
-extern struct rndrstream_s *rndrstream_3d;
+extern struct nurndrstream_s *rndrstream_3d;
 extern u8 *rndrstream_free;
 
 extern s32 NuCameraClipTestPoints(struct nuvec_s *pos, s32 n, struct numtx_s *wm);
@@ -272,7 +270,7 @@ extern void NuVec4MtxTransformVU0(struct nuvec4_s *dst, struct nuvec4_s *src,
                                   struct numtx_s *m);
 extern void NuVec4ScaleXYZVU0(struct nuvec4_s *dst, struct nuvec4_s *src,
                               f32 scale);
-extern void NuRndrStreamLink(struct rndrstream_s *rs);
+extern void NuRndrStreamLink(struct nurndrstream_s *rs);
 extern void NuVecConvertToIntVU0(void *dst, struct nuvec_s *src);
 extern u8 *vpDmaTag_Cnt(u8 *cur);
 extern u8 *vpDmaTag_Close(u8 *cur);
@@ -502,13 +500,6 @@ void OpenPreviousCheckpoints(s32 iRAIL, s32 iALONG, f32 fALONG) {
         }
     }
 }
-
-/* Faithful near-match (state=asm), 90.6%: logic/structure/offsets exact.
- * Residual is a 9-word FP instruction-scheduling tie in the qrand anim_time
- * block -- retail loads anim_duration before D_0062D714 and computes (dur-1.0)
- * eagerly (f2/f3/f4/f0), gcc here loads scale first (f3 vs f2 etc). Not
- * source-steerable (an explicit dur local regressed to a callee-saved f21). */
-struct numtl_s;
 
 extern f32 temp_ratio;
 extern s32 temp_face;
@@ -1915,12 +1906,12 @@ SetBot:
 
 /* Every push re-reads the global cursor, so these stay macros over
  * `rndrstream_3d` rather than taking a local stream pointer. */
-#define RS3D_PUSH_F(v)  do { *(f32 *)rndrstream_3d->cur = (v);  \
-                             rndrstream_3d->cur += 4; } while (0)
-#define RS3D_PUSH_W(v)  do { *(u32 *)rndrstream_3d->cur = (v);  \
-                             rndrstream_3d->cur += 4; } while (0)
-#define RS3D_PUSH_D(v)  do { *(u64 *)rndrstream_3d->cur = (v);  \
-                             rndrstream_3d->cur += 8; } while (0)
+#define RS3D_PUSH_F(v)  do { *(f32 *)rndrstream_3d->cur.b = (v);  \
+                             rndrstream_3d->cur.b += 4; } while (0)
+#define RS3D_PUSH_W(v)  do { *(u32 *)rndrstream_3d->cur.b = (v);  \
+                             rndrstream_3d->cur.b += 4; } while (0)
+#define RS3D_PUSH_D(v)  do { *(u64 *)rndrstream_3d->cur.b = (v);  \
+                             rndrstream_3d->cur.b += 8; } while (0)
 
 /* Faithful reconstruction (state=asm): compiles to exactly 254 instructions =
  * the 1016-byte retail extent, frame 0x140 and reg_mask 0xc0ff0000 both exact.
@@ -1997,9 +1988,9 @@ void AddQuad3DrotXYZ(struct nuvec_s *pos, struct nuvec_s *shape,
     screen[3].y = v4.y;
     screen[3].z = v4.z;
 
-    rndrstream_3d = (struct rndrstream_s *)((u8 *)mat + 0x124);
+    rndrstream_3d = (struct nurndrstream_s *)((u8 *)mat + 0x124);
     NuRndrStreamLink(rndrstream_3d);
-    rndrstream_3d->cur = vpDmaTag_Cnt(rndrstream_3d->cur);
+    rndrstream_3d->cur.b = vpDmaTag_Cnt(rndrstream_3d->cur.b);
     RS3D_PUSH_W(0x10000000);
     RS3D_PUSH_W(0x5000000D);
     RS3D_PUSH_D(0x3002400000008004ULL);
@@ -2009,17 +2000,17 @@ void AddQuad3DrotXYZ(struct nuvec_s *pos, struct nuvec_s *shape,
         RS3D_PUSH_F(uv[1]);
         uv += 2;
         RS3D_PUSH_F(1.0f);
-        rndrstream_3d->cur += 4;
+        rndrstream_3d->cur.b += 4;
         RS3D_PUSH_W(r);
         RS3D_PUSH_W(g & 0xFF);
         RS3D_PUSH_W(b & 0xFF);
         RS3D_PUSH_W(a);
-        NuVecConvertToIntVU0(rndrstream_3d->cur, &screen[i]);
-        rndrstream_3d->cur += 0xC;
+        NuVecConvertToIntVU0(rndrstream_3d->cur.b, &screen[i]);
+        rndrstream_3d->cur.b += 0xC;
         RS3D_PUSH_W(0);
     }
-    rndrstream_3d->cur = vpDmaTag_Close(rndrstream_3d->cur);
-    rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur, 0);
+    rndrstream_3d->cur.b = vpDmaTag_Close(rndrstream_3d->cur.b);
+    rndrstream_free = vpDmaTag_Next(rndrstream_3d->cur.b, 0);
 }
 
 /* Faithful reconstruction from PS2 asm (state=asm), codegen-divergent (~3%):

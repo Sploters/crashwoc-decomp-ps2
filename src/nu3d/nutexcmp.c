@@ -11,17 +11,10 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nutex.h"
+
 typedef unsigned char u_char;
 typedef unsigned int u_int;
-
-typedef struct NuTex {
-    int type;
-    int width;
-    int height;
-    int mmcnt;
-    u_char *bits;
-    u_int *pal;
-} NuTex;
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 
@@ -94,7 +87,7 @@ int Blend16Pixels(u_int *pixels, int *lo, int *hi)
 
 
 
-void NuTexCreateLowResColourMap(NuTex *src, NuTex *dst)
+void NuTexCreateLowResColourMap(struct nutex_s *src, struct nutex_s *dst)
 {
     u_int block[16];
     int lo, hi;
@@ -188,7 +181,7 @@ int BilinearExpand(u_int *pixels, float u, float v)
 }
 
 
-void NuTexCreateLuminanceMultiplyMap(NuTex *colourmap, NuTex *tex, NuTex *dst, int twobit)
+void NuTexCreateLuminanceMultiplyMap(struct nutex_s *colourmap, struct nutex_s *tex, struct nutex_s *dst, int twobit)
 {
     u_int block[16];
     int ncolours;

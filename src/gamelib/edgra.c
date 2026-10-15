@@ -35,6 +35,8 @@
 
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
+#include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 struct edgraitem_s {
     char pad00[0x0C];
@@ -42,31 +44,6 @@ struct edgraitem_s {
     unsigned char toggle;
     char pad11[0x4C - 0x11];
     float fvalue;
-};
-
-struct numtlattrib_s {
-    unsigned long long unk0 : 32;
-    unsigned long long alpha : 4;
-    unsigned long long unk36 : 8;
-    unsigned long long cull : 2;
-    unsigned long long zmode : 2;
-    unsigned long long unk48 : 16;
-};
-
-struct numtl_s {
-    char pad000[0x168];
-    struct numtlattrib_s attrib;
-    char pad170[0x180 - 0x170];
-    struct nuvec_s diffuse;
-    char pad18c[0x1A0 - 0x18C];
-    float alpha;
-};
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;
-    char pad0c[0x18 - 0x0C];
-    int colour;
-    char pad1c[0x24 - 0x1C];
 };
 
 struct grassclump_s {
@@ -203,8 +180,6 @@ extern void eduiMenuDestroy(void *menu);
 extern void eduiMenuRender(struct eduimenu_s *menu);
 extern void *eduiItemSelCreate(int value, struct eduistyle_s *style, int on, int group, void *cb,
                                char *label);
-extern struct numtl_s *NuMtlCreate(int count);
-extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuFntScale(int x, int y);
 extern void edcamSet(void);
 extern void edbitsDrawDiagonalCross(float x, float y, float z, float size, int colour, void *mtl);
@@ -216,7 +191,7 @@ extern void NuWindCreate(struct nuinstance_s *instance, struct nuvec4_s *points,
 extern int edqrand(void);
 extern float NuFsqrt(float x);
 extern float NuTrigTable[];
-extern void NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, void *mtx);
+extern void NuRndrLine3d(struct nuvtx_tc1_s *line, void *mtl, void *mtx);
 extern void NuRndrRect2di(int x, int y, int w, int h, int colour, void *mtl);
 extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl);
 extern void edbitsDrawCircleXY(struct nuvec_s *pos, float radius, unsigned int colour, void *mtl);
@@ -516,7 +491,7 @@ void edgraDoInput(struct pad_s *pad)
 
 void edgraDrawCursor(void)
 {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
 
     line[0].pnt.x = edgra_cam_pos.x - 0.5f;
     line[0].pnt.y = edgra_cam_pos.y;
@@ -524,8 +499,8 @@ void edgraDrawCursor(void)
     line[1].pnt.x = edgra_cam_pos.x + 0.5f;
     line[1].pnt.y = edgra_cam_pos.y;
     line[1].pnt.z = edgra_cam_pos.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edgra_mtl, 0);
     line[0].pnt.x = edgra_cam_pos.x;
     line[0].pnt.y = edgra_cam_pos.y - 0.5f;
@@ -533,8 +508,8 @@ void edgraDrawCursor(void)
     line[1].pnt.x = edgra_cam_pos.x;
     line[1].pnt.y = edgra_cam_pos.y + 0.5f;
     line[1].pnt.z = edgra_cam_pos.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edgra_mtl, 0);
     line[0].pnt.x = edgra_cam_pos.x;
     line[0].pnt.y = edgra_cam_pos.y;
@@ -542,8 +517,8 @@ void edgraDrawCursor(void)
     line[1].pnt.x = edgra_cam_pos.x;
     line[1].pnt.y = edgra_cam_pos.y;
     line[1].pnt.z = edgra_cam_pos.z + 0.5f;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edgra_mtl, 0);
     edbitsDrawCircleXY(&edgra_cam_pos, edgra_radius, 0xFFFFFFFF, edgra_mtl);
     NuRndrRect2di(0x1720, 0xA50, 0xDC0, 0x370, 0x80808080, edgra_mtl_zoff);
@@ -700,9 +675,9 @@ void edgraInit(void)
     edgra_mtl = mtl;
     mtl->attrib.cull = 2;
     mtl->attrib.zmode = 0;
-    mtl->diffuse.x = 0.5f;
-    mtl->diffuse.y = 0.5f;
-    mtl->diffuse.z = 0.5f;
+    mtl->diffuse.r = 0.5f;
+    mtl->diffuse.g = 0.5f;
+    mtl->diffuse.b = 0.5f;
     mtl->alpha = 1.0f;
     mtl->attrib.alpha = 0;
     NuMtlUpdate(mtl);
@@ -710,9 +685,9 @@ void edgraInit(void)
     edgra_mtl_zoff = zoff;
     zoff->attrib.cull = 2;
     zoff->attrib.zmode = 3;
-    zoff->diffuse.x = 0.5f;
-    zoff->diffuse.y = 0.5f;
-    zoff->diffuse.z = 0.5f;
+    zoff->diffuse.r = 0.5f;
+    zoff->diffuse.g = 0.5f;
+    zoff->diffuse.b = 0.5f;
     zoff->alpha = 1.0f;
     zoff->attrib.alpha = 0;
     NuMtlUpdate(zoff);

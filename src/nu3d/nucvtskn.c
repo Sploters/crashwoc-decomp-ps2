@@ -30,6 +30,9 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/nustream.h"
+#include "nu3d/nugobj.h"
+
 typedef struct SkinDmaTag {
     u16 qwc;
     u8 mode;
@@ -58,30 +61,11 @@ typedef struct SkinV {
     void *nid;
 } SkinV;
 
-typedef struct NuPrim {
-    struct NuPrim *next;
-    int type;
-} NuPrim;
-
-typedef struct NuGeom {
-    struct NuGeom *next;
-    char pad04[0x28];
-    NuPrim *prim;
-    char pad30[0x14];
-    SkinV *skinv;
-} NuGeom;
-
-typedef struct NuGobj {
-    char pad00[0x0C];
-    NuGeom *geom;
-} NuGobj;
-
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *NuStreamGetOutputBuffer(int stream);
-extern void NuPs2CreateSkinNorm(NuGobj *gobj);
-extern void NuPs2CreateSkinSmooth(NuGobj *gobj);
+extern void NuPs2CreateSkinNorm(struct nugobj_s *gobj);
+extern void NuPs2CreateSkinSmooth(struct nugobj_s *gobj);
 
 extern char D_006156B0[];
 extern void *D_00633120;
@@ -280,7 +264,7 @@ int FindStripNext(int cur, int base, int cnt, int mode, int *used) {
 }
 
 
-void NuPs2CreateSkin(NuGobj *gobj) {
+void NuPs2CreateSkin(struct nugobj_s *gobj) {
     stream_buffer0 = NuStreamGetOutputBuffer(0);
     stream_buffer1 = NuStreamGetOutputBuffer(1);
     if (gobj->geom) {
@@ -294,8 +278,8 @@ void NuPs2CreateSkin(NuGobj *gobj) {
 }
 
 
-void NuPs2DestroySkin(NuGobj *gobj) {
-    NuGeom *geom;
+void NuPs2DestroySkin(struct nugobj_s *gobj) {
+    struct nugeom_s *geom;
 
     for (geom = gobj->geom; geom; geom = geom->next) {
         if (geom->skinv) {

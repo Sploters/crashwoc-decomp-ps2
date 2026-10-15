@@ -47,6 +47,9 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/numtl.h"
+#include "nu3d/nustream.h"
+#include "nu3d/nutex.h"
 #include "nucore/nuerror.h"
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
@@ -56,25 +59,6 @@ typedef unsigned int u128 __attribute__((mode(TI)));
 struct nucolour4_s {
     struct nucolour3_s rgb;
     float a;
-};
-
-struct nurndrstream_s {
-    void *start;
-    u8 *cur;
-    void *txtr_start;
-    void *txtr_end;
-    void *zbuf;
-    struct NuMtl *mtl;
-    void *mpgtag;
-    unsigned int sortkey;
-    int local_mtx_id;
-    short view_mtx_id;
-    short scissor_id;
-    short xyoffset_id;
-    char pad_0x2A[2];
-    void *light_addr;
-    unsigned int flags;
-    int mtl_tid;
 };
 
 typedef struct {
@@ -118,13 +102,6 @@ struct nuzbstate_s {
     char pad[0x24];
     int zmask;
 };
-
-typedef struct NuMtl {
-    char pad_0x000[0x1A4];
-    int tid;
-    char pad_0x1A8[0x1C];
-    signed char tex_mode;
-} NuMtl;
 
 struct nulocalmtxpkt_s {
     char tag[0x10];
@@ -188,12 +165,6 @@ extern char *rndrstream_free;
 extern int D_0062EA74;
 #define rndrstream_buffer_index D_0062EA74
 
-extern void NuRndrInitStreams(void);
-
-extern void NuRndrStreamResetStreams(int flag);
-
-extern struct nurndrstream_s *NuRndrStreamAllocStream(unsigned int sortkey, void *mpgtag, unsigned int flags);
-
 extern struct nurtlight_s rndrstream_rt_light_buffer;
 
 extern void *rndrstream_rt_light_addr[1];
@@ -212,12 +183,6 @@ extern char D_00289020[];
 extern void *vpDmaTag_Call(void *cur, void *microcode);
 
 extern void *vpDmaTag_Next(void *cur, void *mode);
-
-extern void NuTexAccomodateRS(struct nurndrstream_s *stream, int tid);
-
-extern void *NuTexSet(void *dma, int tid, signed char mode);
-
-extern void *NuTexGetTex0(int tid);
 
 extern struct nuzbstate_s D_0067A600;
 #define zbstate_pkt D_0067A600
@@ -301,14 +266,6 @@ extern struct numtx_s D_0067A3D0;
 
 extern struct numtx_s D_0067A470;
 #define vu1_clip_view_mtx D_0067A470
-
-extern int NuMtlValid(NuMtl *mtl);
-
-extern void *NuMtlGetStateBlockDma(NuMtl *mtl);
-
-extern int NuMtlGetZupd(NuMtl *mtl);
-
-extern void *NuRndrStreamAddZBState(void *stream, int index);
 
 extern u8 *vpDmaTag_CntEx(void *packet, unsigned int vif0, unsigned int vif1);
 
@@ -453,8 +410,6 @@ extern int D_0062EAB0;
 extern int D_0063302C;
 #define local_mtx_clip D_0063302C
 
-extern void *NuRndrStreamPrependMPG(struct nurndrstream_s *stream, void *tag);
-
 
 void NuRndrInitStreams(void)
 {
@@ -490,15 +445,15 @@ void NuRndrInitStreams(void)
     NuRndrStreamResetStreams(1);
     sys = rndrstream_system;
     NuRndrStreamLink(sys);
-    sys->cur = vpDmaTag_CntEx(sys->cur, 0x13000000, 0x50000000) - 4;
-    sys->cur = vtBeginDirect(sys->cur, 0);
-    sys->cur = gsBeginGifPacket(sys->cur, 0, 1, 0, 0, 0, 1, 0xE);
-    *((u64 *)sys->cur)++ = 0;
-    *((u64 *)sys->cur)++ = 0x1A;
-    sys->cur = gsCloseGifPacket(sys->cur);
-    sys->cur = vtCloseDirect(sys->cur);
-    vpDmaTag_Close(sys->cur);
-    rndrstream_free = vpDmaTag_Next(sys->cur, 0);
+    sys->cur.b = vpDmaTag_CntEx(sys->cur.b, 0x13000000, 0x50000000) - 4;
+    sys->cur.b = vtBeginDirect(sys->cur.b, 0);
+    sys->cur.b = gsBeginGifPacket(sys->cur.b, 0, 1, 0, 0, 0, 1, 0xE);
+    *((u64 *)sys->cur.b)++ = 0;
+    *((u64 *)sys->cur.b)++ = 0x1A;
+    sys->cur.b = gsCloseGifPacket(sys->cur.b);
+    sys->cur.b = vtCloseDirect(sys->cur.b);
+    vpDmaTag_Close(sys->cur.b);
+    rndrstream_free = vpDmaTag_Next(sys->cur.b, 0);
     NuMtxSetIdentity(&zfix_mtx);
 }
 
@@ -540,7 +495,7 @@ struct nurndrstream_s *NuRndrStreamAllocStream(unsigned int sortkey, void *mpgta
         stream->mtl = 0;
         stream->sortkey = sortkey;
         stream->start = 0;
-        stream->cur = 0;
+        stream->cur.b = 0;
         stream->txtr_start = 0;
         stream->txtr_end = 0;
         stream->local_mtx_id = -2;
@@ -593,7 +548,7 @@ void NuRndrStreamFlush(void)
                 rndrstream_end[0]->addr = stream->start;
                 rndrstream_end[0]->id = 0x20;
             }
-            rndrstream_end[0] = (NuDmaTag *)stream->cur;
+            rndrstream_end[0] = (NuDmaTag *)stream->cur.b;
         }
         if (stream->txtr_start) {
             if (txtrstream_start[0] == 0) {
@@ -621,7 +576,7 @@ void NuRndrStreamFlush(void)
         do {
             s->mtl = 0;
             s->start = 0;
-            s->cur = 0;
+            s->cur.b = 0;
             s->txtr_start = 0;
             s->txtr_end = 0;
             s->local_mtx_id = -2;
@@ -647,16 +602,16 @@ void NuRndrStreamSetMisc(struct nurndrstream_s *stream)
     u8 *pkt;
 
     if (stream->scissor_id != rndrstream_scissor_id || stream->xyoffset_id != rndrstream_xyoffset_id) {
-        stream->cur = vpDmaTag_CntEx(stream->cur, 0x13000000, 0x50000000) - 4;
-        stream->cur = vtBeginDirect(stream->cur, 0);
-        stream->cur = gsBeginGifPacket(stream->cur, 0, 1, 0, 0, 0, 1, 0xE);
-        *((u64 *)stream->cur)++ = rndrstream_offset;
-        *((u64 *)stream->cur)++ = 0x18;
-        *((u64 *)stream->cur)++ = rndrstream_scissor;
-        *((u64 *)stream->cur)++ = 0x40;
-        stream->cur = gsCloseGifPacket(stream->cur);
-        stream->cur = vtCloseDirect(stream->cur);
-        stream->cur = vpDmaTag_Close(stream->cur);
+        stream->cur.b = vpDmaTag_CntEx(stream->cur.b, 0x13000000, 0x50000000) - 4;
+        stream->cur.b = vtBeginDirect(stream->cur.b, 0);
+        stream->cur.b = gsBeginGifPacket(stream->cur.b, 0, 1, 0, 0, 0, 1, 0xE);
+        *((u64 *)stream->cur.b)++ = rndrstream_offset;
+        *((u64 *)stream->cur.b)++ = 0x18;
+        *((u64 *)stream->cur.b)++ = rndrstream_scissor;
+        *((u64 *)stream->cur.b)++ = 0x40;
+        stream->cur.b = gsCloseGifPacket(stream->cur.b);
+        stream->cur.b = vtCloseDirect(stream->cur.b);
+        stream->cur.b = vpDmaTag_Close(stream->cur.b);
         stream->scissor_id = rndrstream_scissor_id;
         stream->xyoffset_id = rndrstream_xyoffset_id;
     }
@@ -674,12 +629,12 @@ void NuRndrStreamSetMisc(struct nurndrstream_s *stream)
             ((NuDmaTag *)pkt)[-1].qwc = 7;
         }
         if (rndrstream_rt_light_addr[0] == 0) {
-            rndrstream_rt_light_addr[0] = stream->cur + 0x10;
-            NuMemCopy128(stream->cur, &rndrstream_rt_light_buffer, 8);
-            stream->cur += 0x80;
+            rndrstream_rt_light_addr[0] = stream->cur.b + 0x10;
+            NuMemCopy128(stream->cur.b, &rndrstream_rt_light_buffer, 8);
+            stream->cur.b += 0x80;
             rndrstream_rt_light_buffer.ref.tag.addr = rndrstream_rt_light_addr[0];
         } else if (stream->light_addr != rndrstream_rt_light_addr[0]) {
-            *((NuDmaTagQw *)stream->cur)++ = rndrstream_rt_light_buffer.ref;
+            *((NuDmaTagQw *)stream->cur.b)++ = rndrstream_rt_light_buffer.ref;
         }
         stream->light_addr = rndrstream_rt_light_addr[0];
         break;
@@ -694,12 +649,12 @@ void NuRndrStreamSetMisc(struct nurndrstream_s *stream)
             ((NuDmaTag *)pkt)[-1].qwc = 5;
         }
         if (rndrstream_spec_addr == 0) {
-            rndrstream_spec_addr = stream->cur + 0x10;
-            NuMemCopy128(stream->cur, &rndrstream_spec, 6);
-            stream->cur += 0x60;
+            rndrstream_spec_addr = stream->cur.b + 0x10;
+            NuMemCopy128(stream->cur.b, &rndrstream_spec, 6);
+            stream->cur.b += 0x60;
             rndrstream_spec.ref.tag.addr = rndrstream_spec_addr;
         } else if (stream->light_addr != rndrstream_spec_addr) {
-            *((NuDmaTagQw *)stream->cur)++ = rndrstream_spec.ref;
+            *((NuDmaTagQw *)stream->cur.b)++ = rndrstream_spec.ref;
         }
         stream->light_addr = rndrstream_spec_addr;
         break;
@@ -714,12 +669,12 @@ void NuRndrStreamSetMisc(struct nurndrstream_s *stream)
             ((NuDmaTag *)pkt)[-1].qwc = 4;
         }
         if (rndrstream_fx_mtx_addr[0] == 0) {
-            rndrstream_fx_mtx_addr[0] = stream->cur + 0x10;
-            NuMemCopy128(stream->cur, &rndrstream_fx_mtx, 5);
-            stream->cur += 0x50;
+            rndrstream_fx_mtx_addr[0] = stream->cur.b + 0x10;
+            NuMemCopy128(stream->cur.b, &rndrstream_fx_mtx, 5);
+            stream->cur.b += 0x50;
             rndrstream_fx_mtx.ref.tag.addr = rndrstream_fx_mtx_addr[0];
         } else if (stream->light_addr != rndrstream_fx_mtx_addr[0]) {
-            *((NuDmaTagQw *)stream->cur)++ = rndrstream_fx_mtx.ref;
+            *((NuDmaTagQw *)stream->cur.b)++ = rndrstream_fx_mtx.ref;
         }
         stream->light_addr = rndrstream_fx_mtx_addr[0];
         break;
@@ -748,9 +703,9 @@ int NuRndrStreamSetLocalMtx(struct nurndrstream_s *stream)
             local_mtx_pkt.mode = 0;
             break;
         }
-        rndrstream_last_mtx[0] = stream->cur;
-        NuMemCopy128(stream->cur, &local_mtx_pkt, local_mtx_pkt_size >> 4);
-        stream->cur += local_mtx_pkt_size;
+        rndrstream_last_mtx[0] = stream->cur.b;
+        NuMemCopy128(stream->cur.b, &local_mtx_pkt, local_mtx_pkt_size >> 4);
+        stream->cur.b += local_mtx_pkt_size;
         stream->local_mtx_id = rndrstream_local_mtx_id;
         done = 1;
     }
@@ -1020,7 +975,7 @@ u64 *NuRndrStreamGetOffset(void)
 void NuRndrStreamResetStream(struct nurndrstream_s *stream, int flag)
 {
     stream->start = 0;
-    stream->cur = 0;
+    stream->cur.b = 0;
     stream->txtr_start = 0;
     stream->txtr_end = 0;
     if (flag) {
@@ -1048,7 +1003,7 @@ void NuRndrStreamResetStreams(int flag)
         do {
             s->mtl = 0;
             s->start = 0;
-            s->cur = 0;
+            s->cur.b = 0;
             s->txtr_start = 0;
             if (flag) {
                 s->txtr_end = 0;
@@ -1096,7 +1051,7 @@ void NuRndrStreamFxMPG(int mode)
         microcode = (mode != 1) ? D_00289020 : D_0028CFF0;
     }
     if (rndrstream_fx_microcode != microcode) {
-        rndrstream_fx->cur = vpDmaTag_Call(rndrstream_fx->cur, microcode);
+        rndrstream_fx->cur.b = vpDmaTag_Call(rndrstream_fx->cur.b, microcode);
         rndrstream_fx_microcode = microcode;
     }
 }
@@ -1112,7 +1067,7 @@ void *NuRndrStreamAlloc(int qwords)
 }
 
 
-int NuRndrStreamAddMtl(struct nurndrstream_s *stream, NuMtl *mtl)
+int NuRndrStreamAddMtl(struct nurndrstream_s *stream, struct numtl_s *mtl)
 {
     if (!NuMtlValid(mtl)) {
         return 0;
@@ -1121,20 +1076,20 @@ int NuRndrStreamAddMtl(struct nurndrstream_s *stream, NuMtl *mtl)
         if (stream->mtl_tid != mtl->tid) {
             stream->mtl_tid = mtl->tid;
             NuTexAccomodateRS(stream, mtl->tid);
-            stream->cur = NuTexSet(stream->cur, mtl->tid, mtl->tex_mode);
+            stream->cur.b = NuTexSet(stream->cur.b, mtl->tid, mtl->ctxt);
         }
-        stream->cur = vpDmaTag_Call(stream->cur, NuMtlGetStateBlockDma(mtl));
-        stream->cur = NuRndrStreamAddZBState(stream->cur, NuMtlGetZupd(mtl));
+        stream->cur.b = vpDmaTag_Call(stream->cur.b, NuMtlGetStateBlockDma(mtl));
+        stream->cur.b = NuRndrStreamAddZBState(stream->cur.b, NuMtlGetZupd(mtl));
     }
     stream->mtl = mtl;
     return 1;
 }
 
 
-void *NuRndrStreamAddTex(struct nurndrstream_s *stream, int tid, signed char mode)
+u64 NuRndrStreamAddTex(struct nurndrstream_s *stream, int tid, signed char mode)
 {
     NuTexAccomodateRS(stream, tid);
-    stream->cur = NuTexSet(stream->cur, tid, mode);
+    stream->cur.b = NuTexSet(stream->cur.b, tid, mode);
     return NuTexGetTex0(tid);
 }
 
@@ -1161,10 +1116,10 @@ int NuRndrStreamSetViewMtx(struct nurndrstream_s *stream)
         return 0;
     }
     if ((stream->flags & 4) && view_mtx_pkt_size != 1) {
-        NuMemCopy128(stream->cur, view_mtx_pkt, view_mtx_pkt_size >> 4);
-        stream->cur += view_mtx_pkt_size;
-        NuMemCopy128(stream->cur, faceon_dir_pkt, 2);
-        stream->cur += 0x20;
+        NuMemCopy128(stream->cur.b, view_mtx_pkt, view_mtx_pkt_size >> 4);
+        stream->cur.b += view_mtx_pkt_size;
+        NuMemCopy128(stream->cur.b, faceon_dir_pkt, 2);
+        stream->cur.b += 0x20;
         stream->view_mtx_id = rndrstream_view_mtx_id;
         return 1;
     }
@@ -1180,9 +1135,9 @@ int NuRndrStreamSetViewMtxScissorClip(struct nurndrstream_s *stream)
     if (view_mtx_pkt_size == 1) {
         return 0;
     }
-    NuMemCopy128(stream->cur, clip_view_mtx_pkt, view_mtx_pkt_size >> 4);
+    NuMemCopy128(stream->cur.b, clip_view_mtx_pkt, view_mtx_pkt_size >> 4);
     stream->view_mtx_id = -2;
-    stream->cur += view_mtx_pkt_size;
+    stream->cur.b += view_mtx_pkt_size;
     return 1;
 }
 
@@ -1202,15 +1157,15 @@ int NuRndrStreamSetLocalMtxEx(struct nurndrstream_s *stream, int clip)
             local_mtx_pkt.mode = 0;
             break;
         }
-        rndrstream_last_mtx[0] = stream->cur;
-        NuMemCopy128(stream->cur, &local_mtx_pkt, local_mtx_pkt_size >> 4);
-        stream->cur += local_mtx_pkt_size;
+        rndrstream_last_mtx[0] = stream->cur.b;
+        NuMemCopy128(stream->cur.b, &local_mtx_pkt, local_mtx_pkt_size >> 4);
+        stream->cur.b += local_mtx_pkt_size;
         stream->local_mtx_id = rndrstream_local_mtx_id;
         if (clip) {
             if (testfclip) {
-                stream->cur = vpDmaTag_CntEx(stream->cur, 0x1400000E, 0x17000000);
+                stream->cur.b = vpDmaTag_CntEx(stream->cur.b, 0x1400000E, 0x17000000);
             } else {
-                stream->cur = vpDmaTag_CntEx(stream->cur, 0x1400000A, 0x17000000);
+                stream->cur.b = vpDmaTag_CntEx(stream->cur.b, 0x1400000A, 0x17000000);
             }
         }
         return 1;
