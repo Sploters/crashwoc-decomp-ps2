@@ -13,7 +13,7 @@ complete = false
 
 [[function]]
 id = "pal103:unit-0098:00201a38:StillLockedOnTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00201b70:DrawGlider"
@@ -45,11 +45,11 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:002041c8:DeadGliderCoco"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002043b8:ProcessGliderMovementWB"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00204588:MoveGlider"
@@ -65,7 +65,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00205548:FindZoffaRestartPoint"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:002056d8:ZoffaSmoke"
@@ -149,7 +149,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:00209c38:MovePlane"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00209dd0:FarmReset"
@@ -229,7 +229,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0098:0020fe00:CollideWithBattleShip"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0020ff90:InitBattleShip"
@@ -329,7 +329,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00214c68:ProcessWBIntro"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:00214de8:ProcessVehicleLevel"
@@ -565,15 +565,15 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c7d8:GetBattleShipBestTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021c938:GetGunBoatBestTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021caa0:GetZoffaBestTarget"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0098:0021cc00:PickGliderTarget"

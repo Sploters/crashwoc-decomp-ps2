@@ -264,6 +264,7 @@ extern float D_0062D91C;
 extern float D_0062D920;
 extern float D_0062D924;
 extern struct nuvec_s D_006B75A0;   /* fixed glider translation (level 0xD) */
+#define GliderAutoPosition D_006B75A0
 
 /* per-level glider model indices into CModel (-1 == none).  These live far
  * from $gp (retail uses %hi/%lo absolute loads); declare as incomplete arrays
@@ -306,7 +307,7 @@ void DrawGlider(struct creature_s *c)
     if (g->AutoPilot && (Level == 0xD)) {
         NuMtxSetRotationX(&mTEMP, lift * D_0062D91C);
         NuMtxRotateY(&mTEMP, 0);
-        NuMtxTranslate(&mTEMP, &D_006B75A0);
+        NuMtxTranslate(&mTEMP, &GliderAutoPosition);
     } else if (Level == 0x1A) {
         scale = D_0062D920;
         NuMtxSetRotationZ(&mTEMP, g->TiltZ * scale);
@@ -3509,7 +3510,7 @@ static inline void InitGliderBombs(void)
     memset(EnemyGliderBombs, 0, sizeof(EnemyGliderBombs));
 }
 
-extern struct zoffastart_s D_005A6C30[4];
+extern struct zoffastart_s D_005A6C30[16];
 #define ZoffaStartPoints D_005A6C30
 extern s32 D_006332A0;
 extern s32 D_006332A4;
@@ -3517,6 +3518,57 @@ extern s32 D_006332A8;
 #define ZoffaCollisionCounter D_006332A0
 #define ZoffaTeleportIndx D_006332A4
 #define CurrentAggressor D_006332A8
+
+extern struct nuvec_s D_0061F410;      /* {0.0f, 0.0f, -1.0f} */
+#define zoffa_view_dir D_0061F410
+
+/* Whether a respawn point is clear: away from the camera and from
+ * anything solid. */
+static inline s32 SafePosition(struct nuvec_s *pos)
+{
+    struct nuvec_s rel;
+    struct nuvec_s temp;
+    struct nuvec_s dir;
+
+    NuVecSub(&rel, pos, (struct nuvec_s *)&GameCam.m._30);
+    if (NuVecMag(&rel) < 10.0f) {
+        return 0;
+    }
+    dir = zoffa_view_dir;
+    NuVecMtxRotate(&dir, &dir, &GameCam.m);
+    /* As in the original, the facing test reads `temp`, which is never
+     * set; the rotated `dir` goes unused. */
+    if (NuVecDot(&rel, &temp) < 0.0f) {
+        return 0;
+    }
+    return SafeFromCollisions(pos);
+}
+
+/* A random respawn point for a Zoffa UFO, or 0 if the one picked is not
+ * safe; the pick is marked with a debug cross (white safe, red not). */
+struct zoffastart_s *FindZoffaRestartPoint(void)
+{
+    s32 j;
+    s32 safe;
+
+    j = (s32)(frand() * 16.0f);
+    while (j > 16) {
+        j -= 4;
+    }
+    while (j < 0) {
+        j += 16;
+    }
+    safe = SafePosition((struct nuvec_s *)&ZoffaStartPoints[j]);
+    if (safe != 0) {
+        DrawCross((struct nuvec_s *)&ZoffaStartPoints[j], 0xFFFFFF, 3.0f);
+    } else {
+        DrawCross((struct nuvec_s *)&ZoffaStartPoints[j], 0xFF0000, 3.0f);
+    }
+    if (safe != 0) {
+        return &ZoffaStartPoints[j];
+    }
+    return 0;
+}
 
 static inline void InitZoffaUFOs(void)
 {
@@ -3655,6 +3707,63 @@ extern f32 WBMINY;
 extern f32 WBTARGLIMX;
 extern f32 WBTARGLIMY;
 extern f32 WBLIMX;
+
+extern f32 WBTILTXSCALE;
+extern f32 WBTILTZSCALE;
+extern f32 WBBARRELSPEED;
+extern f32 WBBARRELSEEKSPEEDZERO;
+extern f32 WBBARRELSEEKSPEEDNONZERO;
+
+/* Weather boss level: the glider flies forward at a fixed speed, steered by
+ * its tilt and kept inside the play box; a barrel roll slides it sideways. */
+void ProcessGliderMovementWB(struct glider_s *glider)
+{
+    f32 dest;
+    struct nuvec_s temp;
+
+    if (WBIntroOn != 0) {
+        glider->Position = WBIntroGliderPos;
+        glider->Position.z = 0.0f;
+    } else {
+        if (glider->BarrelRoll == 0) {
+            glider->Velocity.z = -Level_GliderSpeed;
+            glider->Velocity.x = glider->TiltZ * WBTILTZSCALE;
+            glider->Velocity.y = glider->TiltX * WBTILTXSCALE;
+        }
+        NuVecScaleAccum(&glider->Position, &glider->Velocity, 0.02f);
+        if (glider->Position.x > WBLIMX) {
+            glider->Position.x = WBLIMX;
+        }
+        if (glider->Position.x < -WBLIMX) {
+            glider->Position.x = -WBLIMX;
+        }
+        if (glider->Position.y > WBMAXY) {
+            glider->Position.y = WBMAXY;
+        }
+        if (glider->Position.y < WBMINY) {
+            glider->Position.y = WBMINY;
+        }
+        if (glider->BarrelRoll > 1) {
+            dest = -WBBARRELSPEED;
+        } else if (glider->BarrelRoll <= -2) {
+            dest = WBBARRELSPEED;
+        } else {
+            dest = 0.0f;
+        }
+        if (dest == 0.0f) {
+            SeekHalfLife(&glider->BarrelSpeedX, dest, WBBARRELSEEKSPEEDZERO,
+                         0.02f);
+        } else {
+            SeekHalfLife(&glider->BarrelSpeedX, dest,
+                         WBBARRELSEEKSPEEDNONZERO, 0.02f);
+        }
+        temp = SetNuVec(glider->BarrelSpeedX, 0.0f, 0.0f);
+        NuVecRotateY(&temp, &temp, (s32)(glider->AngleY * 182.04445f));
+        glider->Position.x += temp.x * 0.02f;
+        glider->Position.y += temp.y * 0.02f;
+        glider->Position.z += temp.z * 0.02f;
+    }
+}
 
 void ProcessWeatherBossTarget(void)
 {
@@ -4233,4 +4342,55 @@ f32 GetBigGunBestTarget(f32 best, struct nuvec_s **pos,
         }
     }
     return best;
+}
+
+extern void GameSfx(s32 sfx, struct nuvec_s *pos);
+extern struct nuvec_s ZepplinGliderOffset;
+
+/* The zeppelin carries the glider until its timer runs out, then lets go
+ * with a jolt and flies on. */
+void MovePlane(struct plane_s *plane)
+{
+    s32 action;
+    s32 grabglider;
+
+    grabglider = 0;
+    if (plane->active != 0) {
+        action = plane->actionstatus;
+        switch (action) {
+        case 0:
+            grabglider = 1;
+            Level_GliderCurrentCeiling = 36.0f;
+            if (ProcessTimer(&plane->actiontimer) != 0) {
+                plane->actionstatus = 1;
+            }
+            break;
+        case 1:
+            plane->actiontimer = 1.0f;
+            plane->actionstatus = 2;
+            PlayerGlider.ForceTurn = action;
+            GameSfx(0x82, &player->obj.pos);
+            NewRumble(&player->rumble, 0x7F);
+            NewBuzz(&player->rumble, 5);
+            break;
+        case 2:
+            if (ProcessTimer(&plane->actiontimer) != 0) {
+                plane->actionstatus = 3;
+            }
+            break;
+        case 3:
+            plane->active = 0;
+            break;
+        }
+        NuVecScaleAccum(&plane->pos, &plane->vel, 0.02f);
+        PlayerGlider.AutoPilot = grabglider;
+        if (grabglider != 0) {
+            NuVecAdd(&PlayerGlider.Position, &plane->pos, &ZepplinGliderOffset);
+            GliderAutoPosition = PlayerGlider.Position;
+            PlayerGlider.TiltX = 0.0f;
+            PlayerGlider.TiltZ = 0.0f;
+            PlayerGlider.Velocity = plane->vel;
+        }
+        MyAnimateModelNew(&plane->draw, 0.59999996f);
+    }
 }

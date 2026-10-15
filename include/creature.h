@@ -462,14 +462,15 @@ struct glider_s {
     f32 DestTiltZ;             /* 0x7C */
     f32 AngleY;                /* 0x80  heading (NuMtxRotateY) */
     char pad_84[0x98 - 0x84];
-    s32 BarrelRoll;            /* 0x98 */
-    char pad_9C[0xA4 - 0x9C];
+    s32 BarrelRoll;            /* 0x98  >1 rolling one way, <-1 the other */
+    char pad_9C[0xA0 - 0x9C];
+    f32 BarrelSpeedX;          /* 0xA0  sideways speed of a barrel roll */
     s32 TerminalDive;          /* 0xA4 */
     char pad_A8[0xAC - 0xA8];
     f32 FireTimer;             /* 0xAC */
     f32 HitTimer;              /* 0xB0 */
     s32 AutoPilot;             /* 0xB4 */
-    char pad_B8[0xBC - 0xB8];
+    s32 ForceTurn;             /* 0xB8 */
     s32 HitPoints;             /* 0xBC  0..100 */
     char LocatorList[16];      /* 0xC0 */
     f32 LocatorTime[16];       /* 0xD0 */
