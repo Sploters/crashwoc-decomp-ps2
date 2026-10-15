@@ -35,6 +35,7 @@ Known quirk: the 32-bit EE GCC gets EOVERFLOW stat-ing bind-mounted sources, so 
 python -m unittest discover -s tests -v            # all unit tests
 python -m unittest tests.test_status -v            # one test module
 python tools/status.py --check                     # validate status manifests
+python tools/check_types.py --check                # type census ratchet (docs/decomp_agent.md)
 
 # Registry / target gates (native, need orig/)
 python tools/verify_target.py                      # hash + ELF structure vs committed registry
@@ -50,6 +51,8 @@ python tools/dispatch.py ninja check               # current + verify-loaded + v
 python tools/dispatch.py ninja verify-loaded       # full loaded image must reproduce retail SHA
 python tools/dispatch.py ninja verify-promoted     # re-verify every "matching" claim from scratch
 python tools/dispatch.py ninja report              # objdiff-cli progress report
+python tools/check_codegen.py --build --snapshot   # before a type refactor (on the base)
+python tools/check_codegen.py --build --compare    # after it: must report 0 objects differ
 python tools/dispatch.py ninja report-public       # whitelist-sanitized report (decomp.dev)
 
 # Promotion (the only writer of state = "matching")

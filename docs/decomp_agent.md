@@ -215,6 +215,44 @@ retail extern D_... reference instead.
 Do not mark a unit complete = true while it owns data ranges unless
 Data-from-C verification supports that unit/range.
 
+### Types and shared headers
+
+Types are moving from per-unit copies into shared headers in `include/`, with
+layouts that also hold on a 64-bit host. If a header in `include/` already
+defines a struct, include it instead of copying the struct into the unit.
+
+Two tools gate this work:
+
+- `python tools/check_types.py` counts duplicate structs and typedefs, `long`,
+  varargs hacks, byte-offset casts, `sizeof` pads, local libc prototypes and
+  conflicting externs/prototypes (`--metric <name>` lists the sites).
+  `validate.yml` runs `--check` against `config/type_census.toml`, which fails
+  when a count changes in either direction; record the change with `--update`
+  in the same commit.
+- `python tools/check_codegen.py --build --snapshot` on the base, then
+  `--build --compare` after the change, proves a refactor changed no code in
+  any `current`, `matching`, `equivalent` or `report-current` object
+  (`ninja check` only covers `matching` functions).
+
+Rules for type refactors:
+
+1. Moving or renaming types, externs or prototypes changes no code:
+   `check_codegen.py --compare` ends at 0.
+2. Offsets and sizes of a struct moving into a shared header are measured with
+   the compiler, not taken from the `/* 0x.. */` comments.
+3. A unit's local copy of a tag is removed in the same commit that includes the
+   header defining it.
+4. Merging two views of a struct is a type decision (`s16`/`u16`, pointer/`u32`,
+   `s8`/`u8` change code); line them up by offset and let the codegen check
+   decide.
+5. Where retail provably used an implicit declaration or a mismatched
+   prototype, the PS2 build keeps it; host-only fixes go behind a guard.
+6. Headers hold types, `extern` declarations and prototypes only, and no
+   alias `#define`s (`#define fseed D_0062EA68` would rename every `fseed` in
+   every includer); the readable alias stays in the `.c` file.
+7. `long` is 8 bytes under both compilers (pointers are 4): replace it with
+   `s64`/`u64`, never `int`.
+
 ## CLI quick reference
 
 ```bash

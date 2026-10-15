@@ -31,6 +31,9 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
+      - name: Type census ratchet
+        run: python tools/check_types.py --check
+
       - name: Committed JSON and TOML parse
         run: |
           python - <<'EOF'

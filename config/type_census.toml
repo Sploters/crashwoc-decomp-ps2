@@ -1,0 +1,15 @@
+# Type census ratchet (tools/check_types.py). Counts only; regenerate
+# with `python tools/check_types.py --update` in the change that moves them.
+
+schema = 1
+
+[metrics]
+struct_redefinitions = 481
+typedef_redefinitions = 208
+long_types = 18
+varargs_hacks = 4
+offset_casts = 20
+sizeof_pads = 1
+libc_prototypes = 206
+extern_conflicts = 71
+prototype_conflicts = 374
