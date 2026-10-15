@@ -2317,6 +2317,82 @@ extern void SeekAngHalfLife360f(f32 *dest, f32 target, f32 halflife, f32 dt);
 extern void MyGameSfxLoop(s32 id, struct nuvec_s *pos, s32 vol);
 extern short CRASHTEROIDSSATELLITEVOL;
 
+/* Only the fields of crate.c's struct CrateCube that this file reads. */
+struct CrateCube {
+    char pad_00[0x10];
+    struct nuvec_s pos;        /* 0x10 */
+    char pad_1C[0x38 - 0x1C];
+    u16 flags;                 /* 0x38 */
+};
+extern struct CrateCube *temp_pCrate;
+extern s32 temp_crate_type;
+extern f32 CRATEBALLOONRADIUS;
+extern f32 CRATEBALLOONOFFSET;
+extern s32 HitCrates(struct obj_s *obj, s32 destroy);
+extern struct CrateCube *HitCrateBalloons(struct nuvec_s *pos, f32 radius);
+extern s32 HitItems(struct obj_s *obj);
+extern struct creature_s *FindClock(void);
+extern void StartTimeTrial(struct nuvec_s *pos, s32 clock);
+
+void GliderBombsHitThings(struct glider_s *Glider)
+{
+    struct obj_s obj;
+    s32 i;
+    f32 r;
+    struct nuvec_s v;
+    struct creature_s *c;
+    struct gliderbomb_s *bomb;
+    struct gliderbomb_s *bombs;
+
+    obj.bot = -0.3f;
+    obj.top = 0.3f;
+    obj.attack = 0;
+    obj.SCALE = 1.0f;
+    obj.RADIUS = 0.3f;
+    obj.pLOCATOR = 0;
+    bombs = GliderBombs;
+    for (i = 0; i < 10; i++) {
+        bomb = &bombs[i];
+        if (bomb->life != 0) {
+            obj.pos = bomb->pos;
+            if (HitCrates(&obj, 1) != 0) {
+                AddGameDebris(0x1A, &obj.pos);
+                AddScreenWumpa(temp_pCrate->pos.x, temp_pCrate->pos.y + 0.25f,
+                               temp_pCrate->pos.z, 1);
+                bomb->life = 0;
+                if (temp_crate_type == 5) {
+                    Glider->HitPoints += 50;
+                    if (Glider->HitPoints > 100) {
+                        Glider->HitPoints = 100;
+                    }
+                }
+            } else if (HitCrateBalloons(&obj.pos, obj.RADIUS) != 0) {
+                AddGameDebris(0x1A, &obj.pos);
+                AddScreenWumpa(temp_pCrate->pos.x, temp_pCrate->pos.y + CRATEBALLOONOFFSET,
+                               temp_pCrate->pos.z, 1);
+                bomb->life = 0;
+                temp_pCrate->flags = (temp_pCrate->flags | 0x400) ^ 0x400;
+            } else if (HitItems(&obj) != 0) {
+                AddGameDebris(0x1A, &obj.pos);
+                bomb->life = 0;
+            } else {
+                c = FindClock();
+                if (c != 0) {
+                    v.x = c->obj.pos.x;
+                    v.y = c->obj.pos.y + CRATEBALLOONOFFSET;
+                    v.z = c->obj.pos.z;
+                    r = obj.RADIUS + CRATEBALLOONRADIUS;
+                    if (NuVecDistSqr(&obj.pos, &v, 0) < r * r) {
+                        AddGameDebris(0x1A, &obj.pos);
+                        bomb->life = 0;
+                        StartTimeTrial(&c->obj.pos, 1);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void ProcessSatellite(struct satellite_s *sat)
 {
     s32 id;

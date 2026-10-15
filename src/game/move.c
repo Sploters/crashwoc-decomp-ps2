@@ -807,6 +807,57 @@ void AnimateSNOWBOARD(struct creature_s *plr) {
     }
 }
 
+extern void GameSfxLoop(s32 sfx, struct nuvec_s *pos);
+extern s32 gamesfx_pitch;
+extern s32 ExtraMoves;
+
+void MoveSWIMMING(struct creature_s *plr, struct pad_s *pad) {
+    struct MoveInfo *minfo = &SwimmingMoveInfo;
+    s32 SPIN;
+
+    SPIN = pad->paddata & 0xA8;
+    GameSfxLoop(0x27, &plr->obj.pos);
+    if (plr->tap == 0 && (pad->buttons & 0x40) != 0) {
+        plr->tap = 10;
+        gamesfx_pitch = 0x583;
+        GameSfx(0x28, &plr->obj.pos);
+    }
+    if (plr->spin_wait != 0) {
+        plr->spin_wait--;
+    }
+    if (plr->spin != 0 && plr->spin_frame < plr->spin_frames) {
+        plr->spin_frame++;
+    }
+    if (SPIN != 0) {
+        if (plr->spin == 0) {
+            plr->spin_frame = 0;
+            plr->spin = 1;
+            plr->spin_frames = minfo->SPINFRAMES + minfo->SPINRESETFRAMES;
+            plr->spin_wait = minfo->SUPERSPINWAITFRAMES;
+            GameSfx(0x28, &plr->obj.pos);
+        } else if ((ExtraMoves != 0 || (Game.powerbits & 4) != 0) && plr->spin < 7) {
+            if (plr->spin_wait != 0 && (plr->spin & 1) == 0) {
+                plr->spin++;
+                plr->spin_frames += minfo->SUPERSPINFRAMES;
+                plr->spin_wait = minfo->SUPERSPINWAITFRAMES;
+                GameSfx(0x28, &plr->obj.pos);
+            }
+        }
+    } else if (plr->spin_frame == plr->spin_frames) {
+        plr->spin = 0;
+    } else if ((ExtraMoves != 0 || (Game.powerbits & 4) != 0) && (plr->spin & 1) != 0) {
+        plr->spin++;
+    }
+    plr->obj.attack = 0;
+    if (plr->spin != 0 &&
+        plr->spin_frame < plr->spin_frames - plr->OnFootMoveInfo->SPINRESETFRAMES) {
+        plr->obj.attack = 2;
+    }
+    if (plr->obj.mask != 0 && plr->obj.mask->active > 2) {
+        plr->obj.attack |= 0x80;
+    }
+}
+
 void AnimateSWIMMING(struct creature_s *plr) {
     struct MoveInfo *info = &SwimmingMoveInfo;
     u64 d;
@@ -1004,6 +1055,81 @@ void ResetGates(void) {
             gate_bits = 0;
             if (Level == 5) {
                 bonusgem_ok = 0;
+            }
+        }
+    }
+}
+
+extern char tbuf[];
+extern char D_006286E0[]; /* "player_trigger_%.2i_" */
+extern struct spline_s *NuSplineFindPartial(struct nugscn_s *scene, char *name, char *txt);
+extern s32 NuSpecialFind(struct nugscn_s *scene, struct nuhspecial_s *special, char *name);
+
+/* Player trigger splines are named "player_trigger_NN_" followed by the
+ * names of up to 16 objects to animate, separated by 'x'. */
+void InitPlayerEvents(void) {
+    struct plrevent_s *ev;
+    char name[256];
+    char objname[32];
+    char c;
+    s32 i;
+    s32 j;
+    s32 i_txt;
+    s32 length;
+    s32 count;
+    struct nuvec_s *p0;
+    struct nuvec_s *p1;
+
+    if (world_scene[0] == 0) {
+        return;
+    }
+    ev = PlrEvent;
+    for (i = 0; i < 8; i++, ev++) {
+        ev->spl = 0;
+        ev->triggered = 0;
+        sprintf(tbuf, D_006286E0, i);
+        i_txt = strlen(tbuf);
+        ev->spl = NuSplineFindPartial(world_scene[0], tbuf, name);
+        if (ev->spl == 0) {
+            continue;
+        }
+        if (ev->spl->len != 2) {
+            ev->spl = 0;
+        }
+        if (ev->spl == 0) {
+            continue;
+        }
+        p0 = (struct nuvec_s *)ev->spl->pts;
+        p1 = (struct nuvec_s *)(ev->spl->pts + ev->spl->ptsize);
+        ev->pos.x = (p0->x + p1->x) * 0.5f;
+        ev->pos.y = (p0->y + p1->y) * 0.5f;
+        ev->pos.z = (p0->z + p1->z) * 0.5f;
+        GetALONG(&ev->pos, 0, -1, -1, 1);
+        ev->iRAIL = temp_iRAIL;
+        ev->iALONG = temp_iALONG;
+        ev->fALONG = temp_fALONG;
+        for (j = 0; j < 16; j++) {
+            ev->obj[j].special = 0;
+        }
+        count = 0;
+        length = strlen(name);
+        j = 0;
+        for (; i_txt < length; i_txt++) {
+            c = name[i_txt];
+            if (c == 'x' || i_txt == length - 1) {
+                if (i_txt == length - 1) {
+                    objname[j++] = c;
+                }
+                objname[j] = 0;
+                if (NuSpecialFind(world_scene[0], &ev->obj[count], objname) != 0) {
+                    count++;
+                    if (count == 16) {
+                        break;
+                    }
+                }
+                j = 0;
+            } else {
+                objname[j++] = c;
             }
         }
     }
