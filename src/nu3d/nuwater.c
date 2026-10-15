@@ -17,12 +17,11 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-typedef struct NuColour3 {
-    float r;
-    float g;
-    float b;
-} NuColour3;
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nurand.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 
 typedef struct NuMtlAttrib {
     u32 : 32;
@@ -61,28 +60,8 @@ typedef struct NuWaterFx {
     float height;
 } NuWaterFx;
 
-typedef struct NuVec {
-    float x;
-    float y;
-    float z;
-} NuVec;
-
-typedef struct NuVec4 {
-    float x;
-    float y;
-    float z;
-    float w;
-} NuVec4;
-
-typedef struct NuMtx {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-} NuMtx;
-
 typedef struct NuCamera {
-    NuMtx mtx;
+    struct numtx_s mtx;
 } NuCamera;
 
 typedef struct NuRndrStream {
@@ -105,7 +84,7 @@ typedef struct NuMtl {
     };
     NuMtlAttrib2 attrib2;
     u8 pad178[0x8];
-    NuColour3 diffuse;
+    struct nucolour3_s diffuse;
     NuMtlFx fx1;
     NuMtlFx fx2;
     NuMtlFx fx3;
@@ -129,7 +108,7 @@ typedef struct NuGobj {
 } NuGobj;
 
 typedef struct NuInstance {
-    NuMtx mtx;
+    struct numtx_s mtx;
     int objid;
     int flags;
     u8 pad48[0x8];
@@ -154,7 +133,7 @@ typedef struct NuTexSpec {
 } NuTexSpec;
 
 typedef struct WaterTable {
-    NuVec4 wave[32];
+    struct nuvec4_s wave[32];
     float fx1;
     float fx4;
 } WaterTable;
@@ -167,17 +146,11 @@ extern int NuTexGetReqSize(int tid, int level);
 extern int NuTexReserve(int size);
 extern void NuTexAssignAddr(int tid, int addr);
 extern void NuTexUnReserve(void);
-extern int NuPower2(int value);
 extern int NuRndrBeginScene(int target);
 extern void NuRndrEndScene(void);
 extern void NuRndrRectUV2di(int x, int y, int w, int h, float u0, float v0, float u1, float v1,
                             u32 colour, NuMtl *mtl);
 extern void NuRndrGobj(NuGobj *gobj, NuInstance *inst);
-extern void NuMtxInvR(NuMtx *dst, NuMtx *src);
-extern void NuMtxScale(NuMtx *m, NuVec *scale);
-extern void NuVecMtxTransformH(NuVec *dst, NuVec *src, NuMtx *m);
-extern void NuRandSeed(int seed);
-extern float NuRandFloat(void);
 extern void NuRndrStreamLink(NuRndrStream *stream);
 extern u32 *vpDmaTag_Cnt(u32 *cur);
 extern u32 *vpDmaTag_Close(u32 *cur);
@@ -371,7 +344,7 @@ void fixNewMaterials(void) {
 void fixMaterials(void) {
     NuMtl *mtl;
     NuMtl *layer;
-    NuColour3 diffuse;
+    struct nucolour3_s diffuse;
     int fxid;
     int i;
     int width;
@@ -502,10 +475,10 @@ void NuWaterInit(NuGScn *scene) {
 
 
 void animateWaterTables(float scale, float time) {
-    NuVec wave;
-    NuVec pos;
-    NuMtx mtx;
-    NuVec mtxscale = {0.5f, 0.5f, 0.5f};
+    struct nuvec_s wave;
+    struct nuvec_s pos;
+    struct numtx_s mtx;
+    struct nuvec_s mtxscale = {0.5f, 0.5f, 0.5f};
     NuMtl *mtl;
     NuRndrStream *stream;
     float *table;
@@ -542,7 +515,7 @@ void animateWaterTables(float scale, float time) {
         *stream->cur++ = 0x10000000;
         *stream->cur++ = 0x6C2001B2;
         for (j = 0; j < 32; j++) {
-            *((NuVec4 *)stream->cur)++ = *(NuVec4 *)table;
+            *((struct nuvec4_s *)stream->cur)++ = *(struct nuvec4_s *)table;
             table += 4;
         }
         stream->cur = vpDmaTag_Close(stream->cur);
@@ -552,10 +525,10 @@ void animateWaterTables(float scale, float time) {
 
 
 void animateWater(float scale, float time) {
-    NuVec wave;
-    NuVec pos;
-    NuMtx mtx;
-    NuVec mtxscale = {0.5f, 0.5f, 0.5f};
+    struct nuvec_s wave;
+    struct nuvec_s pos;
+    struct numtx_s mtx;
+    struct nuvec_s mtxscale = {0.5f, 0.5f, 0.5f};
     NuMtl *mtl;
     NuRndrStream *stream;
     float amp;

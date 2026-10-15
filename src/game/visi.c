@@ -10,6 +10,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/numathtypes.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern void NuMemFreeFn(void *ptr, char *file, int line);
@@ -89,13 +92,6 @@ struct nugscn_s {
     struct nugspline_s *splines;
 };
 
-struct nuplane_s {
-    float a;
-    float b;
-    float c;
-    float d;
-};
-
 /* One visibility zone: the instances to show while inside spline sp. */
 struct visidat_s {
     struct nugspline_s *sp;
@@ -135,8 +131,6 @@ static inline int PtInsideSpline(struct nuvec_s *wpos, struct nugspline_s *sp)
     }
     return n & 1;
 }
-
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
 
 /* Counts the instances with a gobj centred inside spline sp, storing them in
    op when it is given. */

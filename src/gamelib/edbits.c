@@ -18,14 +18,10 @@
 
 #include "nu_libc.h"
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
+#include "numath/numathtypes.h"
+#include "numath/nuvec.h"
 
 struct numtl_s;
-struct numtx_s;
 struct nuinstance_s;
 
 struct nurndrvtx_s {
@@ -75,8 +71,6 @@ extern float NuTrigTable[];
 extern void GameSfx(int sfx, struct nuvec_s *pos);
 extern void NuSoundPlay3d(struct nuvec_s *pos, int sfx, int volL, int volR, int pitch);
 extern void NuStrCpy(char *dst, char *src);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecRotateZ(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern int NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl, struct numtx_s *mtx);
 
 

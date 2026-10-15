@@ -106,17 +106,9 @@
 
 #include "nu_libc.h"
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 struct numtlattrib_s {
     unsigned long long : 32;
@@ -134,14 +126,6 @@ struct numtl_s {
     struct nucolour3_s diffuse;
     char pad18c[0x1A0 - 0x18C];
     float alpha;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    struct nuvec_s pos;
-    float _33;
 };
 
 struct camera_s {
@@ -582,9 +566,6 @@ extern void edobjConvertPathToAnim(int instance);
 extern void edcamSetPos(struct nuvec_s *pos);
 extern void edcamMove(struct pad_s *pad);
 extern void edcamGetPosAng(struct nuvec_s *pos, int *ax, int *ay);
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern float NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern struct nuvec_s *edmainQueryLocVec(void);
 extern float NuFsqrt(float x);
 extern char *edbitsGetSoundName(int id);
@@ -625,19 +606,11 @@ extern void NuFntPrintEx(int x, int y, int flags, char *fmt, ...);
 extern int NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, struct numtx_s *mtx);
 extern void NuRndrRect2di(int x, int y, int w, int h, int colour, void *mtl);
 extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl);
-extern void NuVecRotateZ(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern void eduiMenuRender(void *menu);
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *mtx);
 extern unsigned char object_switches[];
 extern struct numtx_s numtx_identity;
 extern int PlatImpactInfo(struct nuvec_s *norm, int *info0, int *info1);
-extern void NuMtxSetIdentity(struct numtx_s *m);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxRotateZ(struct numtx_s *m, int angle);
-extern void NuMtxRotateY(struct numtx_s *m, int angle);
-extern void NuMtxMul(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
 extern void NuAnimDataCalcTime(struct nuanimdata_s *animdata, float time,
                                struct nuanimtime_s *atime);
 extern void NuAnimCurveSetApplyToMatrix(struct nuanimcurveset_s *set, struct nuanimtime_s *atime,
@@ -740,7 +713,7 @@ extern void edobjcbCancelSoundTypeMenu(void);
 inline float edobjPlayerObjectDistance(int obj)
 {
     if (edmainQueryLocVec() != 0) {
-        return NuVecDist(&ObjectInstance[obj].mtx.pos, edmainQueryLocVec(), 0);
+        return NuVecDist((struct nuvec_s *)&ObjectInstance[obj].mtx._30, edmainQueryLocVec(), 0);
     }
     return 0.0f;
 }
@@ -771,9 +744,9 @@ void edobjUpdateObjects(float dt)
         }
         anim = inst->anim;
         NuMtxSetIdentity(&inst->mtx);
-        inst->mtx.pos.x = ObjectPath[i].waypoints[0].x;
-        inst->mtx.pos.y = ObjectPath[i].waypoints[0].y;
-        inst->mtx.pos.z = ObjectPath[i].waypoints[0].z;
+        inst->mtx._30 = ObjectPath[i].waypoints[0].x;
+        inst->mtx._31 = ObjectPath[i].waypoints[0].y;
+        inst->mtx._32 = ObjectPath[i].waypoints[0].z;
         if (anim != 0 && ObjectAnim[anim->anim_ix] != 0) {
             switch (ObjectPath[i].switch_type) {
             case 0:
@@ -905,7 +878,7 @@ void edobjUpdateObjects(float dt)
                 NuAnimCurveSetApplyToMatrix(animdata->chunks[atime.chunk]->animcurvesets[0], &atime,
                                             &animmtx);
                 anim->mtx = animmtx;
-                NuMtxTranslate(&anim->mtx, &inst->mtx.pos);
+                NuMtxTranslate(&anim->mtx, (struct nuvec_s *)&inst->mtx._30);
             }
         }
         for (j = 0; j < (int)dt; j++) {
@@ -1012,9 +985,9 @@ inline int edobjRenderCutoffTest(struct nuvec_s *pos)
     float dy;
     float dz;
 
-    dx = pos->x - global_camera.mtx.pos.x;
-    dy = pos->y - global_camera.mtx.pos.y;
-    dz = pos->z - global_camera.mtx.pos.z;
+    dx = pos->x - global_camera.mtx._30;
+    dy = pos->y - global_camera.mtx._31;
+    dz = pos->z - global_camera.mtx._32;
     if (NuFsqrt(dx * dx + dy * dy + dz * dz) > 40.0f) {
         return 0;
     }
@@ -1035,10 +1008,10 @@ void edobjRenderObjects(struct nugscn_s *scene)
             if ((edobj_particle_mode || edobj_sound_mode) && edobj_nearest == i) {
                 inst->flags.onscreen = NuRndrGScnObj(scene->gobjs[inst->id], &inst->mtx);
             } else if (anim != 0) {
-                if (edobjRenderCutoffTest(&anim->mtx.pos)) {
+                if (edobjRenderCutoffTest((struct nuvec_s *)&anim->mtx._30)) {
                     inst->flags.onscreen = NuRndrGScnObj(scene->gobjs[inst->id], &anim->mtx);
                 }
-            } else if (edobjRenderCutoffTest(&inst->mtx.pos)) {
+            } else if (edobjRenderCutoffTest((struct nuvec_s *)&inst->mtx._30)) {
                 inst->flags.onscreen = NuRndrGScnObj(scene->gobjs[inst->id], &inst->mtx);
             }
         }
@@ -1053,7 +1026,7 @@ void edobjDetermineNearestObject(float range)
     int i;
 
     if (edobj_nearest != -1) {
-        NuVecSub(&delta, &edobj_cam_pos, &ObjectInstance[edobj_nearest].mtx.pos);
+        NuVecSub(&delta, &edobj_cam_pos, (struct nuvec_s *)&ObjectInstance[edobj_nearest].mtx._30);
         if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z == 0.0) {
             return;
         }
@@ -1061,7 +1034,7 @@ void edobjDetermineNearestObject(float range)
     edobj_nearest = -1;
     for (i = 0; i < 64; i++) {
         if (ObjectInstance[i].id != -1) {
-            NuVecSub(&delta, &edobj_cam_pos, &ObjectInstance[i].mtx.pos);
+            NuVecSub(&delta, &edobj_cam_pos, (struct nuvec_s *)&ObjectInstance[i].mtx._30);
             dist = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
             if (range < 0.0f || dist < range) {
                 edobj_nearest = i;
@@ -1197,9 +1170,9 @@ void edobjConvertPathToAnim(int obj)
 
     ObjectInstance[obj].anim = 0;
     NuMtxSetIdentity(&ObjectInstance[obj].mtx);
-    ObjectInstance[obj].mtx.pos.x = ObjectPath[obj].waypoints[0].x;
-    ObjectInstance[obj].mtx.pos.y = ObjectPath[obj].waypoints[0].y;
-    ObjectInstance[obj].mtx.pos.z = ObjectPath[obj].waypoints[0].z;
+    ObjectInstance[obj].mtx._30 = ObjectPath[obj].waypoints[0].x;
+    ObjectInstance[obj].mtx._31 = ObjectPath[obj].waypoints[0].y;
+    ObjectInstance[obj].mtx._32 = ObjectPath[obj].waypoints[0].z;
     num = ObjectPath[obj].num_waypoints;
     if (ObjectPath[obj].platinst == -1) {
         ObjectPath[obj].platinst = NewPlatInst(&ObjectInstance[obj].mtx,
@@ -2058,9 +2031,9 @@ void edobjDrawCursor(void)
         }
         if (type != -1 && edobj_blink_timer % 150 < 75) {
             NuMtxSetIdentity(&edobj_cursor_matrix);
-            edobj_cursor_matrix.pos.x = edobj_cam_pos.x;
-            edobj_cursor_matrix.pos.y = edobj_cam_pos.y;
-            edobj_cursor_matrix.pos.z = edobj_cam_pos.z;
+            edobj_cursor_matrix._30 = edobj_cam_pos.x;
+            edobj_cursor_matrix._31 = edobj_cam_pos.y;
+            edobj_cursor_matrix._32 = edobj_cam_pos.z;
             NuRndrGScnObj(edobj_base_scene->gobjs[edobj_base_scene->specials[type].instance->objid],
                           &edobj_cursor_matrix);
         }
@@ -2924,8 +2897,8 @@ void edobjRender(void)
         } else {
             colour = -1;
         }
-        edbitsDrawCube(ObjectInstance[edobj_nearest].mtx.pos.x, ObjectInstance[edobj_nearest].mtx.pos.y,
-                       ObjectInstance[edobj_nearest].mtx.pos.z, 0.5f, 0.5f, 0.5f, 0, 0, 0, 0, colour,
+        edbitsDrawCube(ObjectInstance[edobj_nearest].mtx._30, ObjectInstance[edobj_nearest].mtx._31,
+                       ObjectInstance[edobj_nearest].mtx._32, 0.5f, 0.5f, 0.5f, 0, 0, 0, 0, colour,
                        edobj_mtl_zoff);
         if (!edobj_copy_mode && !edobj_particle_mode && !edobj_sound_mode) {
             edobjRenderWaypoints(edobj_nearest);

@@ -51,6 +51,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern s32 Level;
@@ -307,7 +310,6 @@ void DrawSphere(struct nuvec_s *pos, f32 radius, f32 factor) {
 }
 
 extern f32 D_0062DF34;
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 
 void DrawDeformedCross(struct nuvec_s *center, struct nuvec_s *size, s32 colour,
                        f32 angle) {
@@ -518,7 +520,6 @@ f32 fsign(f32 x) {
 }
 
 extern f32 D_0062DF40;
-extern void NuMtxSetRotationY(struct numtx_s *m, s32 r);
 extern void NuHGobjEval(struct NUHGOBJ_s *hobj, s32 nJ, struct NUJOINTANIM_s *pJ,
                         struct numtx_s *tmtx);
 extern void NuHGobjEvalAnim(struct NUHGOBJ_s *hobj, struct nuanimdata_s *data,
@@ -665,7 +666,6 @@ struct nuquat_s SetNuQuat(f32 x, f32 y, f32 z, f32 w) {
     return q;
 }
 
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern f32 NuFsqrt(f32 x);
 
 f32 ControlledDist(struct nuvec_s *A, struct nuvec_s *B, s32 control) {

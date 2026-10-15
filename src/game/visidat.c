@@ -11,26 +11,8 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
-
-struct nuplane_s {
-    float a;
-    float b;
-    float c;
-    float d;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-};
+#include "numath/numathtypes.h"
+#include "numath/nuvec.h"
 
 struct nugeom_s;
 struct nufaceongeom_s;
@@ -127,7 +109,6 @@ union variptr_u {
 extern void *NuFileLoad(char *name);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
 extern int NuPlnLineVU0(struct nuplane_s *pln, struct nuvec_s *p0, struct nuvec_s *p1, struct nuvec_s *hit);
 
 extern char D_00625208[];

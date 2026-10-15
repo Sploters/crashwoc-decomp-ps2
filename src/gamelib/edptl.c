@@ -177,6 +177,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/numathtypes.h"
+#include "numath/nuvec.h"
+
 struct edptlitem_s {
     char pad00[0xC];
     int value;
@@ -194,12 +197,6 @@ struct edptltexitem_s {
     float y1;
     void *change;
     void *mtl;
-};
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
 };
 
 struct edppptl_s {
@@ -365,13 +362,6 @@ struct edptlgradmenu_s {
 struct edptlfont_s {
     unsigned int colour;
     char pad04[0xC];
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
 };
 
 struct camera_s {
@@ -729,9 +719,6 @@ extern void edcamGetPosAng(struct nuvec_s *pos, float *ax, float *ay);
 extern void edcamGetPosAngSnap(struct nuvec_s *pos, float *ax, float *ay);
 extern void SphereDraw(struct nuvec_s *pos, float radius, float scale);
 extern void *edpp_boxmtl;
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecRotateZ(struct nuvec_s *out, struct nuvec_s *in, int angle);
-extern void NuVecRotateY(struct nuvec_s *out, struct nuvec_s *in, int angle);
 extern void NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, void *mtx);
 extern void NuRndrRect2di(int x, int y, int w, int h, int colour, void *mtl);
 extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl);
@@ -975,12 +962,6 @@ struct numtlattrib_s {
     unsigned long long cull : 2;
     unsigned long long zmode : 2;
     unsigned long long : 16;
-};
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
 };
 
 struct numtl_s {

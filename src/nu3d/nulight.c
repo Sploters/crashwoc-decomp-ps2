@@ -32,28 +32,22 @@
 
 #include "nu_types.h"
 
-typedef struct nuvec_s {
-    float x;
-    float y;
-    float z;
-} nuvec_s;
-
-typedef struct numtx_s {
-    float m[4][4];
-} numtx_s;
+#include "numath/numathtypes.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 
 typedef struct nulight_s {
     char unknown_00[0x14];
-    nuvec_s diffuse;                /* 0x14 */
+    struct nuvec_s diffuse;         /* 0x14 */
     char unknown_20[0x20];
-    numtx_s mtx;                    /* 0x40 */
+    struct numtx_s mtx;             /* 0x40 */
     char unknown_80[0x8];
     int index;
     int used;
 } nulight_s;
 
 typedef struct nulgtspot_s {
-    nuvec_s pos;
+    struct nuvec_s pos;
     float size;
     int colour;
     int mode;
@@ -64,9 +58,9 @@ typedef struct nulgtspot_s {
 } nulgtspot_s;
 
 typedef struct nulgtarclaser_s {
-    nuvec_s start;
-    nuvec_s end;
-    nuvec_s mid;
+    struct nuvec_s start;
+    struct nuvec_s end;
+    struct nuvec_s mid;
     float sizew;
     float sizel;
     float sizewob;
@@ -78,15 +72,15 @@ typedef struct nulgtarclaser_s {
 } nulgtarclaser_s;
 
 typedef struct nulgtpolyhaze_s {
-    nuvec_s pos;
+    struct nuvec_s pos;
     float size;
     float rot;
 } nulgtpolyhaze_s;
 
 extern int NuRndrFogClear;
 extern nulight_s D_006AD100[];
-extern nuvec_s D_006AD580[];
-extern nuvec_s D_006AD5A8[];
+extern struct nuvec_s D_006AD580[];
+extern struct nuvec_s D_006AD5A8[];
 extern nulight_s *D_006AD5D0[];
 extern float NuRndrFogNear;
 extern float NuRndrFogFar;
@@ -119,14 +113,12 @@ extern void *vpDmaTag_RetEx(void *packet, u32 vif0, u32 vif1);
 extern void *vpDmaTag_Close(void *packet);
 extern void *vtBeginDirect(void *packet, u32 irq);
 extern void *vtCloseDirect(void *packet);
-extern int NuPower2(int value);
-extern void NuVecMtxRotate(nuvec_s *dst, nuvec_s *src, numtx_s *mtx);
-extern int NuRndrSetDirectionalLights(nuvec_s *d0, nuvec_s *c0, nuvec_s *d1, nuvec_s *c1,
-                                      nuvec_s *d2, nuvec_s *c2);
+extern int NuRndrSetDirectionalLights(struct nuvec_s *d0, struct nuvec_s *c0, struct nuvec_s *d1, struct nuvec_s *c1,
+                                      struct nuvec_s *d2, struct nuvec_s *c2);
 
 extern int D_00633088;
 extern int D_006AD5E0[];
-extern nuvec_s D_006AD5F0;
+extern struct nuvec_s D_006AD5F0;
 extern u32 D_006AD600[];
 extern int NuLightOldSpotCnt;
 extern int NuLgtArcLaserOldCnt;
@@ -299,7 +291,7 @@ nulight_s *NuLightCreate(void) {
 /* Puts the light in one of the three directional slots: its own slot when
    slot 0 already holds it, otherwise the least recently used one. */
 void NuLightUpdate(nulight_s *light) {
-    nuvec_s dir;
+    struct nuvec_s dir;
     nulight_s *l;
     int oldest;
     int best;
@@ -365,7 +357,7 @@ void NuLigthSetPolyHazeMat(void *mtl, float *u, float *v) {
 }
 
 
-void NuLightAddSpot(nuvec_s *pos, int colour, int mode, float size) {
+void NuLightAddSpot(struct nuvec_s *pos, int colour, int mode, float size) {
     if (NuLightSpotCnt < 8) {
         NuLightSpots[NuLightSpotCnt].pos = *pos;
         NuLightSpots[NuLightSpotCnt].size = size;
@@ -379,7 +371,7 @@ void NuLightAddSpot(nuvec_s *pos, int colour, int mode, float size) {
 }
 
 
-void NuLightAddSpotXSpanFade(nuvec_s *pos, int colour, int mode, int xspan,
+void NuLightAddSpotXSpanFade(struct nuvec_s *pos, int colour, int mode, int xspan,
                              int fade, float size, float brightness) {
     if (xspan < 0x80 && NuLightSpotCnt < 8) {
         NuLightSpots[NuLightSpotCnt].pos = *pos;
@@ -408,7 +400,7 @@ void NuLightFogClear(int clear) {
 }
 
 
-void NuLgtArcLaser(int type, nuvec_s *start, nuvec_s *end, nuvec_s *mid,
+void NuLgtArcLaser(int type, struct nuvec_s *start, struct nuvec_s *end, struct nuvec_s *mid,
                    float sizew, float sizel, float sizewob, float wobspeed,
                    int colour) {
     int i;
@@ -444,7 +436,7 @@ void NuLgtSetArcMat(void *material, float u0, float v0, float u1, float v1) {
 }
 
 
-void NuLightAddHazePoly(nuvec_s *pos, float size, float rot) {
+void NuLightAddHazePoly(struct nuvec_s *pos, float size, float rot) {
     if (NuLightHazePolyCnt < 32) {
         NuLgtPolyHazeData[NuLightHazePolyCnt].pos = *pos;
         NuLgtPolyHazeData[NuLightHazePolyCnt].size = size;

@@ -24,16 +24,7 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
-
-typedef struct NuMtx {
-    float m[4][4];
-} NuMtx;
-
-typedef struct NuVec {
-    float x;
-    float y;
-    float z;
-} NuVec;
+#include "numath/numathtypes.h"
 
 typedef struct NuGScn NuGScn;
 typedef struct NuTriggerSys NuTriggerSys;
@@ -113,7 +104,7 @@ extern void instNuTriggerEnable(NuTriggerSys *sys);
 extern void instNuTriggerDisable(NuTriggerSys *sys);
 
 extern void instNuGCutSceneDestroy(NuGCutScene *scene);
-extern void instNuGCutSceneTranslate(NuGCutScene *scene, NuVec *offset);
+extern void instNuGCutSceneTranslate(NuGCutScene *scene, struct nuvec_s *offset);
 extern void instNuGCutSceneRotateY(NuGCutScene *scene, int angle);
 extern void instNuGCutSceneEnable(NuGCutScene *scene);
 extern void instNuGCutSceneDisable(NuGCutScene *scene);
@@ -154,7 +145,7 @@ extern char D_0062F820[];
 #define err_cutscene_count D_0061A210
 
 extern NuSceneInstance *D_0062F808;
-extern NuMtx *D_0062F80C;
+extern struct numtx_s *D_0062F80C;
 #define sceneinst_list D_0062F808
 #define player_mtx D_0062F80C
 
@@ -290,7 +281,7 @@ void NuSceneInstanceDestroy(NuSceneInstance *inst) {
 }
 
 
-void NuSceneInstanceTranslate(NuSceneInstance *inst, NuVec *offset) {
+void NuSceneInstanceTranslate(NuSceneInstance *inst, struct nuvec_s *offset) {
     int i;
 
     for (i = 0; i < inst->data->ninstances; i++) {
@@ -368,6 +359,6 @@ void NuSceneManagerSysRender(void) {
 }
 
 
-void NuSceneManagerSetPtrToPlayerMtx(NuMtx *mtx) {
+void NuSceneManagerSetPtrToPlayerMtx(struct numtx_s *mtx) {
     player_mtx = mtx;
 }

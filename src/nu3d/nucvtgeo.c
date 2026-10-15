@@ -29,6 +29,8 @@
 
 #include "nu_types.h"
 
+#include "numath/numathtypes.h"
+
 typedef struct nucolourref_s {
     unsigned int addr;
     int count;
@@ -46,12 +48,6 @@ typedef struct NuGobj {
     int type;
     NuGeom *geom;
 } NuGobj;
-
-typedef struct NuVec {
-    float x;
-    float y;
-    float z;
-} NuVec;
 
 typedef union NuFloatBits {
     float f;
@@ -79,7 +75,7 @@ extern int NuCvtPntOn;
 extern int NuCvtUvOn;
 extern float NuCvtMaxSpan;
 extern NuFloatBits NuCvtPntSpan[3];
-extern NuVec NuCvtPntMid;
+extern struct nuvec_s NuCvtPntMid;
 extern void *info_pktdata;
 
 extern int D_0062EEDC;
@@ -136,7 +132,7 @@ unsigned int NuCvtSizeDmaBezTriCFromIdx(void *dma, int count) {
 }
 
 
-void NuCvtCalcFastPoint(NuVec *a, NuVec *b, NuMtl *mtl) {
+void NuCvtCalcFastPoint(struct nuvec_s *a, struct nuvec_s *b, NuMtl *mtl) {
     int point;
 
     if (mtl) {

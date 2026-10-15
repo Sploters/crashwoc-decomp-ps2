@@ -18,6 +18,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct pad_s {
@@ -92,7 +94,6 @@ extern void NuFntPrintEx(s32 x, s32 y, s32 colour, char *fmt, ...);
 extern u64 fptodp(f32 value);
 extern char *strupr(char *s);
 extern void eduiMenuProcess(void *menu, struct pad_s *pad);
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern f32 NewShadowMask(struct nuvec_s *pos, s32 flag, f32 y);
 extern void *InCrate(f32 x, f32 z, f32 ytop, f32 ybot, f32 radius);
 

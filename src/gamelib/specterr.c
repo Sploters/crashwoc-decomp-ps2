@@ -12,20 +12,10 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct nuvec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-struct numtx_s {
-    f32 _00, _01, _02, _03;
-    f32 _10, _11, _12, _13;
-    f32 _20, _21, _22, _23;
-    struct nuvec_s pos;
-    f32 _33;
-};
+#include "numath/nufloat.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 struct nuinstanim_s {
     struct numtx_s mtx;
@@ -89,15 +79,6 @@ typedef struct SpecTerrData {
 } SpecTerrData;
 
 extern void *CrashDataPtr(void);
-extern void NuMtxInvH(struct numtx_s *inv, struct numtx_s *mtx);
-extern void NuVecMtxTransform(struct nuvec_s *d, struct nuvec_s *s, struct numtx_s *mtx);
-extern void NuVecMtxRotate(struct nuvec_s *d, struct nuvec_s *s, struct numtx_s *mtx);
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecScale(struct nuvec_s *d, struct nuvec_s *s, f32 k);
-extern void NuVecNorm(struct nuvec_s *d, struct nuvec_s *s);
-extern f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
-extern f32 NuFabs(f32 x);
 extern void NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, void *mtx);
 
 extern char D_00619AA0[];
@@ -187,9 +168,9 @@ s32 SpecialTerrainInstanceCollideCheck(struct nuvec_s *pos, f32 radius, SpecTerr
     f32 dx;
     f32 dz;
 
-    delta.x = pos->x - mtx->pos.x;
-    delta.y = pos->y - mtx->pos.y;
-    delta.z = pos->z - mtx->pos.z;
+    delta.x = pos->x - mtx->_30;
+    delta.y = pos->y - mtx->_31;
+    delta.z = pos->z - mtx->_32;
     if (delta.x * delta.x + delta.y * delta.y + delta.z * delta.z
         > (obj->radius + radius) * (obj->radius + radius)) {
         return 0;
@@ -200,7 +181,7 @@ s32 SpecialTerrainInstanceCollideCheck(struct nuvec_s *pos, f32 radius, SpecTerr
         NuVecMtxTransform(&localpos, pos, &invmtx);
         extent.x = extent.y = extent.z = radius;
         NuVecMtxTransform(&extent, &extent, &invmtx);
-        NuVecSub(&extent, &extent, &invmtx.pos);
+        NuVecSub(&extent, &extent, (struct nuvec_s *)&invmtx._30);
         extent.x = NuFabs(extent.x);
         extent.y = NuFabs(extent.y);
         extent.z = NuFabs(extent.z);
@@ -233,7 +214,7 @@ s32 SpecialTerrainInstanceCollideCheck(struct nuvec_s *pos, f32 radius, SpecTerr
             next = (SpecTerrShape *)(box + 1);
             NuVecMtxTransform(&boxpos, &localpos, &box->mtx);
             NuVecMtxTransform(&boxextent, &extent, &box->mtx);
-            NuVecSub(&boxextent, &boxextent, &box->mtx.pos);
+            NuVecSub(&boxextent, &boxextent, (struct nuvec_s *)&box->mtx._30);
             boxextent.x = NuFabs(boxextent.x);
             boxextent.y = NuFabs(boxextent.y);
             boxextent.z = NuFabs(boxextent.z);
@@ -343,7 +324,7 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
             draw = 0;
         }
         if (draw && specterr_draw_bounds) {
-            line[0].pnt = line[1].pnt = inst->mtx.pos;
+            line[0].pnt = line[1].pnt = *(struct nuvec_s *)&inst->mtx._30;
             line[0].pnt.x += obj->radius;
             line[0].pnt.y += obj->radius;
             line[0].pnt.z += obj->radius;
@@ -352,7 +333,7 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
             line[1].pnt.z += obj->radius;
             NuRndrLine3d(line, 0, 0);
 
-            line[0].pnt = line[1].pnt = inst->mtx.pos;
+            line[0].pnt = line[1].pnt = *(struct nuvec_s *)&inst->mtx._30;
             line[0].pnt.x += obj->radius;
             line[0].pnt.y += obj->radius;
             line[0].pnt.z += obj->radius;
@@ -361,7 +342,7 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
             line[1].pnt.z += obj->radius;
             NuRndrLine3d(line, 0, 0);
 
-            line[0].pnt = line[1].pnt = inst->mtx.pos;
+            line[0].pnt = line[1].pnt = *(struct nuvec_s *)&inst->mtx._30;
             line[0].pnt.x += obj->radius;
             line[0].pnt.y += obj->radius;
             line[0].pnt.z += obj->radius;
@@ -370,7 +351,7 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
             line[1].pnt.z -= obj->radius;
             NuRndrLine3d(line, 0, 0);
 
-            line[0].pnt = line[1].pnt = inst->mtx.pos;
+            line[0].pnt = line[1].pnt = *(struct nuvec_s *)&inst->mtx._30;
             line[0].pnt.x -= obj->radius;
             line[0].pnt.y -= obj->radius;
             line[0].pnt.z -= obj->radius;
@@ -379,7 +360,7 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
             line[1].pnt.z -= obj->radius;
             NuRndrLine3d(line, 0, 0);
 
-            line[0].pnt = line[1].pnt = inst->mtx.pos;
+            line[0].pnt = line[1].pnt = *(struct nuvec_s *)&inst->mtx._30;
             line[0].pnt.x -= obj->radius;
             line[0].pnt.y -= obj->radius;
             line[0].pnt.z -= obj->radius;
@@ -388,7 +369,7 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
             line[1].pnt.z -= obj->radius;
             NuRndrLine3d(line, 0, 0);
 
-            line[0].pnt = line[1].pnt = inst->mtx.pos;
+            line[0].pnt = line[1].pnt = *(struct nuvec_s *)&inst->mtx._30;
             line[0].pnt.x -= obj->radius;
             line[0].pnt.y -= obj->radius;
             line[0].pnt.z -= obj->radius;

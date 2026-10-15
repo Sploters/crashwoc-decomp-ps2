@@ -24,30 +24,12 @@
  */
 
 #include "nucore/nuerror.h"
+#include "numath/nufloat.h"
+#include "numath/numathtypes.h"
+#include "numath/nuplane.h"
+#include "numath/nuvec.h"
 
 #include "creature.h"
-
-struct nuplane_s {
-    f32 x;
-    f32 y;
-    f32 z;
-    f32 d;
-};
-
-f32 NuVecDot(struct nuvec_s *a, struct nuvec_s *b);
-void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-void NuVecCross(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
-void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
-void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-f32 NuFsign(f32 value);
-f32 NuFabs(f32 value);
-f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b,
-                 struct nuvec_s *delta);
-f32 NuVecMag(struct nuvec_s *vec);
-s32 NuPtInPoly(struct nuvec_s *point, struct nuvec_s *v0,
-               struct nuvec_s *v1, struct nuvec_s *v2,
-               struct nuplane_s *plane);
 
 extern char D_00614020[];
 extern char D_00614048[];
@@ -64,9 +46,9 @@ s32 NuPlnPlnIntersect(struct nuplane_s *p0, struct nuplane_s *p1,
 {
     struct nuvec_s cross;
     u64 tolerance;
-    cross.x = p0->y * p1->z - p0->z * p1->y;
-    cross.y = p0->z * p1->x - p0->x * p1->z;
-    cross.z = p0->x * p1->y - p0->y * p1->x;
+    cross.x = p0->b * p1->c - p0->c * p1->b;
+    cross.y = p0->c * p1->a - p0->a * p1->c;
+    cross.z = p0->a * p1->b - p0->b * p1->a;
     NuVecNorm(&cross, &cross);
     *direction = cross;
 
@@ -75,45 +57,45 @@ s32 NuPlnPlnIntersect(struct nuplane_s *p0, struct nuplane_s *p1,
     cross.z = NuFabs(cross.z);
 
     if (cross.x <= cross.z && cross.y <= cross.z) {
-        if (dpcmp(fptodp(NuFabs(p1->x)), D_00614070) < 0) {
-            point->y = (p0->d * p1->x / p0->x - p1->d) /
-                       (-p1->x * p0->y / p0->x + p1->y);
-            point->x = (-p0->d - p0->y * point->y) / p0->x;
+        if (dpcmp(fptodp(NuFabs(p1->a)), D_00614070) < 0) {
+            point->y = (p0->d * p1->a / p0->a - p1->d) /
+                       (-p1->a * p0->b / p0->a + p1->b);
+            point->x = (-p0->d - p0->b * point->y) / p0->a;
         } else {
-            point->y = (p1->d * p0->x / p1->x - p0->d) /
-                       (-p0->x * p1->y / p1->x + p0->y);
-            point->x = (-p1->d - p1->y * point->y) / p1->x;
+            point->y = (p1->d * p0->a / p1->a - p0->d) /
+                       (-p0->a * p1->b / p1->a + p0->b);
+            point->x = (-p1->d - p1->b * point->y) / p1->a;
         }
         point->z = 0.0f;
     } else if (cross.x <= cross.y && cross.z <= cross.y) {
-        if (dpcmp(fptodp(NuFabs(p1->x)), D_00614078) < 0) {
-            point->z = (p0->d * p1->x / p0->x - p1->d) /
-                       (-p1->x * p0->z / p0->x + p1->z);
-            point->x = (-p0->d - p0->z * point->z) / p0->x;
+        if (dpcmp(fptodp(NuFabs(p1->a)), D_00614078) < 0) {
+            point->z = (p0->d * p1->a / p0->a - p1->d) /
+                       (-p1->a * p0->c / p0->a + p1->c);
+            point->x = (-p0->d - p0->c * point->z) / p0->a;
         } else {
-            point->z = (p1->d * p0->x / p1->x - p0->d) /
-                       (-p0->x * p1->z / p1->x + p0->z);
-            point->x = (-p1->d - p1->z * point->z) / p1->x;
+            point->z = (p1->d * p0->a / p1->a - p0->d) /
+                       (-p0->a * p1->c / p1->a + p0->c);
+            point->x = (-p1->d - p1->c * point->z) / p1->a;
         }
         point->y = 0.0f;
     } else {
-        if (dpcmp(fptodp(NuFabs(p1->y)), D_00614080) < 0) {
-            point->z = (p0->d * p1->y / p0->y - p1->d) /
-                       (-p1->y * p0->z / p0->y + p1->z);
-            point->y = (-p0->d - p0->z * point->z) / p0->y;
+        if (dpcmp(fptodp(NuFabs(p1->b)), D_00614080) < 0) {
+            point->z = (p0->d * p1->b / p0->b - p1->d) /
+                       (-p1->b * p0->c / p0->b + p1->c);
+            point->y = (-p0->d - p0->c * point->z) / p0->b;
         } else {
-            point->z = (p1->d * p0->y / p1->y - p0->d) /
-                       (-p0->y * p1->z / p1->y + p0->z);
-            point->y = (-p1->d - p1->z * point->z) / p1->y;
+            point->z = (p1->d * p0->b / p1->b - p0->d) /
+                       (-p0->b * p1->c / p1->b + p0->c);
+            point->y = (-p1->d - p1->c * point->z) / p1->b;
         }
         point->x = 0.0f;
     }
 
     tolerance = D_00614088;
-    if (dpcmp(fptodp(p0->x * point->x + p0->y * point->y +
-                     p0->z * point->z + p0->d), tolerance) > 0 ||
-        dpcmp(fptodp(p1->x * point->x + p1->y * point->y +
-                     p1->z * point->z + p1->d), tolerance) > 0) {
+    if (dpcmp(fptodp(p0->a * point->x + p0->b * point->y +
+                     p0->c * point->z + p0->d), tolerance) > 0 ||
+        dpcmp(fptodp(p1->a * point->x + p1->b * point->y +
+                     p1->c * point->z + p1->d), tolerance) > 0) {
         NuErrorProlog(D_00614020, 0x187)(D_00614048);
     }
     return 0;
@@ -130,18 +112,18 @@ void NuPlnEqn(struct nuplane_s *plane, struct nuvec_s *p0,
     NuVecSub(&v1, p2, p0);
     NuVecCross(&normal, &v0, &v1);
     NuVecNorm((struct nuvec_s *)plane, &normal);
-    plane->d = -((plane->x * p0->x + plane->y * p0->y) +
-                 plane->z * p0->z);
+    plane->d = -((plane->a * p0->x + plane->b * p0->y) +
+                 plane->c * p0->z);
 }
 
 void NuPlnEqnPn(struct nuplane_s *plane, struct nuvec_s *point,
                 struct nuvec_s *normal)
 {
-    plane->x = normal->x;
-    plane->y = normal->y;
-    plane->z = normal->z;
-    plane->d = -((plane->x * point->x + plane->y * point->y) +
-                 plane->z * point->z);
+    plane->a = normal->x;
+    plane->b = normal->y;
+    plane->c = normal->z;
+    plane->d = -((plane->a * point->x + plane->b * point->y) +
+                 plane->c * point->z);
 }
 
 f32 NuPlnDist(struct nuplane_s *plane, struct nuvec_s *point)
@@ -318,29 +300,29 @@ s32 NuPtInPoly(struct nuvec_s *point, struct nuvec_s *v0,
                struct nuvec_s *v1, struct nuvec_s *v2,
                struct nuplane_s *plane)
 {
-    f32 ax = NuFabs(plane->x);
-    f32 ay = NuFabs(plane->y);
-    f32 az = NuFabs(plane->z);
+    f32 ax = NuFabs(plane->a);
+    f32 ay = NuFabs(plane->b);
+    f32 az = NuFabs(plane->c);
 
     if (ay < ax) {
         if (az < ax) {
-            if (plane->x <= 0.0f) {
+            if (plane->a <= 0.0f) {
                 return NuPtInPolyYZ(point, v0, v1, v2);
             }
             return NuPtInPolyZY(point, v0, v1, v2);
         }
-        if (plane->z <= 0.0f) {
+        if (plane->c <= 0.0f) {
             goto project_xy;
         }
         return NuPtInPolyYX(point, v0, v1, v2);
     }
     if (az < ay) {
-        if (plane->y <= 0.0f) {
+        if (plane->b <= 0.0f) {
             return NuPtInPolyZX(point, v0, v1, v2);
         }
         return NuPtInPolyXZ(point, v0, v1, v2);
     }
-    if (!(plane->z <= 0.0f)) {
+    if (!(plane->c <= 0.0f)) {
         return NuPtInPolyYX(point, v0, v1, v2);
     }
 

@@ -14,6 +14,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nutrig.h"
+
 #include "creature.h"
 
 extern f32 NuTrigTable[];

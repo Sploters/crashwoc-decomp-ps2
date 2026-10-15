@@ -4,6 +4,10 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/nufloat.h"
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 
 #include "creature.h"
 
@@ -169,7 +173,6 @@ extern f32 bonus_crates_wait;
 extern f32 bonus_lives_wait;
 
 s32 NuSoundStopStream(s32 channel);
-f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
 s32 qrand(void);
 s32 RotDiff(u16 a, u16 b);
 void GameSfx(s32 sfx, struct nuvec_s *pos);
@@ -1450,21 +1453,10 @@ void ObjectRotation(struct obj_s *obj, s32 mode, s32 vehicle);
 s32 AddAward(s32 hub, s32 level, s32 bits);
 void AddGameDebris(s32 type, struct nuvec_s *pos);
 f32 CrateTopBelow(struct nuvec_s *pos);
-f32 NuVecMag(struct nuvec_s *v);
-s32 NuAtan2D(f32 x, f32 z);
-void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 void MoveVehicle(struct creature_s *c, struct pad_s *pad);
 f32 NuFsqrt(f32 x);
-f32 NuFabs(f32 x);
 void GameRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 dist,
                  struct nuvec_s *hit);
-void NuMtxSetRotationX(struct numtx_s *m, s32 r);
-void NuMtxRotateY(struct numtx_s *m, s32 r);
-void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-void NuVecNorm(struct nuvec_s *d, struct nuvec_s *a);
-f32 NuVecDot(struct nuvec_s *a, struct nuvec_s *b);
-void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 void MoveLoopXZ(struct obj_s *obj, u16 *hdg);
 void NewTerrainScaleY(struct nuvec_s *pos, struct nuvec_s *mom, u8 *chrs,
                       s32 index, f32 adjust, f32 radius, f32 ratio);
@@ -3475,14 +3467,6 @@ s32 Draw3DObject(s32 object, struct nuvec_s *pos, u16 xrot, u16 yrot, u16 zrot,
                  struct nugscn_s *scn, struct nuspecial_s *obj, s32 rot);
 void Draw3DCrateCount(struct nuvec_s *pos, u16 angle);
 void ScaleFlatShadow(struct nuvec_s *s, f32 y, f32 shadow, f32 scale);
-void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
-void NuMtxSetRotationY(struct numtx_s *m, s32 r);
-void NuMtxRotateX(struct numtx_s *m, s32 r);
-void NuMtxRotateY(struct numtx_s *m, s32 r);
-void NuMtxRotateZ(struct numtx_s *m, s32 r);
-void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-void NuMtxPreScale(struct numtx_s *m, struct nuvec_s *s);
-s32 NuAtan2D(f32 x, f32 z);
 s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 int NuHGobjRndrMtx(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                     short *layer, struct numtx_s *tmtx);

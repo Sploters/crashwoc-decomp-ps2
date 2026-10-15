@@ -25,31 +25,10 @@
  *   0x001102b0 NuBez3EvaluateX
  */
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
-
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-};
-
-extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, float scale);
-extern void NuVecScaleAccum(struct nuvec_s *dst, struct nuvec_s *src, float scale);
-extern float NuVec4Dot(struct nuvec4_s *a, struct nuvec4_s *b);
-extern void NuVec4MtxTransformH(struct nuvec4_s *dst, struct nuvec4_s *src,
-                                struct numtx_s *m);
+#include "numath/numathtypes.h"
+#include "numath/nupatch.h"
+#include "numath/nuvec.h"
+#include "numath/nuvec4.h"
 
 extern struct numtx_s D_00614090;
 #define bez3_basis D_00614090

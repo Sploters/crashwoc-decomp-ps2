@@ -22,6 +22,10 @@
  *   0x0024c960 JonMaskFPS
  */
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 typedef struct
@@ -93,10 +97,6 @@ struct deb3emit_s {
 
 extern struct deb3emit_s Deb3Emit[7];
 extern struct deb3info Deb3Info[27];
-extern void NuMtxSetRotateXYZ(struct numtx_s *m, struct nuangvec_s *a);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 
 extern struct rbclass_s rbclass[5];
 extern struct nuvec_s ShadNorm;
@@ -104,7 +104,6 @@ extern struct nuvec_s ShadNorm;
 extern f32 D_0062E774;   /* rigid-body integration timestep */
 extern f32 D_0062E778;   /* minimum ShadNorm.y for debris to come to rest */
 
-extern void NuMtxSetIdentity(struct numtx_s *m);
 extern void RBodyMove(struct deb3_s *deb, f32 dt);
 extern void RBodyImpact(struct deb3_s *deb, struct nuvec_s *pnt,
                         struct nuvec_s *nrm);
@@ -130,20 +129,6 @@ extern void GameSfx(s32 id, struct nuvec_s *pos);
 extern void AddFiniteShotDebrisEffect(s32 *key, s32 effect, struct nuvec_s *pos,
                                       s32 n);
 extern s32 qrand(void);
-extern void NuVecAdd(struct nuvec_s* v, struct nuvec_s* v0, struct nuvec_s* v1);
-extern float NuVecDot(struct nuvec_s* v0, struct nuvec_s* v1);
-extern void NuVecCross(struct nuvec_s* v, struct nuvec_s* v0, struct nuvec_s* v1);
-extern void NuVecInvMtxRotate(struct nuvec_s* v, struct nuvec_s* v0, struct numtx_s* m0);
-extern void NuVecSub(struct nuvec_s* v, struct nuvec_s* v0, struct nuvec_s* v1);
-extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
-extern void NuMtxSkewSymmetric(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxMulR(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuMtxAddR(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuMtxOrth(struct numtx_s *m);
-extern void NuMtxInvR(struct numtx_s *dst, struct numtx_s *src);
-extern void NuMtxPreRotateX(struct numtx_s *m, s32 angle);
-extern void NuMtxPreRotateY(struct numtx_s *m, s32 angle);
-extern void NuMtxPreRotateZ(struct numtx_s *m, s32 angle);
 extern void Draw3DCharacter(struct nuvec_s *pos, s32 xrot, s32 yrot, s32 z,
                             struct CharacterModel *model, f32 scale, s32 action,
                             f32 anim_time, s32 last);
@@ -300,7 +285,6 @@ extern void AddVariableShotDebrisEffect(s32 type, struct nuvec_s *pos,
                                         s32 count, s32 a, s32 b);
 extern struct deb3_s *AddDeb3Ang(struct nuvec_s *pos, s32 db, s32 emit,
                                  struct nuangvec_s *angle, s32 rotx, s32 roty);
-extern s32 NuAtan2D(f32 x, f32 z);
 extern f32 NuFsqrt(f32 x);
 extern f32 NewShadow(struct nuvec_s *pos, f32 y);
 extern void NuLightAddSpot(struct nuvec_s *pos, u32 colour, s32 mode, f32 size);

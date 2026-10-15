@@ -3,6 +3,8 @@
 
 #include "nu_types.h"
 
+#include "numath/numathtypes.h"
+
 /* ------------------------------------------------------------------ */
 /* Shared small math / engine types                                    */
 /* ------------------------------------------------------------------ */
@@ -14,39 +16,6 @@ enum nufilemode_e {
 	NUFILE_READ_NOWAIT = 3,
 	NUFILE_MODE_CNT = 4
 };
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-}; /* 0xC */
-
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-}; /* 0x10 */
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
-}; /* 0xC */
-
-struct nuquat_s {
-    float x;
-    float y;
-    float z;
-    float w;
-}; /* 0x10 */
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-}; /* 0x40 */
 
 struct nuhspecial_s {
     struct nugscn_s *scene;    /* 0x0 */
@@ -631,7 +600,7 @@ struct nugeom_s { // 0x50
 	/* 0x2c */ struct nuprim_s *prim;
 	/* 0x30 */ struct nuskin_s *skin;
 	/* 0x34 */ struct NUVTXSKININFO_s *vtxskininfo;
-	/* 0x38 */ struct NuVec *cntrl_pts;
+	/* 0x38 */ struct nuvec_s *cntrl_pts;
 	/* 0x3c */ int ncntrl_pts;
 	/* 0x40 */ int dma_len;
 	/* 0x44 */ struct skinv_s *skinv;

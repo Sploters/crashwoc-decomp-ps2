@@ -26,6 +26,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern s32 USELIGHTS;
@@ -183,17 +185,11 @@ s32 NuFileWriteInt(void *f, s32 v);
 s32 NuFileWriteFloat(void *f, f32 v);
 s32 NuFileWriteChar(void *f, char v);
 f32 FindLightProportion(struct nuvec_s *vec, struct Nearest_Light_s *nearest_light);
-extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern f32 NuVecNorm(struct nuvec_s *d, struct nuvec_s *a);
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern s32 NuRndrSetDirectionalLights(struct nuvec_s *d0, struct nucolour3_s *c0,
                                       struct nuvec_s *d1, struct nucolour3_s *c1,
                                       struct nuvec_s *d2, struct nucolour3_s *c2);
 extern s32 NuRndrSetAmbientLight(struct nuvec_s *amb);
 extern void NuRndrSetSpecularLight(struct nuvec_s *dir, s32 enable);
-extern void NuVecRotateX(struct nuvec_s *out, struct nuvec_s *in, s32 ang);
-extern void NuVecRotateY(struct nuvec_s *out, struct nuvec_s *in, s32 ang);
 void NuRndrLine3dDbg(u32 colour, f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1);
 void ResetLights(struct Nearest_Light_s *nl);
 void GetLights(struct nuvec_s *pos, struct Nearest_Light_s *nearest_lights,

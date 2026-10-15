@@ -18,11 +18,9 @@
 
 #include "nu_libc.h"
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 struct edcam_s {
     struct nuvec_s pos;
@@ -50,13 +48,6 @@ struct edcam_s {
     int adjust_zoom : 1;
 };
 
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-};
-
 struct nupad_s {
     unsigned char pad000[0x568];
     unsigned long long flags2;
@@ -75,14 +66,7 @@ struct nupad_s {
 extern struct edcam_s *D_0062F99C;
 
 extern int NuPs2ApplyDeadZone(int value, int deadzone);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 
-extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
-extern void NuMtxRotateX(struct numtx_s *m, int angle);
-extern void NuMtxRotateY(struct numtx_s *m, int angle);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 extern void edmainSetCamera(struct numtx_s *m);
 
 #define edcam D_0062F99C

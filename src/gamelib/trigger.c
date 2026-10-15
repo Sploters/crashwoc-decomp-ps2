@@ -23,20 +23,10 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct nuvec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-struct numtx_s {
-    f32 _00, _01, _02, _03;
-    f32 _10, _11, _12, _13;
-    f32 _20, _21, _22, _23;
-    struct nuvec_s pos; /* 0x30 -- translation row */
-    f32 _33;            /* 0x3C */
-};
+#include "numath/nufloat.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 struct numtx2_s
 {
@@ -180,17 +170,12 @@ typedef struct NuTriggerSys {
 
 extern int NuSceneInstanceRunScript(void *scene, void *script);
 extern int NuFileLoadBuffer(void *name, void *buf, int size);
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern float NuFabs(float f);
 
 extern char D_00619EF8[];
 extern char D_00619F20[];
 extern char D_00619F60[];
 
 void NuRndrLine3d(struct NuRndrVtx *line, void *arg1, struct numtx_s *mtx);
-void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src,
-                       struct numtx_s *mtx);
-void NuMtxInvH(struct numtx_s *dst, struct numtx_s *src);
 
 extern NuTriggerSys *D_00633230;
 #define g_NuTriggerSysList D_00633230
@@ -505,7 +490,7 @@ void DebugRenderTriggers(void)
                 struct numtx_s *mtx = &inst->nodes[def->parent].mtx;
 
                 if (g_DbgTriggerExtents) {
-                    line[1].pos = mtx->pos;
+                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
                     line[0].pos = line[1].pos;
                     line[0].pos.x += def->radius;
                     line[0].pos.y += def->radius;
@@ -515,7 +500,7 @@ void DebugRenderTriggers(void)
                     line[1].pos.z += def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = mtx->pos;
+                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
                     line[0].pos = line[1].pos;
                     line[0].pos.x += def->radius;
                     line[0].pos.y += def->radius;
@@ -525,7 +510,7 @@ void DebugRenderTriggers(void)
                     line[1].pos.z += def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = mtx->pos;
+                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
                     line[0].pos = line[1].pos;
                     line[0].pos.x += def->radius;
                     line[0].pos.y += def->radius;
@@ -535,7 +520,7 @@ void DebugRenderTriggers(void)
                     line[1].pos.z -= def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = mtx->pos;
+                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
                     line[0].pos = line[1].pos;
                     line[0].pos.x -= def->radius;
                     line[0].pos.y -= def->radius;
@@ -545,7 +530,7 @@ void DebugRenderTriggers(void)
                     line[1].pos.z -= def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = mtx->pos;
+                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
                     line[0].pos = line[1].pos;
                     line[0].pos.x -= def->radius;
                     line[0].pos.y -= def->radius;
@@ -555,7 +540,7 @@ void DebugRenderTriggers(void)
                     line[1].pos.z -= def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = mtx->pos;
+                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
                     line[0].pos = line[1].pos;
                     line[0].pos.x -= def->radius;
                     line[0].pos.y -= def->radius;
@@ -971,8 +956,6 @@ void NuTriggerPull(NuTriggerSys *sys, NuTriggerDef *def, NuTrigger *trig, int pu
         trig->state &= 0xFE;
     }
 }
-
-float NuVecDistSqr(struct nuvec_s* v0, struct nuvec_s* v1, struct nuvec_s* d);
 
 int CheckParentedTriggerWithPos(struct NUTRIGGER_s* trigger, struct numtx2_s* mtx, struct nuvec_s* pos, float r) {
     int i;

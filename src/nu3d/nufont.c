@@ -27,12 +27,7 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct nucolour3_s {
-    f32 r;
-    f32 g;
-    f32 b;
-};
+#include "numath/numathtypes.h"
 
 struct numtlattrib_s {
     u64 : 32;

@@ -33,11 +33,8 @@
 
 #include "nu_libc.h"
 
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
+#include "numath/numathtypes.h"
+#include "numath/nuvec.h"
 
 struct edgraitem_s {
     char pad00[0x0C];
@@ -45,13 +42,6 @@ struct edgraitem_s {
     unsigned char toggle;
     char pad11[0x4C - 0x11];
     float fvalue;
-};
-
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
 };
 
 struct numtlattrib_s {
@@ -238,7 +228,6 @@ extern void edcamGetPosAng(struct nuvec_s *pos, float *ax, float *ay);
 extern void eduiMenuProcess(void *menu, struct pad_s *pad);
 extern void eduiCreateMessageMenu(void *menu, char *text, int flag);
 extern int NuFileSize(char *name);
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 extern int edbitsLookupInstance(char *name);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);

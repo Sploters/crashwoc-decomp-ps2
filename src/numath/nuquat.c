@@ -16,6 +16,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nuquat.h"
+
 #include "creature.h"
 
 double acos(double x);

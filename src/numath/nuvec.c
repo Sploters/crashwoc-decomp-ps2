@@ -44,21 +44,11 @@
 
 #include "nu_types.h"
 
-struct nuvec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-struct numtx_s {
-    f32 _00, _01, _02, _03;
-    f32 _10, _11, _12, _13;
-    f32 _20, _21, _22, _23;
-    f32 _30, _31, _32, _33;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
 
 f32 NuFsqrt(f32 x);
-f32 NuMtxDet3(struct numtx_s *mtx);
 extern f32 NuTrigTable[];
 
 void NuVecRotateAxis(struct nuvec_s *dst, struct nuvec_s *src, void *unused,
@@ -348,15 +338,17 @@ f32 NuVecMag(struct nuvec_s *v)
     return NuFsqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 }
 
-void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src)
+f32 NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src)
 {
+    f32 len;
     f32 scale;
 
-    scale = NuFsqrt(src->x * src->x + src->y * src->y + src->z * src->z);
-    scale = 1.0f / scale;
+    len = NuFsqrt(src->x * src->x + src->y * src->y + src->z * src->z);
+    scale = 1.0f / len;
     dst->x = src->x * scale;
     dst->y = src->y * scale;
     dst->z = src->z * scale;
+    return len;
 }
 
 void NuVecSurfaceNormal(struct nuvec_s *dst, struct nuvec_s *p0,

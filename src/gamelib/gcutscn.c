@@ -76,22 +76,24 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/nufloat.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuquat.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 
 #include "creature.h"
 #include "gcutscn.h"
 
-typedef struct numtx_s NuMtx;
-typedef struct nuvec_s NuVec;
-typedef struct nuvec4_s NuVec4;
-
 typedef struct NuInstance {
-    NuMtx matrix;                 /* 0x00 */
+    struct numtx_s matrix;        /* 0x00 */
     int objid;                    /* 0x40 */
     int flags;                    /* 0x44 */
 } NuInstance;
 
 typedef struct NuSpecial {
-    NuMtx mtx;                    /* 0x00 */
+    struct numtx_s mtx;           /* 0x00 */
     NuInstance *instance;         /* 0x40 */
     char *name;                   /* 0x44 */
     int flags;                    /* 0x48 */
@@ -180,7 +182,7 @@ struct NuGCutRigid {
 };
 
 typedef struct NuGCutRigidData {
-    NuMtx mtx;                    /* 0x00 */
+    struct numtx_s mtx;           /* 0x00 */
     char *name;                   /* 0x40 */
     NuHSpecial obj;               /* 0x44 */
     NuAnimData2 *anim;            /* 0x4C */
@@ -223,8 +225,8 @@ struct NuGCutRigidSys {
 };
 
 struct NuGCutBounds {
-    NuVec min;                    /* 0x00 */
-    NuVec max;                    /* 0x0C */
+    struct nuvec_s min;           /* 0x00 */
+    struct nuvec_s max;           /* 0x0C */
 };
 
 typedef struct NuGCutTriggerTarget {
@@ -244,7 +246,7 @@ struct NuGCutTriggerSys {
 };
 
 typedef struct NuGCutCamTgt {
-    NuVec *object;                /* 0x00 */
+    struct nuvec_s *object;       /* 0x00 */
     float frame;                  /* 0x04 */
     float nframes;                /* 0x08 negative = blend back out */
     signed char camid;            /* 0x0C */
@@ -260,7 +262,7 @@ typedef struct NuGCutCam {
 #define NUGCUTCAM_TARGETED 0x2
 
 typedef struct NuGCutCamData {
-    NuMtx mtx;                    /* 0x00 */
+    struct numtx_s mtx;           /* 0x00 */
     unsigned char flags;          /* 0x40 */
     char pad41;                   /* 0x41 */
     unsigned char anim_ix;        /* 0x42 */
@@ -293,16 +295,9 @@ struct NuGCutCamSys {
 /* Round a heap pointer up to the next 16-byte boundary. */
 #define ALIGN16(p) ((char *)(((unsigned int)(p) + 15) & ~15))
 
-extern void NuMtxSetIdentity(NuMtx *mtx);
-extern void NuMtxSetTranslation(NuMtx *mtx, NuVec4 *pos);
-extern void NuMtxTranslate(NuMtx *mtx, NuVec *offset);
-extern void NuMtxSetRotateXYZ(NuMtx *mtx, struct nuangvec_s *ang);
-extern void NuMtxRotateY(NuMtx *mtx, float angle);
 extern void *NuAnimData2FixPtrs(void *anim, int base);
 extern float NuAnimCurve2CalcVal(NuAnimCurve2 *curve, NuAnimTime *atime, int flags);
-extern void NuVecMtxTransform(NuVec *dst, NuVec *src, NuMtx *mtx);
 extern void NuAnimData2CalcTime(NuAnimData2 *anim, float time, NuAnimTime *atime);
-extern void NuMtxMul(NuMtx *dst, NuMtx *a, NuMtx *b);
 
 void instNuGCutSceneUpdate(NuGCutScene *scene, int paused);
 void NuGCutRigidSysFixUp(NuGCutSceneDef *def, void *gscene);
@@ -311,9 +306,9 @@ void NuGCutLocatorSysFixUp(NuGCutLocatorDef *def);
 void NuGCutTriggerSysFixUp(NuGCutSceneDef *def, void *triggers);
 void instNuGCutSceneEnd(NuGCutScene *scene);
 void instNuGCutDebrisLocatorUpdate(NuGCutLocatorDef *def, NuGCutLocator *locator,
-                                   NuGCutLocatorData *data, float time, NuMtx *mtx);
-void NuGCutLocatorCalcMtx(NuGCutLocatorData *data, float time, NuMtx *mtx, NuAnimTime *atime);
-void instNuGCutSceneCalculateCentre(NuGCutScene *scene, NuMtx *mtx);
+                                   NuGCutLocatorData *data, float time, struct numtx_s *mtx);
+void NuGCutLocatorCalcMtx(NuGCutLocatorData *data, float time, struct numtx_s *mtx, NuAnimTime *atime);
+void instNuGCutSceneCalculateCentre(NuGCutScene *scene, struct numtx_s *mtx);
 void instNuGCutCamSysStart(NuGCutCamSys *camsys, NuGCutCamDef *def);
 void instNuGCutRigidSysEnd(NuGCutScene *scene, float time);
 void instNuGCutRigidSysStart(NuGCutRigidSys *sys, NuGCutRigidDef *def);
@@ -383,7 +378,7 @@ void NuSetCutSceneRigidCollisionCheckFn(NuCutSceneRigidCollisionCheckFn fn) {
 }
 
 
-int instNuGCutSceneCharGetStartMtx(NuGCutScene *scene, char *name, NuMtx *mtx) {
+int instNuGCutSceneCharGetStartMtx(NuGCutScene *scene, char *name, struct numtx_s *mtx) {
     NuGCutCharDef *chardef = scene->def->chardef;
     int i;
 
@@ -491,9 +486,9 @@ inline void instNuGCutSceneEnd(NuGCutScene *scene) {
 extern int D_0062F7C8;
 #define cutscene_rndr_cameras D_0062F7C8
 
-extern NuMtx numtx_identity;
-extern float NuCameraDistSqr(NuVec *pos);
-extern int NuCameraClipTestExtents(NuVec *min, NuVec *max, NuMtx *mtx);
+extern struct numtx_s numtx_identity;
+extern float NuCameraDistSqr(struct nuvec_s *pos);
+extern int NuCameraClipTestExtents(struct nuvec_s *min, struct nuvec_s *max, struct numtx_s *mtx);
 void instNuGCutCamSysUpdate(NuGCutScene *scene, float time);
 void instNuGCutTriggerSysUpdate(NuGCutScene *scene, float time);
 void instNuGCutRigidSysUpdate(NuGCutScene *scene, float time);
@@ -620,7 +615,7 @@ void instNuGCutSceneCreateCamTgtArray(NuGCutScene *scene, int count, char **heap
 }
 
 
-int instNuGCutSceneAddCamTgt(NuGCutScene *scene, NuVec *object, char camid, float frame, float nframes) {
+int instNuGCutSceneAddCamTgt(NuGCutScene *scene, struct nuvec_s *object, char camid, float frame, float nframes) {
     NuGCutCamSys *camsys = scene->camsys;
 
     if (camsys && camsys->count < camsys->max) {
@@ -635,14 +630,14 @@ int instNuGCutSceneAddCamTgt(NuGCutScene *scene, NuVec *object, char camid, floa
 }
 
 
-void instNuGCutSceneSetPos(NuGCutScene *scene, NuVec4 *pos) {
+void instNuGCutSceneSetPos(NuGCutScene *scene, struct nuvec4_s *pos) {
     scene->flags |= NUGCUTSCENE_MATRIXSET;
     NuMtxSetTranslation(&scene->mtx, pos);
     instNuGCutSceneCalculateCentre(scene, &scene->mtx);
 }
 
 
-void instNuGCutSceneTranslate(NuGCutScene *scene, NuVec *offset) {
+void instNuGCutSceneTranslate(NuGCutScene *scene, struct nuvec_s *offset) {
     if (!(scene->flags & NUGCUTSCENE_MATRIXSET)) {
         scene->flags |= NUGCUTSCENE_MATRIXSET;
         NuMtxSetIdentity(&scene->mtx);
@@ -654,12 +649,14 @@ void instNuGCutSceneTranslate(NuGCutScene *scene, NuVec *offset) {
 
 void instNuGCutSceneRotateY(NuGCutScene *scene, float angle) {
     scene->flags |= NUGCUTSCENE_MATRIXSET;
-    NuMtxRotateY(&scene->mtx, angle);
+    /* Retail bug: the float angle goes to NuMtxRotateY's int parameter
+     * unconverted (it arrives in $f12, the callee reads $a1). */
+    ((void (*)(struct numtx_s *, float))NuMtxRotateY)(&scene->mtx, angle);
     instNuGCutSceneCalculateCentre(scene, &scene->mtx);
 }
 
 
-void instNuGCutSceneSetMtx(NuGCutScene *scene, NuMtx *mtx) {
+void instNuGCutSceneSetMtx(NuGCutScene *scene, struct numtx_s *mtx) {
     scene->flags |= NUGCUTSCENE_MATRIXSET;
     scene->mtx = *mtx;
     instNuGCutSceneCalculateCentre(scene, &scene->mtx);
@@ -711,7 +708,7 @@ inline int NuGCutLocatorIsVisble(NuGCutLocatorData *data, float time, NuAnimTime
 
 
 typedef struct NuRndrVtx {
-    NuVec pnt;                    /* 0x00 */
+    struct nuvec_s pnt;           /* 0x00 */
     char pad0C[0xC];              /* 0x0C */
     int colour;                   /* 0x18 */
     char pad1C[0x8];              /* 0x1C */
@@ -720,17 +717,14 @@ typedef struct NuRndrVtx {
 extern int D_0062F7D8;
 #define cutscene_rndr_emitters D_0062F7D8
 
-extern void NuVecRotateZ(NuVec *dst, NuVec *src, int angle);
-extern void NuVecRotateY(NuVec *dst, NuVec *src, int angle);
-extern void NuVecAdd(NuVec *dst, NuVec *a, NuVec *b);
-extern void NuRndrLine3d(NuRndrVtx *line, void *mtl, NuMtx *mtx);
+extern void NuRndrLine3d(NuRndrVtx *line, void *mtl, struct numtx_s *mtx);
 
-void DebugRndrEmitter(NuVec *pos, short rotz, short roty) {
-    NuVec tip = { 0.0f, 2.0f, 0.0f };
-    NuVec left = { 0.2f, 1.8f, 0.0f };
-    NuVec right = { -0.2f, 1.8f, 0.0f };
-    NuVec front = { 0.0f, 1.8f, 0.2f };
-    NuVec back = { 0.0f, 1.8f, -0.2f };
+void DebugRndrEmitter(struct nuvec_s *pos, short rotz, short roty) {
+    struct nuvec_s tip = { 0.0f, 2.0f, 0.0f };
+    struct nuvec_s left = { 0.2f, 1.8f, 0.0f };
+    struct nuvec_s right = { -0.2f, 1.8f, 0.0f };
+    struct nuvec_s front = { 0.0f, 1.8f, 0.2f };
+    struct nuvec_s back = { 0.0f, 1.8f, -0.2f };
     NuRndrVtx line[2];
 
     if (cutscene_rndr_emitters) {
@@ -770,11 +764,11 @@ void DebugRndrEmitter(NuVec *pos, short rotz, short roty) {
 }
 
 
-void NuGCutLocatorCalcMtx(NuGCutLocatorData *data, float time, NuMtx *mtx, NuAnimTime *atime) {
+void NuGCutLocatorCalcMtx(NuGCutLocatorData *data, float time, struct numtx_s *mtx, NuAnimTime *atime) {
     NuAnimData2 *anim = data->anim;
-    NuMtx *locmtx = (NuMtx *)data->pad;
-    NuVec t;
-    NuVec r;
+    struct numtx_s *locmtx = (struct numtx_s *)data->pad;
+    struct nuvec_s t;
+    struct nuvec_s r;
     struct nuangvec_s ang;
 
     if (anim) {
@@ -803,16 +797,14 @@ void NuGCutLocatorCalcMtx(NuGCutLocatorData *data, float time, NuMtx *mtx, NuAni
         mtx->_21 = -mtx->_21;
         mtx->_23 = -mtx->_23;
         mtx->_32 = -mtx->_32;
-        NuMtxTranslate(mtx, (NuVec *)&locmtx->_30);
+        NuMtxTranslate(mtx, (struct nuvec_s *)&locmtx->_30);
     } else {
         *mtx = *locmtx;
     }
 }
 
 
-extern void NuVecMtxRotate(NuVec *dst, NuVec *src, NuMtx *mtx);
-
-inline void CalculateLocatorDirection(int direction, NuMtx *mtx, NuVec *dir) {
+inline void CalculateLocatorDirection(int direction, struct numtx_s *mtx, struct nuvec_s *dir) {
     int rotate = 0;
 
     switch (direction) {
@@ -868,22 +860,19 @@ inline void CalculateLocatorDirection(int direction, NuMtx *mtx, NuVec *dir) {
 }
 
 
-extern void NuMtxPreTranslate(NuMtx *mtx, NuVec *offset);
-extern float NuAtan2(float y, float x);
-extern int NuAngSub(int a, int b);
 extern float NuFsqrt(float x);
-extern void AddFiniteShotDebrisEffect(int *key, int type, NuVec *pos, int count);
+extern void AddFiniteShotDebrisEffect(int *key, int type, struct nuvec_s *pos, int count);
 extern void DebrisEmitterOrientation(int key, short rotz, short roty);
-extern void AddVariableShotDebrisEffect(int type, NuVec *pos, int count, short rotz, short roty);
+extern void AddVariableShotDebrisEffect(int type, struct nuvec_s *pos, int count, short rotz, short roty);
 
 #define NUGCUTLOCATOR_PIVOT  0x4
 #define NUGCUTLOCATOR_FINITE 0x10
 
 void instNuGCutDebrisLocatorUpdate(NuGCutLocatorDef *def, NuGCutLocator *locator,
-                                   NuGCutLocatorData *data, float time, NuMtx *wm) {
-    NuMtx mtx;
+                                   NuGCutLocatorData *data, float time, struct numtx_s *wm) {
+    struct numtx_s mtx;
     NuAnimTime atime;
-    NuVec dir;
+    struct nuvec_s dir;
     int key;
     float rate;
     int shots;
@@ -908,7 +897,7 @@ void instNuGCutDebrisLocatorUpdate(NuGCutLocatorDef *def, NuGCutLocator *locator
                 if (shots) {
                     NuGCutLocatorCalcMtx(data, time, &mtx, &atime);
                     if (data->flags & NUGCUTLOCATOR_PIVOT) {
-                        NuMtxPreTranslate(&mtx, (NuVec *)&data->pad[0x40]);
+                        NuMtxPreTranslate(&mtx, (struct nuvec_s *)&data->pad[0x40]);
                     }
                     if (wm) {
                         NuMtxMul(&mtx, &mtx, wm);
@@ -918,10 +907,10 @@ void instNuGCutDebrisLocatorUpdate(NuGCutLocatorDef *def, NuGCutLocator *locator
                     rotz = NuAtan2(NuFsqrt(dir.x * dir.x + dir.z * dir.z), -dir.y) * 10430.378f;
                     if (data->flags & NUGCUTLOCATOR_FINITE) {
                         key = -1;
-                        AddFiniteShotDebrisEffect(&key, debtype, (NuVec *)&mtx._30, shots);
+                        AddFiniteShotDebrisEffect(&key, debtype, (struct nuvec_s *)&mtx._30, shots);
                         DebrisEmitterOrientation(key, rotz, roty);
                     } else {
-                        AddVariableShotDebrisEffect(debtype, (NuVec *)&mtx._30, shots, rotz, roty);
+                        AddVariableShotDebrisEffect(debtype, (struct nuvec_s *)&mtx._30, shots, rotz, roty);
                     }
                 }
             } else {
@@ -956,10 +945,10 @@ void instNuGCutLocatorSysUpdate(NuGCutScene *scene, float time) {
 
 
 typedef void (*NuGCutLocatorFrameFn)(NuGCutScene *scene, NuGCutLocatorDef *def, NuGCutLocator *locator,
-                                     NuGCutLocatorData *data, float time, NuMtx *mtx);
+                                     NuGCutLocatorData *data, float time, struct numtx_s *mtx);
 
 inline void instNuGCutLocatorUpdate(NuGCutScene *scene, NuGCutLocatorDef *def, NuGCutLocator *locator,
-                                    NuGCutLocatorData *data, float time, NuMtx *mtx) {
+                                    NuGCutLocatorData *data, float time, struct numtx_s *mtx) {
     NuGCutLocatorType *type = &def->types[data->type];
 
     if (type->flags & NUGCUTLOCATOR_DEBRIS) {
@@ -987,7 +976,7 @@ void NuGCutCamsSysFixPtrs(NuGCutSceneDef *def, int base) {
 }
 
 
-void instNuGCutSceneCalculateCentre(NuGCutScene *scene, NuMtx *mtx) {
+void instNuGCutSceneCalculateCentre(NuGCutScene *scene, struct numtx_s *mtx) {
     NuGCutSceneDef *def = scene->def;
 
     if (def->bounds) {
@@ -1307,15 +1296,13 @@ void NuGCutCharSysFixUp(NuGCutSceneDef *def) {
 }
 
 
-extern void NuMtxPreScale(NuMtx *mtx, NuVec *scale);
-
-void NuGCutRigidCalcMtx(NuGCutRigidData *rigid, float time, NuMtx *mtx) {
+void NuGCutRigidCalcMtx(NuGCutRigidData *rigid, float time, struct numtx_s *mtx) {
     NuAnimData2 *anim = rigid->anim;
     NuAnimTime atime;
-    NuVec t;
-    NuVec r;
+    struct nuvec_s t;
+    struct nuvec_s r;
     struct nuangvec_s ang;
-    NuVec scale;
+    struct nuvec_s scale;
 
     if (anim) {
         NuAnimCurve2 *curves = anim->curves;
@@ -1350,18 +1337,18 @@ void NuGCutRigidCalcMtx(NuGCutRigidData *rigid, float time, NuMtx *mtx) {
         mtx->_21 = -mtx->_21;
         mtx->_23 = -mtx->_23;
         mtx->_32 = -mtx->_32;
-        NuMtxTranslate(mtx, (NuVec *)&rigid->mtx._30);
+        NuMtxTranslate(mtx, (struct nuvec_s *)&rigid->mtx._30);
     } else {
         *mtx = rigid->mtx;
     }
 }
-extern int NuSpecialDrawAt(NuHSpecial *special, NuMtx *mtx);
+extern int NuSpecialDrawAt(NuHSpecial *special, struct numtx_s *mtx);
 
 void instNuGCutRigidSysUpdate(NuGCutScene *scene, float time) {
     NuGCutSceneDef *def;
     NuGCutRigidDef *rigiddef;
     NuGCutRigidSys *sys;
-    NuMtx mtx;
+    struct numtx_s mtx;
     signed char state;
     int i;
     int j;
@@ -1412,7 +1399,7 @@ void instNuGCutRigidSysRender(NuGCutScene *scene, float time) {
     NuGCutSceneDef *def;
     NuGCutRigidDef *rigiddef;
     NuGCutRigidSys *sys;
-    NuMtx mtx;
+    struct numtx_s mtx;
     signed char state;
     int i;
     int j;
@@ -1463,11 +1450,11 @@ void instNuGCutRigidSysRender(NuGCutScene *scene, float time) {
 }
 
 
-void NuGCutCharAnimProcess(NuGCutCharDesc *desc, float time, NuMtx *mtx, int *is_visible,
+void NuGCutCharAnimProcess(NuGCutCharDesc *desc, float time, struct numtx_s *mtx, int *is_visible,
                            unsigned int *animix, float *animrate, float *blendframes) {
     NuAnimTime atime;
-    NuVec t;
-    NuVec r;
+    struct nuvec_s t;
+    struct nuvec_s r;
     struct nuangvec_s ang;
     float value;
     NuAnimCurve2 *curves;
@@ -1558,7 +1545,7 @@ void NuGCutCharAnimProcess(NuGCutCharDesc *desc, float time, NuMtx *mtx, int *is
 void instNuGCutRigidSysEnd(NuGCutScene *scene, float time) {
     NuGCutRigidDef *rigiddef = scene->def->rigiddef;
     NuGCutRigidSys *sys = scene->rigidsys;
-    NuMtx mtx;
+    struct numtx_s mtx;
     signed char state;
     int i;
 
@@ -1875,29 +1862,23 @@ extern char D_00619CD8[];               /* error message */
 extern int NuFileLoadBuffer(char *name, void *buf, int size);
 
 
-extern NuMtx cutscenecammtx;
+extern struct numtx_s cutscenecammtx;
 extern int set_cutscenecammtx;
 extern char D_00619D18[];
 #define badcamera_msg D_00619D18
 
 extern void NuAnimCurve2SetApplyToMatrix(NuAnimCurve2 *curves, signed char *curveflags, signed char setflags,
-                                         NuAnimTime *atime, NuMtx *mtx);
-extern float NuFabs(float x);
-extern float NuFsign(float x);
-extern void NuMtxLookAtZ(NuMtx *mtx, NuVec *target);
-extern void NuMtxToQuat(NuMtx *mtx, struct nuquat_s *quat);
-extern void NuQuatSlerp(struct nuquat_s *dst, struct nuquat_s *from, struct nuquat_s *to, float t);
-extern void NuQuatToMtx(struct nuquat_s *quat, NuMtx *mtx);
+                                         NuAnimTime *atime, struct numtx_s *mtx);
 
 void instNuGCutCamSysUpdate(NuGCutScene *scene, float time) {
     NuGCutCamDef *camdef = scene->def->camdef;
     NuGCutCamSys *camsys = scene->camsys;
     NuAnimTime atime;
-    NuMtx aim;
+    struct numtx_s aim;
     struct nuquat_s qfrom;
     struct nuquat_s qto;
     struct nuquat_s qblend;
-    NuVec campos;
+    struct nuvec_s campos;
     unsigned char camchange;
     NuGCutCamTgt *tgt;
     NuGCutCam *cam;
@@ -1956,7 +1937,7 @@ void instNuGCutCamSysUpdate(NuGCutScene *scene, float time) {
             cam->flags &= ~NUGCUTCAM_TARGETED;
             return;
         }
-        campos = *(NuVec *)&cutscenecammtx._30;
+        campos = *(struct nuvec_s *)&cutscenecammtx._30;
         aim = cutscenecammtx;
         NuMtxLookAtZ(&aim, tgt->object);
         if (nframes > 0.01f) {
@@ -1976,7 +1957,7 @@ void instNuGCutCamSysUpdate(NuGCutScene *scene, float time) {
         NuMtxToQuat(&cutscenecammtx, &qfrom);
         NuQuatSlerp(&qblend, &qfrom, &qto, lerp);
         NuQuatToMtx(&qblend, &cutscenecammtx);
-        *(NuVec *)&cutscenecammtx._30 = campos;
+        *(struct nuvec_s *)&cutscenecammtx._30 = campos;
     }
 }
 

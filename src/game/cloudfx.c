@@ -16,6 +16,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/nurand.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern s32 cloudreset;
@@ -37,7 +40,6 @@ extern struct nuivec_s grphaserate[];
 extern void cloudInit();
 extern void NuMtlDestroy(void *mtl);
 extern void *NuRndrStreamAllocStream(void *a0, void *a1, s32 a2);
-extern f32 NuRandFloat(void);
 
 /* ---- cloudInit support ---- */
 
@@ -138,7 +140,6 @@ extern void NuRndrStreamLink(struct rndrstream_s *rs);
 extern void NuRndrStreamSetMisc(struct rndrstream_s *rs);
 extern int NuRndrStreamAddMtl(struct rndrstream_s *rs, struct cloudmtl_s *mtl);
 extern int NuRndrStreamSetViewMtx(struct rndrstream_s *rs);
-extern void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern u8 *vpDmaTag_CntEx(u8 *cur, s32 qwc, u32 tag);
 extern u8 *vpDmaTag_Close(u8 *cur);
 extern u8 *vpDmaTag_RefEx(u8 *cur, u32 addr, s32 a2, u32 tag);
@@ -168,7 +169,6 @@ extern u16 tt_cdensity[];
 extern u16 ttcdenrate[];
 extern f32 D_0063291C;
 
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 extern void TextureCreateEx(void *desc, void *mtl, void *tex, void *sbptr,
                             void *buf, void *buf2, void *buffend);
 

@@ -28,6 +28,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+
 #include "creature.h"
 
 struct nuinstance_s {
@@ -205,10 +208,6 @@ extern f32 NuTrigTable[];
 extern float FONT3D_JSCALEX;
 extern struct gametimer_s GameTimer;
 
-extern void NuMtxSetScale(struct numtx_s *, struct nuvec_s *);
-extern void NuMtxRotateX(struct numtx_s *, u16);
-extern void NuMtxRotateY(struct numtx_s *, u16);
-extern void NuMtxRotateZ(struct numtx_s *, u16);
 extern s32 NuRndrGScnObj(void *, struct numtx_s *);
 extern void NuVpSetSize(float, float);
 extern void GameSfx(s32, s32);
@@ -989,7 +988,6 @@ extern f32 BONUSLIFESCALE;
 extern u16 panel_head_xrot;
 extern u16 panel_head_yrot;
 extern s32 bonus_lives;
-extern s32 NuAtan2D(f32 x, f32 z);
 
 void UpdatePanelDebris(void) {
     struct pdeb_s *deb;

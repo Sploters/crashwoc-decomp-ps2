@@ -31,19 +31,10 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-}; /* 0x0C */
-
-struct nuplane_s {
-    float a;
-    float b;
-    float c;
-    float d;
-}; /* 0x10 */
+#include "numath/numathtypes.h"
+#include "numath/nuplane.h"
+#include "numath/nurand.h"
+#include "numath/nuvec.h"
 
 struct nuvtx_tc1_s {
     struct nuvec_s pnt;             /* 0x00 */
@@ -149,11 +140,6 @@ union nugiftag_u {
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern s64 NuRand(void *rand);
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
-extern void NuPlnEqn(struct nuplane_s *pln, struct nuvec_s *p0, struct nuvec_s *p1, struct nuvec_s *p2);
 extern u32 *vpDmaTag_RetEx(void *buf, u32 vif0, u32 vif1);
 extern void *vpDmaTag_Close(void *end);
 extern void NuPs2DestroyRenderStream(struct nugobj_s *gobj);
