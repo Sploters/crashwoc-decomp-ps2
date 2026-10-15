@@ -16,6 +16,7 @@
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
+#include "nu3d/nugobj.h"
 
 struct nuinstanim_s {
     struct numtx_s mtx;
@@ -33,13 +34,6 @@ struct nugscn_s {
     char header[0x18];
     s32 numinstance;
     struct nuinstance_s *instances;
-};
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;
-    char pad0c[0x18 - 0x0C];
-    s32 colour;
-    char pad1c[0x24 - 0x1C];
 };
 
 typedef struct SpecTerrShape {
@@ -79,7 +73,7 @@ typedef struct SpecTerrData {
 } SpecTerrData;
 
 extern void *CrashDataPtr(void);
-extern void NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, void *mtx);
+extern void NuRndrLine3d(struct nuvtx_tc1_s *line, void *mtl, void *mtx);
 
 extern char D_00619AA0[];
 extern char D_00619AC8[];
@@ -291,7 +285,7 @@ s32 SpecialTerrainInstanceCollideCheck(struct nuvec_s *pos, f32 radius, SpecTerr
 
 
 void SpecialTerrainTestRender(SpecTerrData *data) {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     struct nuvec_s centre;
     struct numtx_s invmtx;
     struct nuinstance_s *inst;
@@ -311,8 +305,8 @@ void SpecialTerrainTestRender(SpecTerrData *data) {
         return;
     }
     cur = (char *)data->crashdata;
-    line[1].colour = -1;
-    line[0].colour = -1;
+    line[1].diffuse = -1;
+    line[0].diffuse = -1;
     count = *(s32 *)cur;
     cur += sizeof(s32);
     for (i = 0; i < count; i++) {

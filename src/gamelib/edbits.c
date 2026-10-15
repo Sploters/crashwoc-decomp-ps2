@@ -21,15 +21,9 @@
 #include "numath/numathtypes.h"
 #include "numath/nuvec.h"
 #include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 struct nuinstance_s;
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;
-    char pad0c[0x18 - 0x0C];
-    int colour;
-    char pad1c[0x24 - 0x1C];
-};
 
 struct edsfx_s {
     char name[16];
@@ -71,7 +65,7 @@ extern float NuTrigTable[];
 extern void GameSfx(int sfx, struct nuvec_s *pos);
 extern void NuSoundPlay3d(struct nuvec_s *pos, int sfx, int volL, int volR, int pitch);
 extern void NuStrCpy(char *dst, char *src);
-extern int NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl, struct numtx_s *mtx);
+extern int NuRndrLine3d(struct nuvtx_tc1_s *line, struct numtl_s *mtl, struct numtx_s *mtx);
 
 
 void edbitsSoundPlay(struct nuvec_s *pos, int sfx) {
@@ -130,7 +124,7 @@ void edbitsRegisterSfx(struct edsfx_s *globaltab, struct edsfx_s *leveltab, int 
 
 void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, float sizez,
                     int rotz0, int roty0, int rotz1, int roty1, int colour, struct numtl_s *mtl) {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     struct nuvec_s a;
     struct nuvec_s b;
     float corners[60] = {
@@ -168,8 +162,8 @@ void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, float s
             line[1].pnt.x = x + b.x;
             line[1].pnt.y = y + b.y;
             line[1].pnt.z = z + b.z;
-            line[0].colour = colour;
-            line[1].colour = colour;
+            line[0].diffuse = colour;
+            line[1].diffuse = colour;
             NuRndrLine3d(line, mtl, 0);
         }
     }
@@ -178,7 +172,7 @@ void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, float s
 
 void edbitsDrawDiagonalCross(float x, float y, float z, float size, int colour,
                              struct numtl_s *mtl) {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     float diagonals[12] = {
         1.0f, 1.0f, 1.0f,    -1.0f, 1.0f, 1.0f,
         1.0f, -1.0f, 1.0f,   -1.0f, -1.0f, 1.0f,
@@ -189,11 +183,11 @@ void edbitsDrawDiagonalCross(float x, float y, float z, float size, int colour,
         line[0].pnt.x = x + size * diagonals[i];
         line[0].pnt.y = y + size * diagonals[i + 1];
         line[0].pnt.z = z + size * diagonals[i + 2];
-        line[0].colour = colour;
+        line[0].diffuse = colour;
         line[1].pnt.x = x - size * diagonals[i];
         line[1].pnt.y = y - size * diagonals[i + 1];
         line[1].pnt.z = z - size * diagonals[i + 2];
-        line[1].colour = colour;
+        line[1].diffuse = colour;
         NuRndrLine3d(line, mtl, 0);
     }
 }
@@ -229,7 +223,7 @@ char *edbitsGetSoundName(int sfx) {
 
 
 void edbitsDrawCircleXY(struct nuvec_s *centre, float radius, int colour, struct numtl_s *mtl) {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     int i;
     int angle;
     float *trig;
@@ -237,8 +231,8 @@ void edbitsDrawCircleXY(struct nuvec_s *centre, float radius, int colour, struct
     line[1].pnt.x = centre->x;
     line[1].pnt.y = centre->y;
     line[1].pnt.z = centre->z + radius;
-    line[0].colour = colour;
-    line[1].colour = colour;
+    line[0].diffuse = colour;
+    line[1].diffuse = colour;
     for (i = 1; i < 11; i++) {
         line[0].pnt = line[1].pnt;
         line[1].pnt.x = centre->x;

@@ -46,6 +46,7 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "nu3d/nuhgobj.h"
 #include "nu3d/numtl.h"
 #include "nu3d/nustream.h"
 #include "nu3d/nutex.h"
@@ -1122,24 +1123,22 @@ void DoInput(void)
 }
 
 
-struct nuhgobj_s;
 struct nuanimdata_s;
 
 extern char D_0061B4D0[];
 extern s32 bgloadlastcharacter;
 extern char *bgloadcharnames[];
 extern char *bgloadanimnames[];
-extern struct nuhgobj_s *bgloadchr[2];
+extern struct NUHGOBJ_s *bgloadchr[2];
 extern struct nuanimdata_s *bgloadanim[2];
 
 extern void TimeTunnelInit(void *buffer, void *buffend);
-extern struct nuhgobj_s *NuGHGRead(void *buffer, char *name);
 extern struct nuanimdata_s *NuAnimDataLoadBuff(char *name, void *buffer, void *buffend);
 
 void BGLoadScreenInit(s32 loadchars)
 {
     void **buffend = &superbuffer_end;
-    void *buffer = (char *)superbuffer_end - 0x100000;
+    char *buffer = (char *)superbuffer_end - 0x100000;
     void *dat;
     s32 c;
 

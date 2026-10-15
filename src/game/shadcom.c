@@ -14,15 +14,9 @@
 #include "nu3d/numtl.h"
 #include "nu3d/nustream.h"
 #include "nu3d/nutex.h"
+#include "nu3d/nugobj.h"
 
 #include "creature.h"
-
-struct nuvtx_tc1_s {
-    struct nuvec_s pnt;           /* 0x00 */
-    struct nuvec_s nrm;           /* 0x0C */
-    u32 diffuse;                  /* 0x18 */
-    f32 tc[2];                    /* 0x1C */
-}; /* 0x24 */
 
 struct shadentry_s {
     s16 xframes;                  /* 0x00 */

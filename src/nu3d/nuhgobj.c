@@ -37,21 +37,11 @@
 #include "numath/numtx.h"
 #include "numath/nuplane.h"
 #include "numath/nuvec.h"
+#include "nu3d/nugobj.h"
+#include "nu3d/nuhgobj.h"
 
-struct SkinDmaTag;
-
-struct nugeom_s {
-    struct nugeom_s *next;
-    struct numtl_s *mtl;
-    void *dmastream;
-    struct SkinDmaTag *skindma;
-    char pad10[0x04];
-    int mtl_id;
-    char pad18[0x28];
-    int dmasize;
-};
-
-struct nugobj_s {
+/* A gobj as NuGHGWrite stores it: nugobj_s up to origin. */
+struct nughggobj_s {
     struct nugobj_s *sysnext;
     struct nugobj_s *syslast;
     int type;
@@ -76,97 +66,7 @@ struct nughggeom_s {
     int skindma;
 };
 
-struct NUPOINTOFINTEREST_s {
-    struct numtx_s offset;
-    char *name;
-    u8 parent_joint;
-    char pad45[0x0B];
-};
-
-struct NUJOINTDATA_s {
-    struct numtx_s orient;
-    struct nuvec_s locator_offset;
-    char *name;
-    char parent_ix;
-    u8 flags;
-    char pad52[0x0E];
-};
-
-struct NUHLAYERDATA_s {
-    char *name;
-    struct nugobj_s **gobjs;
-    struct nugobj_s *skin_object;
-    struct nugobj_s **blend_gobjs;
-    struct nugobj_s *blend_skin_object;
-};
-
-struct nushadowvtx_s {
-    struct nuvec_s pos;
-    int count;
-};
-
-struct nushadowmesh_s {
-    struct nushadowvtx_s *first;
-    struct nushadowvtx_s *second;
-};
-
-struct nushadowdata_s {
-    void *ellipsoids;
-    void *cylinders;
-    struct nushadowmesh_s *meshes;
-    u8 numellipsoids;
-    u8 numcylinders;
-    u8 nummeshes;
-    u8 last;
-};
-
 struct nutexanimenv_s;
-
-struct nuhcollideentry_s {
-    int type;
-    void *data;
-};
-
-struct nuhcollide_s {
-    unsigned int nentries;
-    struct nuhcollideentry_s *entries;
-};
-
-struct NUHGOBJ_s {
-    short *tids;
-    int numtid;
-    struct numtl_s **mtls;
-    int nummtl;
-    int type;
-    struct NUJOINTDATA_s *joints;
-    struct numtx_s *T;
-    struct numtx_s *INV_WT;
-    u8 *joint_ixs;
-    struct NUHLAYERDATA_s *layers;
-    struct NUPOINTOFINTEREST_s *pois;
-    u8 *poi_ixs;
-    char *string_table;             /* 0x30 */
-    int string_table_size;          /* 0x34 */
-    f32 scale;
-    struct nushadowdata_s *shadow;
-    f32 sphere_radius;
-    f32 sphere_y;
-    struct nuvec_s bbox_min;
-    struct nuvec_s bbox_max;
-    f32 cyl_y;
-    f32 cyl_height;
-    f32 cyl_radius;
-    struct nuhcollide_s *collide;
-    int numtexanims;                /* 0x70 */
-    struct nutexanim_s *texanims;   /* 0x74 */
-    short *texanim_tids;            /* 0x78 */
-    u8 num_joints;
-    u8 num_joint_ixs;
-    u8 num_layers;
-    u8 num_pois;
-    u8 num_poi_ixs;
-    char pad81[0x03];
-};
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
@@ -174,10 +74,8 @@ extern int NuFileBeginBlkRead(int fh, int blockid);
 extern void NuFileEndBlkRead(int fh);
 extern int NuFileGetBlkSize(int fh);
 extern int NuFileRead(int fh, void *buf, int size);
-extern void NuGobjDestroy(struct nugobj_s *gobj);
 extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 extern void NuCvtSknInstFix(struct SkinDmaTag *tag);
-extern void ReadNuIFFHGobjSet(int fh, struct NUHGOBJ_s *hobj);
 extern void NuCvtSknInstUnFix(struct SkinDmaTag *tag);
 
 extern char D_00615290[];
@@ -626,7 +524,6 @@ extern int NuFileLoadBuffer(char *name, void *buf, int size);
 extern int NuMemFileOpen(void *buf, int size, int mode);
 extern void NuFileClose(int fh);
 extern char *strlwr(char *s);
-void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj);
 extern char D_006152B0[];
 extern char D_006152D0[];
 extern char D_006152F0[];
@@ -951,8 +848,8 @@ void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj) {
 
 char *NuGHGWriteGobj(char *base, char *ptr, struct NUHGOBJ_s *hobj, struct nugobj_s *gobj,
                      int *offset) {
-    struct nugobj_s *out;
-    struct nugobj_s *last;
+    struct nughggobj_s *out;
+    struct nughggobj_s *last;
     struct nugeom_s *geom;
     struct nughggeom_s *ogeom;
     struct nughggeom_s *lastgeom;
@@ -961,14 +858,14 @@ char *NuGHGWriteGobj(char *base, char *ptr, struct NUHGOBJ_s *hobj, struct nugob
     *offset = 0;
     while (gobj) {
         ptr = (char *)(((unsigned int)ptr + 3) & ~3);
-        out = (struct nugobj_s *)ptr;
+        out = (struct nughggobj_s *)ptr;
         if (last) {
             last->next_gobj = (struct nugobj_s *)(ptr - base);
         } else {
             *offset = ptr - base;
         }
         ptr = (char *)&out[1];
-        memcpy(out, gobj, sizeof(struct nugobj_s));
+        memcpy(out, gobj, sizeof(struct nughggobj_s));
         out->faceon_geom = 0;
         lastgeom = 0;
         for (geom = gobj->geom; geom; geom = geom->next) {

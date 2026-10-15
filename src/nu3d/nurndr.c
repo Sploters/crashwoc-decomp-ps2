@@ -130,6 +130,7 @@
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
 #include "nups2/ps2txtr.h"
+#include "nu3d/nugobj.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
 
 typedef struct GsFrameReg {
@@ -319,39 +320,6 @@ struct nutribatch_s {
     int count;
     int pad04[3];
     u128 tris[1];
-};
-
-struct nugeom_s {
-    struct nugeom_s *next;
-    struct numtl_s *mtl;
-    void *dma;
-    int pad0c;
-    struct nutribatch_s *otbatch;
-};
-
-struct nufaceongeom_s {
-    struct nufaceongeom_s *next;
-    struct numtl_s *mtl;
-    int pad08;
-    int worldspace;
-    char pad10[0xC];
-    void *dmastream;
-};
-
-struct nugobj_s {
-    char pad00[0xC];
-    struct nugeom_s *geom;
-    struct nufaceongeom_s *faceon_geom;
-    char pad14[8];
-    struct nuvec_s min;
-    struct nuvec_s max;
-    char pad34[0x14];
-    int ngobjs;
-    struct nugobj_s *next_gobj;
-    struct nuvec_s origin;
-    char pad5c[4];
-    int ntris;
-    char pad64[8];
 };
 
 extern struct nurndrstream_s *rndrstream_2d;
@@ -752,7 +720,7 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
             clip = 2;
         }
         if (vis) {
-            nurndr_tritot_this_frame += gobj->ntris;
+            nurndr_tritot_this_frame += gobj->tricount;
             if (instanced) {
                 NuRndrSetLocalMtx(&mtx, vis);
             } else {
@@ -793,8 +761,8 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                             NuRndrStreamSetLocalMtx(rndrstream_3d);
                         }
                     }
-                    if (geom->dma) {
-                        rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, geom->dma);
+                    if (geom->dmastream) {
+                        rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, geom->dmastream);
                         ((unsigned char *)rndrstream_3d->cur.w)[-14] = 4;
                     }
                     if (geom->otbatch) {
@@ -826,7 +794,7 @@ int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         NuRndrStreamLink(stream);
                         NuRndrStreamSetMisc(rndrstream_3d);
                         NuRndrStreamSetViewMtx(rndrstream_3d);
-                        if (!fgeom->worldspace) {
+                        if (!fgeom->faceon_type) {
                             NuRndrStreamSetLocalMtxEx(rndrstream_3d, 1);
                         } else {
                             NuRndrStreamSetLocalMtxEx(rndrstream_3d, 2);
@@ -915,7 +883,7 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
                             NuRndrStreamSetLocalMtx(rndrstream_3d);
                         }
                     }
-                    rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, geom->dma);
+                    rndrstream_3d->cur.w = vpDmaTag_Call(rndrstream_3d->cur.w, geom->dmastream);
                     ((unsigned char *)rndrstream_3d->cur.w)[-14] = 4;
                     mtl = mtl->display_next;
                 } while (mtl);
@@ -936,7 +904,7 @@ int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
                         NuRndrStreamLink(stream);
                         NuRndrStreamSetMisc(rndrstream_3d);
                         NuRndrStreamSetViewMtx(rndrstream_3d);
-                        if (!fgeom->worldspace) {
+                        if (!fgeom->faceon_type) {
                             NuRndrStreamSetLocalMtxEx(rndrstream_3d, 1);
                         } else {
                             NuRndrStreamSetLocalMtxEx(rndrstream_3d, 2);

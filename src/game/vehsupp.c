@@ -51,6 +51,7 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nuhgobj.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
 
@@ -525,8 +526,6 @@ extern void NuHGobjEval(struct NUHGOBJ_s *hobj, s32 nJ, struct NUJOINTANIM_s *pJ
 extern void NuHGobjEvalAnim(struct NUHGOBJ_s *hobj, struct nuanimdata_s *data,
                             f32 time, s32 nJ, struct NUJOINTANIM_s *pJ,
                             struct numtx_s *tmtx);
-extern void NuHGobjPOIMtx(struct NUHGOBJ_s *hobj, u8 i, struct numtx_s *mC,
-                          struct numtx_s *tmtx, struct numtx_s *m);
 
 void GetLocatorMtx(struct CharacterModel *model, struct numtx_s *dest,
                    f32 angle) {
