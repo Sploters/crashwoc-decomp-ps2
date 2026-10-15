@@ -25,8 +25,12 @@ Because step 2 re-derives *every* `matching` claim in the repo, promoting N
 functions together is exactly as strong a proof as promoting them one by one
 -- and costs one verifier run instead of N (that run is several minutes and
 grows with the matching set). The only difference is granularity of failure:
-a batch rolls back whole, so re-run the targets individually, or in halves,
-to find the one that does not hold.
+by default a batch rolls back whole. With `--isolate`, a failed batch is
+narrowed down instead: functions the verifier proved byte-divergent are
+dropped directly, the rest are re-verified in halves, and every function that
+held is kept -- the final manifests are always re-proved by one last full
+verifier run, so `--isolate` never keeps a promotion the verifier did not
+pass. `--report FILE` writes the per-function outcome as JSON.
 
 `--init` creates the status manifest for a source file that doesn't have
 one yet (every function `asm`), deriving the unit from the canonical
@@ -38,6 +42,7 @@ Needs the toolchain for the verify step: run via
 `python tools/dispatch.py python tools/promote.py ...` from the host.
 """
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -111,6 +116,100 @@ def run_verifier(version):
     return subprocess.run(
         [sys.executable, str(ROOT / "tools" / "verify_promoted.py"),
          "--version", version]).returncode == 0
+
+
+def results_path(version):
+    return ROOT / "build" / version / "verify_results.json"
+
+
+def byte_results(path, since):
+    """{id: verified} for the functions a verifier run byte-compared.
+
+    Only entries that carry a `size` were compared against retail; a unit
+    that failed before the comparison (hybrid build, unresolved externals)
+    reports `verified = false` for all its functions without saying which
+    one broke it, so those are left out. A results file not rewritten after
+    `since` (the verifier died first) yields nothing.
+    """
+    try:
+        if path.stat().st_mtime_ns <= since:
+            return {}
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {r["id"]: bool(r.get("verified")) for r in data.get("functions", [])
+            if "size" in r}
+
+
+def isolate_batch(fids, apply, verify, log=print):
+    """Keep every promotion in `fids` that the verifier proves.
+
+    `apply(ids)` rewrites the manifests so exactly `ids` are flipped;
+    `verify()` runs the full verifier and returns (ok, {id: verified}) as
+    `byte_results` reads it. Each verifier run sees every promotion accepted
+    so far plus the subset under test, so an accepted set is always one the
+    verifier passed as a whole. Returns a dict with `accepted` (ids, in input
+    order), `rejected` ({id: reason}), `runs`, and `error` (set when the
+    repository fails even without the candidates, or the final confirmation
+    fails; nothing is kept then).
+    """
+    accepted, rejected = [], {}
+    state = {"runs": 0, "last": None, "baseline": None}
+
+    def attempt(subset):
+        ids = accepted + subset
+        apply(ids)
+        state["runs"] += 1
+        state["last"] = list(ids)
+        log(f"[isolate] verifier run {state['runs']}: "
+            f"{len(accepted)} accepted + {len(subset)} under test")
+        return verify()
+
+    def finish(error=None):
+        if error is not None:
+            accepted.clear()
+        apply(accepted)
+        order = {f: i for i, f in enumerate(fids)}
+        return {"accepted": sorted(accepted, key=order.get),
+                "rejected": rejected, "runs": state["runs"], "error": error}
+
+    queue = [list(fids)]
+    while queue:
+        subset = queue.pop(0)
+        if not subset:
+            continue
+        ok, per = attempt(subset)
+        if ok:
+            accepted.extend(subset)
+            continue
+        diverged = [f for f in subset if per.get(f) is False]
+        for f in diverged:
+            rejected[f] = "bytes differ from retail over the full extent"
+        rest = [f for f in subset if f not in diverged]
+        if diverged:
+            queue.insert(0, rest)          # retry the rest as one group
+            continue
+        if len(rest) == 1:
+            # A lone candidate fails: make sure the repository itself (with
+            # the promotions accepted so far) is green before blaming it.
+            if state["baseline"] is None:
+                state["baseline"], _ = attempt([])
+            if not state["baseline"]:
+                return finish("the verifier fails even without the remaining "
+                              "candidates; fix the repository first")
+            rejected[rest[0]] = ("verification failed with this promotion "
+                                 "(unit or image gate; see verifier output)")
+            continue
+        half = len(rest) // 2
+        queue[:0] = [rest[:half], rest[half:]]
+
+    # Nothing kept means the original manifests come back as they were; any
+    # kept set the last run did not prove exactly is proved once more.
+    if accepted and state["last"] != accepted:
+        ok, _ = attempt([])
+        if not ok:
+            return finish("the final confirmation run failed")
+    return finish()
 
 
 def unit_functions(version, unit_index):
@@ -208,6 +307,12 @@ def main():
                              "(default: derived from the unit category -- "
                              "sce for SDK/SCE/newlib/libgcc, else default); "
                              "must exist in profiles.toml")
+    parser.add_argument("--isolate", action="store_true",
+                        help="if the batch fails, narrow it down and keep "
+                             "every promotion the verifier proves (instead "
+                             "of rolling the whole batch back)")
+    parser.add_argument("--report", metavar="FILE",
+                        help="write the per-function outcome as JSON")
     parser.add_argument("--version", default="pal103")
     args = parser.parse_args()
 
@@ -227,26 +332,38 @@ def main():
 
     # Resolve every target first: a typo must not leave half the batch flipped.
     pending = []                       # [(manifest, fid, old_state)]
+    already = []
     for t in targets:
         manifest, fid, state = find_entry(args.version, t)
         rel = manifest.relative_to(ROOT).as_posix()
         if state == "matching":
             print(f"{fid} is already `matching` in {rel}; nothing to do.")
+            already.append(fid)
             continue
         pending.append((manifest, fid, state))
     if not pending:
-        return 0
+        return report_outcome({"accepted": [], "rejected": {}, "runs": 0,
+                               "error": None, "already": already}, {},
+                              args.report)
 
     # newline="" everywhere: the edit must be byte-preserving outside the
     # flipped words, whatever line endings the file uses and whatever
     # platform this runs on. One original per manifest, so several functions
     # in the same file compose instead of clobbering each other.
     originals = {}
-    for manifest, fid, _ in pending:
+    for manifest, _, _ in pending:
         if manifest not in originals:
             originals[manifest] = read_manifest(manifest)
-        write_manifest(manifest,
-                       flip_state(read_manifest(manifest), fid, "matching"))
+    manifest_of = {fid: manifest for manifest, fid, _ in pending}
+
+    def apply(ids):
+        """Rewrite the touched manifests with exactly `ids` flipped."""
+        texts = dict(originals)
+        for fid in ids:
+            texts[manifest_of[fid]] = flip_state(texts[manifest_of[fid]], fid,
+                                                 "matching")
+        for manifest, text in texts.items():
+            write_manifest(manifest, text)
 
     for manifest, fid, state in pending:
         rel = manifest.relative_to(ROOT).as_posix()
@@ -254,20 +371,71 @@ def main():
     print(f"\nverifying {len(pending)} promotion(s) in "
           f"{len(originals)} manifest(s)...\n", flush=True)
 
-    if run_verifier(args.version):
-        for manifest, fid, _ in pending:
-            print(f"Promoted {fid} to `matching`.")
-        print(f"\nCommit: {', '.join(sorted(m.relative_to(ROOT).as_posix() for m in originals))}")
-        return 0
+    fids = [fid for _, fid, _ in pending]
+    try:
+        if args.isolate and len(fids) > 1:
+            outcome = promote_isolated(args.version, fids, apply)
+        else:
+            apply(fids)
+            if run_verifier(args.version):
+                outcome = {"accepted": fids, "rejected": {}, "runs": 1,
+                           "error": None}
+            else:
+                apply([])
+                outcome = {"accepted": [], "runs": 1,
+                           "error": "the verifier rejected the batch",
+                           "rejected": {f: "batch verification failed"
+                                        for f in fids}}
+                if len(fids) > 1:
+                    outcome["hint"] = ("re-run with --isolate (or the "
+                                       "targets individually) to find the "
+                                       "one that does not hold")
+    except BaseException:
+        apply([])                      # interrupted: never leave a flip behind
+        raise
+    outcome["already"] = already
+    return report_outcome(outcome, manifest_of, args.report)
 
-    for manifest, text in originals.items():
-        write_manifest(manifest, text)
-    print(f"\nVerification FAILED; rolled back all {len(pending)} promotion(s) "
-          f"in {len(originals)} manifest(s).", file=sys.stderr)
-    if len(pending) > 1:
-        print("Re-run the targets individually (or in halves) to find the "
-              "one that does not hold.", file=sys.stderr)
-    return 1
+
+def promote_isolated(version, fids, apply):
+    """isolate_batch wired to the real verifier and its results file."""
+    path = results_path(version)
+
+    def verify():
+        try:
+            since = path.stat().st_mtime_ns
+        except OSError:
+            since = -1
+        ok = run_verifier(version)
+        return ok, byte_results(path, since)
+
+    return isolate_batch(fids, apply, verify)
+
+
+def report_outcome(outcome, manifest_of, report=None):
+    """Print the outcome, write the JSON report, return the exit status."""
+    accepted, rejected = outcome["accepted"], outcome["rejected"]
+    for fid in accepted:
+        print(f"Promoted {fid} to `matching`.")
+    if accepted:
+        touched = sorted({manifest_of[f].relative_to(ROOT).as_posix()
+                          for f in accepted})
+        print(f"\nCommit: {', '.join(touched)}")
+    if outcome.get("error"):
+        print(f"\nVerification FAILED: {outcome['error']}; rolled back all "
+              f"{len(manifest_of)} promotion(s).", file=sys.stderr)
+        if outcome.get("hint"):
+            print(outcome["hint"].capitalize() + ".", file=sys.stderr)
+    else:
+        for fid, why in rejected.items():
+            print(f"Not promoted {fid}: {why}", file=sys.stderr)
+    if report:
+        Path(report).write_text(json.dumps(
+            {"accepted": accepted, "rejected": rejected,
+             "already_matching": outcome.get("already", []),
+             "verifier_runs": outcome.get("runs"),
+             "error": outcome.get("error")}, indent=2) + "\n")
+    return 1 if rejected or outcome.get("error") else 0
 
 
 if __name__ == "__main__":

@@ -100,7 +100,9 @@ choose. Retry with a canonical id.
 10. `promote_matching` - delegates to `tools/promote.py` (the sole writer of
     `state = matching`; it verifies and rolls back on failure). The MCP never
     edits a manifest and never sets `equivalent` - equivalence is a human
-    review decision.
+    review decision. To promote many functions at once and get each one
+    reviewed before it goes into a PR, use the contribution workflow below
+    (`workflow submit` / `batch` / `review` / `gate`).
 
 If blocked, `record_blocker` with a structured kind so the obstacle is not
 rediscovered. Only *architectural* kinds (compiler-owned data, `.lit8`, ...)
@@ -275,6 +277,67 @@ Rules for type refactors:
 7. `long` is 8 bytes under both compilers (pointers are 4): replace it with
    `s64`/`u64`, never `int`.
 
+## Contribution workflow: batch promotion and quality review
+
+Byte-exact is necessary for a contribution, not sufficient: maintainers want
+C a person could have written, with every name and type backed by evidence.
+`tools/decomp_agent/workflow.py` tracks each function through five explicit
+states in a local ledger (`build/<version>/agent_workflow/`, gitignored). The
+status manifests keep their three committed states; `tools/promote.py` stays
+their only writer.
+
+| state | meaning | how a function gets there |
+|---|---|---|
+| `in_progress` | being written | `workflow submit`; any edit after verification; a reviewer's `reject` |
+| `exact_match` | the official verifier proved the bytes | `workflow batch` (via `promote.py --isolate`) |
+| `quality_review` | lint run, review packet waiting | automatic after `exact_match` |
+| `ready_for_contribution` | verified, unchanged since, independently reviewed | `workflow review` with an approved, complete grounding record |
+| `needs_human_review` | doubt the automation cannot settle | blocking hypothesis, failed checklist item, inline assembly, unknown author, reviewer's request |
+
+```bash
+# 1. author: write the C, then queue it (compile_diff exact=true is the only way in)
+python -m tools.decomp_agent.cli workflow submit <id> --author <author-id>
+# 2. promote the whole queue: one verifier run when it holds; on failure the
+#    batch is narrowed down and every promotion the verifier proves is kept
+python -m tools.decomp_agent.cli workflow batch
+# 3. a DIFFERENT reviewer reads build/<version>/agent_workflow/review/<id>.md,
+#    fills the grounding record (template inside, or `workflow template <id>`)
+python -m tools.decomp_agent.cli workflow review <id> --file review.json
+# 4. maintainers settle escalations
+python -m tools.decomp_agent.cli workflow human <id> --decision approve|rework --by <name> --note "..."
+# 5. before a PR: everything newly `matching` vs the base must be ready
+python -m tools.decomp_agent.cli workflow gate --base upstream/main
+```
+
+`promote.py` can also be used directly: `python tools/promote.py A B C
+--isolate --report out.json`. Without `--isolate` a failed batch still rolls
+back whole, exactly as before; one target works as it always did.
+
+**Integrity rules the workflow enforces**
+
+- Only `compile_diff exact = true` (full canonical extent) queues a function;
+  the batch re-checks it, and `exact_match` is set only when the latest
+  verifier run is all green and byte-proved that function.
+- A proof is bound to the SHA-256 of the function's C text. Editing the
+  function, or a manifest that no longer says `matching`, sends it back to
+  `in_progress`; a review for other text is refused.
+- `ready_for_contribution` requires a complete grounding record (what the
+  function does and the evidence, confirmed names/types/offsets/constants,
+  hypotheses marked blocking or not, why this C is a reasonable
+  representation, which simpler forms were tried, a checklist) and a written
+  justification for every lint finding.
+- The reviewer id must differ from the author id. Review independence is
+  only as real as those ids: run the reviewer as a separate agent with the
+  packet as its only input. A reviewer must never be handed the author's
+  conclusions as facts -- the packet labels the author's notes as unverified
+  claims.
+- Inline assembly is never accepted by an automated reviewer; it always goes
+  to `needs_human_review`. Lint findings are questions, not verdicts: an
+  unusual construct is fine when the review justifies it with evidence.
+
+The review packet embeds the retail disassembly, so it lives under `build/`
+and must never be committed.
+
 ## CLI quick reference
 
 ```bash
@@ -285,6 +348,11 @@ python -m tools.decomp_agent.cli compile-diff pal103:unit-0007:00105a60:NuListGe
 python -m tools.decomp_agent.cli session start pal103:unit-0007:00105a60:NuListGetNext
 python -m tools.decomp_agent.cli session resume <sid> --client codex
 python -m tools.decomp_agent.cli verify pal103:unit-0007:00105a60:NuListGetNext --level function
+python -m tools.decomp_agent.cli workflow submit <id> --author <author-id>
+python -m tools.decomp_agent.cli workflow batch
+python -m tools.decomp_agent.cli workflow review <id> --file review.json
+python -m tools.decomp_agent.cli workflow status --state quality_review
+python -m tools.decomp_agent.cli workflow gate --base upstream/main
 ```
 
 All accept `--repo`, `--version`, `--json`, before or after the subcommand.

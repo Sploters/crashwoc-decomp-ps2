@@ -12,6 +12,10 @@ container by ``tools/decomp_agent/runtime.py`` for toolchain-bound work.
     python -m tools.decomp_agent.cli session start <id>
     python -m tools.decomp_agent.cli session resume <sid>
     python -m tools.decomp_agent.cli verify <id> --level function
+    python -m tools.decomp_agent.cli workflow submit <id> --author <agent-id>
+    python -m tools.decomp_agent.cli workflow batch
+    python -m tools.decomp_agent.cli workflow review <id> --file review.json
+    python -m tools.decomp_agent.cli workflow gate --base upstream/main
 
 Global flags: --repo, --version, --json.
 """
@@ -24,7 +28,7 @@ import sys
 from .project import DecompProject, ProjectError
 from . import (health as health_mod, candidates as cand_mod, context as ctx_mod,
                evidence as ev_mod, diff as diff_mod, sessions, blockers,
-               verification, registry as reg_mod)
+               verification, registry as reg_mod, workflow)
 
 
 def _project(args):
@@ -122,6 +126,54 @@ def cmd_session(args):
     raise SystemExit(f"unknown session subcommand: {args.session_cmd}")
 
 
+def cmd_workflow(args):
+    proj = _project(args)
+    wc = args.workflow_cmd
+    if wc == "submit":
+        return workflow.submit(proj, args.target, author=args.author,
+                               notes=args.notes)
+    if wc == "batch":
+        return _workflow_batch(proj, args)
+    if wc == "review":
+        try:
+            with open(args.file, encoding="utf-8") as f:
+                review = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            return {"ok": False, "operation": "workflow_review",
+                    "error": {"code": "bad_file", "message": str(exc)}}
+        return workflow.submit_review(proj, args.target, review)
+    if wc == "template":
+        fid = reg_mod.Registry(proj).require_function(args.target).id_str()
+        record = workflow.load(proj, fid)
+        if record is None:
+            return {"ok": False, "operation": "workflow_template",
+                    "error": {"code": "wrong_state",
+                              "message": f"{fid} has no workflow record"}}
+        return {"ok": True, "operation": "workflow_template",
+                "template": workflow.review_template(record)}
+    if wc == "human":
+        return workflow.human_decision(proj, args.target,
+                                       decision=args.decision, by=args.by,
+                                       note=args.note)
+    if wc == "status":
+        return workflow.status(proj, state=args.state)
+    if wc == "gate":
+        return workflow.gate(proj, base=args.base)
+    raise SystemExit(f"unknown workflow subcommand: {wc}")
+
+
+def _workflow_batch(proj, args):
+    """The batch promotes, so it runs where the toolchain is."""
+    from . import runtime
+    if not runtime.toolchain_local(proj):
+        cli_args = ["workflow", "batch"]
+        if args.limit:
+            cli_args += ["--limit", str(args.limit)]
+        return runtime.dispatch_cli(proj, cli_args, operation="workflow_batch",
+                                    timeout=7200)
+    return workflow.batch(proj, limit=args.limit)
+
+
 def _tri(value):
     if value is None:
         return None
@@ -204,6 +256,32 @@ def build_parser():
     rl = ss.add_parser("recover-lock"); rl.add_argument("id"); rl.add_argument("--client")
     s.set_defaults(func=cmd_session)
 
+    w = sub.add_parser("workflow", help="contribution workflow: submit, "
+                       "batch-promote, review, gate")
+    ws = w.add_subparsers(dest="workflow_cmd", required=True)
+    wsub = ws.add_parser("submit", help="compile_diff a draft; exact -> queued")
+    wsub.add_argument("target"); wsub.add_argument("--author", required=True)
+    wsub.add_argument("--notes")
+    wb = ws.add_parser("batch", help="promote every queued exact candidate "
+                       "with one isolated verifier batch")
+    wb.add_argument("--limit", type=int)
+    wr = ws.add_parser("review", help="apply an independent reviewer's "
+                       "grounding record (JSON file)")
+    wr.add_argument("target"); wr.add_argument("--file", required=True)
+    wt = ws.add_parser("template", help="the grounding record to fill in")
+    wt.add_argument("target")
+    wh = ws.add_parser("human", help="a maintainer settles a "
+                       "needs_human_review function")
+    wh.add_argument("target")
+    wh.add_argument("--decision", required=True, choices=("approve", "rework"))
+    wh.add_argument("--by", required=True); wh.add_argument("--note", required=True)
+    wst = ws.add_parser("status")
+    wst.add_argument("--state", choices=workflow.STATES)
+    wg = ws.add_parser("gate", help="pre-PR check: everything newly "
+                       "`matching` vs BASE must be ready_for_contribution")
+    wg.add_argument("--base", required=True)
+    w.set_defaults(func=cmd_workflow)
+
     _accept_global_options(p)
     return p
 
@@ -254,6 +332,8 @@ def main(argv=None):
         result = {"ok": False, "operation": getattr(args, "cmd", "?"),
                   "error": {"code": "exception", "message": str(exc)}}
     _print(result, args.json)
+    if isinstance(result, dict) and result.get("passed") is False:
+        return 1                         # a failed gate fails the command
     return 0 if (isinstance(result, dict) and result.get("ok", True)) else 1
 
 
