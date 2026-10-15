@@ -165,7 +165,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f85d8:HopCratesAbove"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0095:001f8670:CrateAbove"
