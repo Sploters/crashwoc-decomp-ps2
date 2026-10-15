@@ -31,6 +31,10 @@
  *   0x0025edb8 MakeLightDirection
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 #include "creature.h"
 #include "gcutscn.h"
 
@@ -114,7 +118,6 @@ extern void *NuGHGRead(void *buf, char *path);
 
 extern void NewMenu(void *cursor, s32 a, s32 b, s32 c);
 extern void GameMusic(s32 sfx, s32 i);
-extern s32 strcasecmp(char *a, char *b);
 
 extern s32 cutmovie_hold;
 extern s32 Paused;
@@ -176,7 +179,6 @@ extern void NuGobjInit(void);
 extern s32 set_cutscenecammtx;
 extern struct numtx_s cutscenecammtx;
 extern struct numtx_s *pNuCam;
-extern void *memcpy(void *dst, void *src, s32 n);
 extern void NuCameraSet(void *cam);
 
 extern struct nuvec_s cutpos_CRASH;
@@ -307,6 +309,12 @@ extern s32 D_00633390;
 extern u8 texanimbuff[];
 extern void LoadFont3D(void);
 extern void *NuDatOpen(char *name, char **mem, s32 *used);
+struct nudathdr_s;
+extern void NuDatSet(struct nudathdr_s *ndh);
+extern void NuDatClose(struct nudathdr_s *ndh);
+struct NuTexAnimProg;
+extern void NuTexAnimProgSysInit(void);
+extern struct NuTexAnimProg *NuTexAnimProgReadScript(char **buff, char *name);
 void CutSceneNextLogoFunction(NuGCutScene *icutscene);
 
 struct scenecache_s {
@@ -322,7 +330,6 @@ extern char *superbuffer_end;
 extern void InitSpecular(void);
 extern void InitEnviro(void);
 extern void *NuGScnRead(char **buf, char *end, char *path);
-extern u32 strlen(char *s);
 void CutSceneEndFunction(NuGCutScene *icutscene);
 void CutSceneNextFunction(NuGCutScene *icutscene);
 
@@ -994,8 +1001,6 @@ inline void *FindCutChar(char *name) {
     return 0;
 }
 
-typedef void (*NuDebugMsgFn)();
-extern NuDebugMsgFn NuDebugMsgProlog(char *file, s32 line);
 extern char D_00632BC0[];                /* ".\\cut.c" */
 extern char D_00629350[];                /* "AppCutSceneFindCharacters: cannot fixup ..." */
 #define cut_srcfile D_00632BC0

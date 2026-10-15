@@ -16,6 +16,8 @@
 
 #include "nu_types.h"
 
+#include "nucore/nuerror.h"
+
 typedef struct NuColour3 {
     float r;
     float g;
@@ -157,9 +159,6 @@ typedef struct WaterTable {
     float fx4;
 } WaterTable;
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern NuMtl *NuMtlIterate(int first);
 extern NuMtl *NuMtlCreate(int count);
 extern void NuMtlUpdate(NuMtl *mtl);

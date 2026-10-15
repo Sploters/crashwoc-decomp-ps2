@@ -14,6 +14,8 @@
  *   0x0025ac98 NearestChaserDistance
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct nugspline_s {
@@ -214,8 +216,6 @@ extern u16 temp_xrot;
 extern u16 temp_zrot;
 extern struct nuvec_s ShadNorm;
 
-extern int strlen(const char *s);
-extern int strncasecmp(const char *a, const char *b, int n);
 extern void NuStrCpy(char *dst, char *src);
 extern s32 LineCrossed(f32 xold, f32 zold, f32 xnew, f32 znew,
                        f32 x0, f32 z0, f32 x1, f32 z1);
@@ -223,7 +223,6 @@ extern s32 FurtherALONG(s32 iRAIL0, s32 iALONG0, f32 fALONG0, s32 iRAIL1,
                         s32 iALONG1, f32 fALONG1);
 extern f32 NuVecXZDistSqr(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern f32 NuFsqrt(f32 x);
-extern s32 sprintf(char *buf, const char *fmt, ...);
 extern void NuStrCat(char *dst, char *src);
 extern struct nugspline_s *NuSplineFind(struct nugscn_s *scene, char *name);
 extern s32 NuSpecialFind(struct nugscn_s *scene, struct nuhspecial_s *special, char *name);
@@ -275,7 +274,6 @@ extern void GameSfxLoop(s32 id, struct nuvec_s *pos);
 extern s32 GetDieAnim(struct obj_s *obj, s32 anim);
 extern s32 KillGameObject(struct obj_s *obj, s32 anim);
 extern void LoseMask(struct obj_s *obj);
-extern double fabs(double x);
 extern void GetALONG(struct nuvec_s *pos, struct RPos_s *rpos, s32 iRAIL, s32 iALONG, s32 dir);
 
 void UpdateCrateBallsOfFireDoors(void);

@@ -26,6 +26,8 @@
  * to the end of the unit.
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct nuinstance_s {
@@ -217,7 +219,6 @@ extern s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *, struct numtx_s *, s32,
                              short *, struct numtx_s *, float **);
 extern void Text3D(char *txt, float x, float y, float z, float scalex, float scaley,
                    float scalez, s32 align, s32 colour);
-extern s32 sprintf(char *, char *, ...);
 extern void AddSpacesIntoText(char *, s32);
 
 inline s32 DrawPanel3DObject(s32 object, float x, float y, float z, float scalex,
@@ -668,8 +669,6 @@ void Draw3DCheckpointLetters(void) {
 
 extern char *tLOADING[];
 extern s32 JStrLen(char *txt);
-extern int strlen(const char *s);
-extern int strcmp(const char *a, const char *b);
 extern s32 CombinationCharacterBD(char c0, char c1);
 extern s32 CombinationCharacterBC(char c0, char c1);
 
@@ -1092,8 +1091,6 @@ void UpdatePanelDebris(void) {
     }
 }
 
-
-extern double fmod(double, double);
 
 void DrawPanelDebris(void) {
     struct pdeb_s *deb;

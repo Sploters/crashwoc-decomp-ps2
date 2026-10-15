@@ -14,11 +14,11 @@
  *   0x0010be00 NuQuatLerp
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
-double sqrt(double x);
 double acos(double x);
-double sin(double x);
 float NuFsqrt(float x);
 
 struct nuquat_perm_s {

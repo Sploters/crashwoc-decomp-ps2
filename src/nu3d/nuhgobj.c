@@ -26,7 +26,10 @@
  *   0x001504c8 NuGHGFixupGobj
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct nuvec_s {
     f32 x;
@@ -190,7 +193,6 @@ struct NUHGOBJ_s {
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *s, int c, unsigned int n);
 extern int NuFileBeginBlkRead(int fh, int blockid);
 extern void NuFileEndBlkRead(int fh);
 extern int NuFileGetBlkSize(int fh);
@@ -208,7 +210,6 @@ extern void NuCvtSknInstFix(struct SkinDmaTag *tag);
 extern void ReadNuIFFHGobjSet(int fh, struct NUHGOBJ_s *hobj);
 extern void NuMtxMul(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
 extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-extern void *memcpy(void *dst, const void *src, unsigned int n);
 extern void NuCvtSknInstUnFix(struct SkinDmaTag *tag);
 extern int NuPointRelToBoundingBox(struct nuvec_s *point, struct nuvec_s *max, struct nuvec_s *min);
 extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
@@ -664,9 +665,6 @@ extern int NuFileLoadBuffer(char *name, void *buf, int size);
 extern int NuMemFileOpen(void *buf, int size, int mode);
 extern void NuFileClose(int fh);
 extern char *strlwr(char *s);
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 void ReadNuIFFHGobj(int fh, struct NUHGOBJ_s *hobj);
 extern char D_006152B0[];
 extern char D_006152D0[];

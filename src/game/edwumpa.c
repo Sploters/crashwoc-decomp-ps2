@@ -16,6 +16,8 @@
  *   0x00236258 edwmpCbCancelOptMenu
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct pad_s {
@@ -88,7 +90,6 @@ extern void eduiMenuAddItem(void *menu, void *item);
 extern void NuFntSetPen(s32 colour);
 extern void NuFntPrintEx(s32 x, s32 y, s32 colour, char *fmt, ...);
 extern u64 fptodp(f32 value);
-extern char *strcpy(char *dst, const char *src);
 extern char *strupr(char *s);
 extern void eduiMenuProcess(void *menu, struct pad_s *pad);
 extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);

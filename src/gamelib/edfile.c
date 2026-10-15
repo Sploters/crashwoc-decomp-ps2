@@ -25,6 +25,8 @@
  */
 
 
+#include "nu_libc.h"
+
 #define EDFILE_BUFFER_SIZE 0x1000
 
 enum edfile_media_e {
@@ -50,8 +52,6 @@ extern int NuMcWrite(int fd, void *buff, int size, int async);
 extern int sceMcOpen(int port, int slot, const char *name, int mode);
 extern int sceMcClose(int fd);
 extern int sceMcSync(int mode, int *cmd, int *result);
-extern void *memset(void *dst, int value, unsigned int size);
-extern void *memcpy(void *dst, const void *src, unsigned int size);
 
 extern char edfile_buffer[EDFILE_BUFFER_SIZE];
 extern int edfile_handle;

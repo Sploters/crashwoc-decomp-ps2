@@ -43,7 +43,10 @@
  *   0x001cb600 SetLevel
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct numtx_s {
     float _00, _01, _02, _03;
@@ -119,8 +122,6 @@ struct character_s {
     u8 unk_0x03[0xCE1];
 }; /* 0xCE4 */
 
-typedef void (*msgfn_t)();
-
 extern struct ldata_s LData[];
 extern struct ldata_s *LDATA;
 extern u64 LBIT;
@@ -181,9 +182,7 @@ extern void InitClouds(void);
 extern void NuTexAnimProgSysInit(void);
 extern void *NuDatOpen(char *name, s32 a, s32 b);
 extern void NuDatSet(void *dat);
-extern void *memset(void *dst, s32 c, u32 n);
 extern s32 NuTexAnimProgReadScript(void **buf, void *script);
-extern msgfn_t NuDebugMsgProlog(char *file, s32 line);
 extern void NuDatClose(void *dat);
 extern void NuMtlReadEventSetHandler(s32 (*handler)(struct numtl_s *mtl));
 extern struct nugscn_s *NuGScnRead(void **pptr, void *end, char *name);
@@ -293,7 +292,6 @@ extern short *terraininit(s32 level, void **pptr, void *end, s32 a, char *name,
                         struct nugscn_s *scene, s32 b);
 extern void edppDestroyAllParticles(void);
 extern void edppDestroyAllEffects(void);
-extern s32 sprintf(char *buf, char *fmt, ...);
 extern s32 NuFileSize(char *name);
 extern int edppLoadEffects(char *name, s32 a);
 extern int edppMergeEffects(char *name, s32 a);
@@ -619,7 +617,7 @@ inline void InitTexAnimScripts(void)
     struct texanimref_s *list = texanimscripts;
     void *dat;
     void *animbuf;
-    msgfn_t dbg;
+    NuErrorFunc dbg;
 
     NuTexAnimProgSysInit();
     dat = NuDatOpen(D_0062FA48, 0, 0);

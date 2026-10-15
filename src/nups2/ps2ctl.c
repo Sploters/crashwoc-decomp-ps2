@@ -15,6 +15,7 @@
  *   0x0016e838 DeadZoneValue
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 typedef unsigned int u128 __attribute__((mode(TI)));
@@ -91,7 +92,6 @@ extern NUPADREC *PadRecInfo;
 extern s32 PadDemoEnd;
 extern char D_00617880[];
 
-extern void *memset(void *dst, s32 c, u32 n);
 extern void *NuMemAllocFn(s32 size, char *file, s32 line);
 extern void NuMemFreeFn(void *ptr, char *file, s32 line);
 extern s32 NuFileOpen(char *name, s32 mode);

@@ -8,7 +8,10 @@
  *   0x001a99e8 SpecialTerrainCollideCheck
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct nuvec_s {
     f32 x;
@@ -85,10 +88,6 @@ typedef struct SpecTerrData {
     SpecTerrObject **objects;
 } SpecTerrData;
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern void *memset(void *s, int c, int n);
 extern void *CrashDataPtr(void);
 extern void NuMtxInvH(struct numtx_s *inv, struct numtx_s *mtx);
 extern void NuVecMtxTransform(struct nuvec_s *d, struct nuvec_s *s, struct numtx_s *mtx);

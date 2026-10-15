@@ -21,7 +21,7 @@ state = "asm"
 
 [[function]]
 id = "pal103:unit-0121:0025bd98:LoadCutMovie"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0121:0025c050:SetCutMovieRate"

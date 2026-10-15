@@ -19,6 +19,8 @@
  *   0x001042b8 NuGetChar
  */
 
+#include "nu_libc.h"
+
 typedef struct NuFPar NuFPar;
 
 typedef struct NuFParCommand {
@@ -62,10 +64,6 @@ extern int NuFileOpenSize(int handle);
 extern void NuFileClose(int handle);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *dst, int c, unsigned int n);
-extern int strcasecmp(const char *a, const char *b);
-extern int atoi(const char *s);
-extern double atof(const char *s);
 
 
 inline char NuGetChar(NuFPar *parser)

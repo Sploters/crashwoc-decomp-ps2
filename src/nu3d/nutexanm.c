@@ -46,7 +46,10 @@
  *   0x0015b330 NuTexAnimResetList
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 typedef struct NuFPar {
     int handle;
@@ -62,8 +65,6 @@ struct numtl_s {
 };
 
 struct nunrand_s;
-
-typedef void (*NuErrorFunc)(const char *fmt, ...);
 
 enum {
     NTA_TEX = 0,
@@ -202,13 +203,7 @@ extern int NuFParInterpretWord(NuFPar *parser);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
 extern s64 NuRand(struct nunrand_s *rand);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern void NuTexAnimEnvProc(NuTexAnimEnv *env);
-extern int strcasecmp(char *a, char *b);
-extern unsigned int strlen(const char *s);
-extern void *memset(void *dst, int value, unsigned int size);
-extern void *memcpy(void *dst, const void *src, unsigned int size);
-extern char *strcpy(char *dst, const char *src);
 extern void NuStrCpy(char *dst, char *src);
 
 

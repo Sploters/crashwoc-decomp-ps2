@@ -51,7 +51,10 @@
  *   0x0011eff8 NuTexGetTextAddr
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 typedef struct NuPs2Tex {
     u8 unk000[0x8];
@@ -215,8 +218,6 @@ typedef union BmpColour {
     } c;
 } BmpColour;
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
 typedef struct NuMtlAttrib {
     u64 unk00 : 32;
     u64 alpha : 4;
@@ -336,8 +337,6 @@ extern void ps2videoGetFreeMem(int *bot, int *top);
 extern int NuFileLoadBuffer(char *name, void *buf, int max);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *dst, int value, unsigned int size);
-extern void *memcpy(void *dst, const void *src, unsigned int size);
 extern void FlushCache(int mode);
 extern int NuFileOpen(char *name, int mode);
 extern void NuFileClose(int fh);
@@ -381,7 +380,6 @@ extern int nurndr_pixel_p2w;
 extern int nurndr_pixel_p2h;
 extern u64 cur_rt;
 
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
 extern void NuMemSetExternal(void *addr, int size);

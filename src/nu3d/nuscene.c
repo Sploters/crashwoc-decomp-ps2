@@ -30,6 +30,10 @@
  *   0x0011a878 ReadNuIFFFaceOnGeom
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 struct numtl_s {
     char pad000[0x168];
     struct numtl_s *specmtl;        /* 0x168 */
@@ -284,15 +288,10 @@ struct nugscn_s {
     void *texanimbits;              /* 0x68 */
 };
 
-typedef void (*nuerror_fn)(char *fmt, ...);
 typedef int (*numtlreadevent_fn)(struct numtl_s *mtl);
 
-extern nuerror_fn NuErrorProlog(char *file, int line);
-extern nuerror_fn NuDebugMsgProlog(char *file, int line);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *s, int c, unsigned int n);
-extern int strcmp(const char *s1, const char *s2);
 extern int NuFileRead(int fh, void *buf, int size);
 extern int NuFileBeginBlkRead(int fh, int blk);
 extern void NuFileEndBlkRead(int fh);

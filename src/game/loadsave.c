@@ -10,6 +10,7 @@
  *   0x0025b508 DrawGameSlots
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 struct hub_s {
@@ -165,7 +166,6 @@ extern s32 saveloadSaveSlot(s32 slot, void *data, s32 size);
 extern void Text3D(char *txt, float x, float y, float z, float scalex, float scaley,
                    float scalez, s32 align, s32 colour);
 extern void CalculateGamePercentage(struct game_s *game);
-extern s32 sprintf(char *, const char *, ...);
 extern void AddSpacesIntoText(char *text, s32 flag);
 extern s32 DrawPanel3DObject(s32 object, float x, float y, float z, float scalex,
                              float scaley, float scalez, u16 xrot, u16 yrot,

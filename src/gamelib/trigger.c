@@ -19,7 +19,10 @@
  *   0x001b0f70 NuTriggerPull
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct nuvec_s {
     f32 x;
@@ -175,14 +178,10 @@ typedef struct NuTriggerSys {
 } NuTriggerSys;
 
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern void *memset(void *s, int c, int n);
-extern int strcasecmp(const char *a, const char *b);
-extern int sprintf(char *buf, const char *fmt, ...);
 extern int NuSceneInstanceRunScript(void *scene, void *script);
 extern int NuFileLoadBuffer(void *name, void *buf, int size);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
+extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
+extern float NuFabs(float f);
 
 extern char D_00619EF8[];
 extern char D_00619F20[];

@@ -22,10 +22,11 @@
  *   0x00131f98 NuFntPrintLenV
  */
 
+#include "nu_libc.h"
 #include "nu_stdarg.h"
 #include "nu_types.h"
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
+#include "nucore/nuerror.h"
 
 struct nucolour3_s {
     f32 r;
@@ -97,12 +98,6 @@ struct nurndrstream_s {
     } cur;
 };
 
-extern s32 sprintf(char *buf, const char *fmt, ...);
-extern s32 vsprintf(char *buf, const char *fmt, va_list args);
-extern void *memcpy(void *dst, const void *src, s32 n);
-extern void *memset(void *dst, s32 c, s32 n);
-
-extern NuErrorFunc NuErrorProlog(const char *file, s32 line);
 extern s32 NuFileSize(char *name);
 extern s32 NuFileOpen(char *name, s32 mode);
 extern s32 NuFileRead(s32 handle, void *buf, s32 size);

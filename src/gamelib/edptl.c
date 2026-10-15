@@ -175,6 +175,8 @@
  *   0x00197338 CreateMessageMenu
  */
 
+#include "nu_libc.h"
+
 struct edptlitem_s {
     char pad00[0xC];
     int value;
@@ -465,11 +467,8 @@ extern struct edptlitem_s *D_0062F340;
 extern void edmainRegisterLocVec(struct nuvec_s *loc);
 extern void eduiMenuDetach(void *menu);
 extern void eduiMenuDestroy(void *menu);
-extern char *strcpy(char *dst, const char *src);
 extern void edcamSetPosAng(void *pos, void *ang, int flags);
 extern void cbPtlDeleteEffect(struct edptlmenu_s *menu);
-
-extern int sprintf(char *buf, const char *fmt, ...);
 
 extern char D_0062F368[];
 #define copynameformat D_0062F368
@@ -492,7 +491,6 @@ extern struct edptlgradmenu_s *D_0062F32C;
 extern struct edptlitem_s *D_0062F330;
 extern struct edptlitem_s *D_0062F334;
 extern char D_00617FB8[];
-extern int abs(int value);
 extern void DebReAlloc(struct debkey_s *deb, int count);
 extern void eduiGradStageDelete(struct edptlgradmenu_s *menu, void *stage);
 extern void eduiGradStageAddRGB(struct edptlgradmenu_s *menu, float time, float r, float g,
@@ -583,7 +581,6 @@ extern void DebrisEmitterOrientation(int key, short rotz, short roty);
 extern void DebrisReflectionOrientation(int key, float offset, float factor, short rotz,
                                         short roty);
 extern struct nuvec_s *edmainQueryLocVec(void);
-extern void *memset(void *dst, int value, unsigned int size);
 extern struct edptlmenu_s *eduiMenuCreate(int x, int y, int w, int h, void *font, void *cancelcb,
                                           char *title);
 extern void *eduiMenuAddItem(struct edptlmenu_s *menu, void *item);
@@ -1243,7 +1240,6 @@ extern char D_00618680[];
 extern int freeDmaDebType;
 extern int EdFileReadInt(void);
 extern int NuFileSize(char *name);
-extern void *memcpy(void *dst, const void *src, unsigned int size);
 extern void EdFileRead(void *data, int size);
 extern float EdFileReadFloat(void);
 extern short EdFileReadShort(void);

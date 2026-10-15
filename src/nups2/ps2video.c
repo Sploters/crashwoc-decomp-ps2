@@ -73,7 +73,10 @@
  *   0x0016b770 GetElapsedTime
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 /* GIF A+D pair: a GS register value followed by its register address. */
 typedef struct NuPs2GsReg {
@@ -112,8 +115,6 @@ typedef struct TbSet {
 typedef struct sceDmaChan {
     unsigned int chcr;
 } sceDmaChan;
-
-typedef void (*NuDebugMsgFn)(char *fmt, ...);
 
 typedef struct NuViewport {
     int x;
@@ -161,7 +162,6 @@ extern int sceMcClose(int fd);
 extern int sceMcDelete(int port, int slot, const char *name);
 extern int sceMcSeek(int fd, int offset, int mode);
 extern int sceMcSync(int mode, int *cmd, int *result);
-extern int abs(int value);
 extern int NuPs2ScreenSwap(int vsync);
 extern int EnableIntc(int cause);
 extern int VU1_DmaGetStatus(void);
@@ -174,7 +174,6 @@ extern int RemoveDmacHandler(int channel, int handler_id);
 extern int EnableDmac(int channel);
 extern int DisableDmac(int channel);
 extern void *sceGsSyncVCallback(int (*func)(int));
-extern double pow(double x, double y);
 extern void sceDevVif0Reset(void);
 extern void sceDevVif1Reset(void);
 extern void sceDevVu0Reset(void);
@@ -185,13 +184,11 @@ extern sceDmaChan *sceDmaGetChan(int id);
 extern int GetThreadId(void);
 extern int NuFileSifLoadModule(char *name, int arglen, char *args);
 extern int sceSifLoadModule(const char *name, int arglen, const char *args);
-extern int printf(const char *fmt, ...);
 extern void Exit(int status);
 extern int sceMcInit(void);
 extern int scePadInit(int mode);
 extern int sceSifInitIopHeap(void);
 extern int sceSdRemoteInit(void);
-extern NuDebugMsgFn NuDebugMsgProlog(char *file, int line);
 extern int sceGsSyncV(int mode);
 extern void sceGsSetHalfOffset(NuPs2GsReg *draw, short centre_x, short centre_y, short half_offset);
 extern void sceGsSetHalfOffset2(NuPs2GsReg *draw, short centre_x, short centre_y, short half_offset);
@@ -202,8 +199,6 @@ extern int ifnVif1(int ca);
 extern int ifnVBlankE(int ca);
 extern int ifnVBlankS(int ca);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memcpy(void *dst, const void *src, unsigned int n);
-extern void *memset(void *dst, int value, unsigned int size);
 extern void *NuMemAllocFn(int size, char *file, int line);
 
 #define ExitHandler() __asm__ volatile ("sync\n\tei")

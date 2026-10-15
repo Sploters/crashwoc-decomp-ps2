@@ -41,6 +41,8 @@
  *   0x0022eee8 edcrtcbCancelResetCratesMenu
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct eduiitem_s {
@@ -341,8 +343,6 @@ extern s32 NuMcWriteInt(s32 fd, s32 value, s32 async);
 extern s32 NuMcWriteShort(s32 fd, s16 value, s32 async);
 extern s32 NuMcWriteChar(s32 fd, char value, s32 async);
 
-extern s32 sprintf(char *buf, const char *fmt, ...);
-extern char *strcpy(char *dst, const char *src);
 extern char *strupr(char *s);
 
 void edcrtDrawSpecialCrates(void);

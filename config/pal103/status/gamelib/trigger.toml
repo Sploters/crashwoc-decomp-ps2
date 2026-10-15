@@ -17,7 +17,7 @@ state = "matching"
 
 [[function]]
 id = "pal103:unit-0079:001af278:CheckParentedTriggerWithPos"
-state = "asm"
+state = "matching"
 
 [[function]]
 id = "pal103:unit-0079:001af5f8:CheckUnparentedTriggerWithPos"

@@ -34,6 +34,7 @@
  *   0x00162ae0 testShadowCast
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 struct nuvec_s {
@@ -240,9 +241,6 @@ extern void NuTexUnReserve(void);
 extern void NuVecNorm(struct nuvec_s *out, struct nuvec_s *in);
 extern f32 NuVecDot(struct nuvec_s *a, struct nuvec_s *b);
 extern void NuVecScale(struct nuvec_s *out, struct nuvec_s *in, f32 scale);
-extern double sin(double x);
-extern double cos(double x);
-extern double tan(double x);
 extern struct nucamera_s *NuCameraGetCam(void);
 extern struct numtx_s *NuCameraGetViewMtx(void);
 extern struct numtx_s *NuCameraGetScalingMtx(void);

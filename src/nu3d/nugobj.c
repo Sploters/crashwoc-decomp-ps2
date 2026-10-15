@@ -27,7 +27,10 @@
  *   0x00116558 NuPrimStride
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct nuvec_s {
     float x;
@@ -144,13 +147,8 @@ union nugiftag_u {
     u32 w[4];
 };
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *s, int c, unsigned int n);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern double sqrt(double x);
 extern s64 NuRand(void *rand);
 extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, int angle);

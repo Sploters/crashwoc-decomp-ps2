@@ -24,6 +24,8 @@
  *   0x00247a20 SortLights
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern s32 USELIGHTS;
@@ -170,7 +172,6 @@ extern struct nucolour3_s lcol[3];
 extern struct nuvec_s ldir[3];
 extern struct nuvec_s acol;
 
-s32 sprintf(char *buf, const char *fmt, ...);
 s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
 void *NuMemFileOpen(void *buf, s32 size, s32 mode);
 void NuFileClose(void *f);

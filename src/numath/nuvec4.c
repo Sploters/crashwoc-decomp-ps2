@@ -14,6 +14,8 @@
  *   0x00107a98 NuVec4Lerp
  */
 
+#include "nu_libc.h"
+
 struct nuvec4_s {
     float x;
     float y;
@@ -27,8 +29,6 @@ struct numtx_s {
     float _20, _21, _22, _23;
     float _30, _31, _32, _33;
 };
-
-double sqrt(double x);
 
 void NuVec4Add(struct nuvec4_s *dst, struct nuvec4_s *a,
                struct nuvec4_s *b)

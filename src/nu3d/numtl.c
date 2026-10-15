@@ -31,7 +31,10 @@
  *   0x0011c4b0 NuMtlDisplayMtl
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 struct nurndrstream_s {
     void *start;
@@ -192,7 +195,6 @@ typedef struct GsZbufPair {
 } GsZbufPair;
 
 typedef int (*NuMtlReadEventFunc)(NuMtl *mtl);
-typedef void (*NuErrorFunc)(const char *fmt, ...);
 
 #define NUMTL_VALID 0x01
 #define NUMTL_POOLED 0x02
@@ -227,14 +229,10 @@ extern void *vtCloseDirect(void *packet);
 extern void *gsBeginGifPacket(void *packet, int eop, int nloop, int pre, int prim, int flg, int nreg, ...);
 extern void *gsCloseGifPacket(void *packet);
 extern void *NuTexWriteMaterialSettings(void *packet, NuMtl *mtl);
-extern double floor(double x);
 extern float NuTrigTable[];
 
-extern void *memset(void *dst, int value, unsigned int size);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern int NuFileRead(int fh, void *data, int size);
 extern int NuFileWrite(int fh, void *data, int size);
 extern short NuTexUnRef(int tid);

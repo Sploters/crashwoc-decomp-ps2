@@ -23,6 +23,8 @@
  *   0x0010d288 NuClipZPlane
  */
 
+#include "nucore/nuerror.h"
+
 #include "creature.h"
 
 struct nuplane_s {
@@ -47,11 +49,9 @@ s32 NuPtInPoly(struct nuvec_s *point, struct nuvec_s *v0,
                struct nuvec_s *v1, struct nuvec_s *v2,
                struct nuplane_s *plane);
 
-typedef void (*nuerror_callback)(char *message);
 extern char D_00614020[];
 extern char D_00614048[];
 extern char D_0062EA58[];
-nuerror_callback NuErrorProlog(char *file, s32 line);
 u64 fptodp(f32 value);
 s32 dpcmp(u64 a, u64 b);
 extern u64 D_00614070;

@@ -35,6 +35,8 @@
  *   0x00235198 PlayerLateralOutOfRange
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 /* AI type entry (AIType): PS2 stride 0x1C; character (+0x0), label (+0x2),
@@ -98,7 +100,6 @@ f32 FindNearestCreature(struct nuvec_s *pos, s32 type, struct nuvec_s *out); /* 
 void LoadAI(void);                     /* 0x0022ef10 */
 void ResetAI(void);                    /* 0x0022f2c8 */
 f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d); /* 0x001073a8 */
-s32 strcmp(const char *a, const char *b);
 void GetALONG(struct nuvec_s *pos, struct RPos_s *rpos, s32 iRAIL, s32 iALONG, s32 dir); /* 0x001dac00 */
 s32 AheadOfCheckpoint(s32 iRAIL, s32 iALONG, f32 fALONG); /* 0x001f0278 */
 void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b); /* 0x00106f28 */
@@ -111,7 +112,6 @@ extern char LevelFileName[];           /* 0x0058b098 */
 extern char D_00631B88[];              /* sprintf format for the .ai filename */
 extern u8 Chase[];                     /* 0x005f3ed0 (scratch load buffer) */
 
-s32 sprintf(char *buf, const char *fmt, ...);
 void *NuFileOpen(char *name, s32 mode);            /* 0x001002d8 */
 s32 NuFileLoadBuffer(char *name, void *buf, s32 max); /* 0x00100a88 */
 void *NuMemFileOpen(void *buf, s32 size, s32 mode);   /* 0x00103430 */
@@ -161,7 +161,6 @@ extern char D_0061FFD8[];
 extern char D_0061FFE8[];
 extern char D_0061FFF8[];
 void *NuSpecialFind(void *scene, void *out, char *name);
-void *memset(void *s, s32 c, u32 n);
 
 extern s32 D_00633318;
 extern s32 D_0063331C;

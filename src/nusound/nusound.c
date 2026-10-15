@@ -65,6 +65,10 @@
  *   0x001c5428 NuSoundFindLoopInfo
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 typedef struct nuvec_s {
     float x;
     float y;
@@ -116,12 +120,7 @@ typedef struct SFXINFO {
     int id;
 } SFXINFO;
 
-typedef void (*NuDebugMsgFn)();
-
-extern int strlen(const char *s);
-extern int printf(const char *fmt, ...);
 extern void NuFileGetCurrentPath(char *path);
-extern void *memcpy();
 extern void sceSifInitRpc(unsigned int mode);
 extern int sceSifBindRpc(sceSifClientData *client, unsigned int request,
                          unsigned int mode);
@@ -130,8 +129,6 @@ extern int sceSifCallRpc(sceSifClientData *client, unsigned int function,
                          void *receive, int receive_size, void *end_func,
                          void *end_param);
 extern int sceSifCheckStatRpc(sceSifRpcData *rpcd);
-extern NuDebugMsgFn NuDebugMsgProlog(char *file, int line);
-extern NuDebugMsgFn NuErrorProlog(char *file, int line);
 extern int sceGsSyncV(int mode);
 extern float NuFsqrt(float x);
 extern numtx_s *NuCameraGetVPCMtx(void);

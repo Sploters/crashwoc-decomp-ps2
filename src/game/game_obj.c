@@ -45,6 +45,8 @@
  *   0x00201418 PickupRelic
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 /* Level data record; only flags at +0x24 is touched here. */
@@ -132,7 +134,6 @@ void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 void GameSfx(s32 sfx, struct nuvec_s *pos);
 s32 NuAtan2D(f32 x, f32 z);
 f32 NuFsqrt(f32 x);
-extern void *memset(void *s, s32 c, s32 n);
 void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 s32 GetDieAnim(struct obj_s *obj, s32 anim);
@@ -205,7 +206,6 @@ void AddFiniteShotDebrisEffect(s32 *key, s32 effect, struct nuvec_s *pos, s32 n)
 extern f32 in_speed;
 extern f32 in_s_friction;
 extern f32 in_f_friction;
-extern double fabs(double x);
 
 struct tersurface_s {
     f32 friction;         /* 0x0 */
@@ -296,7 +296,6 @@ s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 void NuLightAddSpot(struct nuvec_s *pos, f32 size, u32 colour, s32 mode);
 void NuRndrAddShadow(struct nuvec_s *pos, s32 alpha, s32 xrot, s32 yrot, s32 zrot, f32 size);
 extern s32 temp_face;
-extern s32 abs(s32 x);
 
 
 s32 CylinderCuboidOverlapXZ(struct nuvec_s *pos, struct obj_s *obj,

@@ -27,6 +27,7 @@
  *   0x00158f48 PrevPktIdx
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 typedef struct SkinDmaTag {
@@ -78,7 +79,6 @@ typedef struct NuGobj {
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *s, int c, unsigned int n);
 extern void *NuStreamGetOutputBuffer(int stream);
 extern void NuPs2CreateSkinNorm(NuGobj *gobj);
 extern void NuPs2CreateSkinSmooth(NuGobj *gobj);

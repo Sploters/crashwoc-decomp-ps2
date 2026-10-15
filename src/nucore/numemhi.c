@@ -7,15 +7,13 @@
  *   0x001057b8 NuFreeHigh
  */
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
+#include "nucore/nuerror.h"
 
 typedef struct NuHighBlock {
     struct NuHighBlock *next;
     unsigned int size;
     int pad[2];
 } NuHighBlock;
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 
 extern char D_00613CC8[];
 extern char D_00613CF0[];

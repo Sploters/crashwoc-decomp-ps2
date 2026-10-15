@@ -21,11 +21,11 @@
  *   0x001aae20 saveloadASDelete
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
 
 extern s32 NuFileSize(char *name);
 extern s32 NuFileLoadBuffer(char *name, void *buf, s32 max);
-extern s32 sprintf(char *buf, const char *fmt, ...);
 extern s32 sceMcSync(s32 mode, s32 *cmd, s32 *result);
 extern s32 sceMcGetInfo(s32 port, s32 slot, s32 *type, s32 *free, s32 *format);
 extern s32 sceMcChdir(s32 port, s32 slot, const char *path, char *pwd);

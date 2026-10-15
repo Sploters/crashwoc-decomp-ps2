@@ -136,6 +136,7 @@ extern s32 NuFileBeginBlkRead(s32 fh, s32 blockid);
 extern void NuFileEndBlkRead(s32 fh);
 
 void edmainMainMenuProc(struct pad_s *pad);
+void edmainMainMenuRender(void);
 void edmainReadLevelFile(void);
 void cbMMRegSel(EDUIMENU *menu, EDUIITEM *item);
 void cbMMCancel(EDUIMENU *menu, EDUIITEM *item);

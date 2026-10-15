@@ -44,10 +44,11 @@
  */
 
 
+#include "nu_libc.h"
 #include "nu_types.h"
-typedef unsigned int u128 __attribute__((mode(TI)));
 
-typedef void (*NuDebugMsgFn)(char *fmt, ...);
+#include "nucore/nuerror.h"
+typedef unsigned int u128 __attribute__((mode(TI)));
 
 struct nuvec_s {
     float x;
@@ -347,8 +348,6 @@ extern char D_006140F0[];
 extern char D_00614108[];
 #define trashed_stream_b_msg D_00614108
 
-extern NuDebugMsgFn NuDebugMsgProlog(char *file, int line);
-
 extern int D_0062EA90;
 #define stream_outbuf_offset D_0062EA90
 
@@ -377,8 +376,6 @@ extern struct nurndrstream_s *D_0067A240[];
 #define rndrstream_sorted D_0067A240
 
 extern int sortstreams_enabled;
-
-extern void *memset(void *dst, int value, unsigned int size);
 
 extern void *NuMemAllocFn(int size, char *file, int line);
 
@@ -433,8 +430,6 @@ extern NuDmaTagQw D_0067A5E0;
 
 extern char D_00614148[];
 #define bad_attrib_msg D_00614148
-
-extern NuDebugMsgFn NuErrorProlog(char *file, int line);
 
 extern u8 *vpDmaTag_RefEx(void *packet, void *addr, int qwc, unsigned int vif1);
 

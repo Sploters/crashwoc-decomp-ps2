@@ -23,6 +23,8 @@
  *   0x00237d00 edaiRender
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 struct pad_s {
@@ -114,7 +116,6 @@ extern void AdjustPosY(struct nuvec_s *pos);
 
 extern void NuFntSetPen(s32 col);
 extern void NuFntPrintEx(s32 x, s32 y, s32 flag, const char *fmt, ...);
-extern char *strcpy(char *dst, const char *src);
 extern char *strupr(char *s);
 
 struct aitab_s {

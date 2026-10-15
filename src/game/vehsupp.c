@@ -49,6 +49,8 @@
  *   0x00221ab0 ControlledDist
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern s32 Level;
@@ -58,9 +60,6 @@ extern s32 gamesfx_pitch;
 
 extern void GameSfx(s32 Id, struct nuvec_s *Pos);
 extern void GameSfxLoop(s32 Id, struct nuvec_s *Pos);
-extern int rand(void);
-extern double pow(double, double);
-extern double fmod(double, double);
 extern f32 NuTrigTable[];
 extern s32 ChrisInTheHouse;
 extern struct nuvec_s D_006B75C0[];

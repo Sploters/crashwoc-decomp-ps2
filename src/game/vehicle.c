@@ -230,6 +230,8 @@
  *   0x0021feb8 CheckAgainstRocks
  */
 
+#include "nu_libc.h"
+
 #include "creature.h"
 
 extern s32 Level;
@@ -398,7 +400,6 @@ extern void InitWeatherBoss_a(void);
 extern void ProcessWeatherBoss_a(struct weatherboss_s *wb);
 extern void DrawWeatherBoss_a(struct weatherboss_s *wb);
 extern struct jeeprock_s *AddRockVel(struct nuvec_s *pos, struct nuvec_s *vel, f32 radius, s32 owner);
-extern void *memset(void *dst, s32 val, s32 len);
 extern char *best_cRPos;
 
 /* The earth boss is an atlasphere, like PlayerAtlas (far). */
@@ -855,7 +856,6 @@ s32 GetCurrentFarmObjectives(void)
 
 extern f32 NewShadowMaskPlat(struct nuvec_s *pos, f32 size, s32 extramask);
 extern s32 ShadowInfo(void);
-extern double fabs(double x);
 
 s32 FindSurfaceType(struct nuvec_s *pos)
 {

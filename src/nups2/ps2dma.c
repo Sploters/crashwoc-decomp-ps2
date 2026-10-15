@@ -40,8 +40,11 @@
  *   0x0016d700 VU1_DmaGetStatusI
  */
 
+#include "nu_libc.h"
 #include "nu_stdarg.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 
 typedef struct DmaTag {
     u16 qwc;
@@ -63,7 +66,6 @@ typedef struct GifTag {
 } GifTag;
 
 typedef DmaTag *(*TagWalkFunc)(DmaTag *tag, void *user);
-typedef void (*NuErrorFunc)(const char *fmt, ...);
 
 #define VIF0_CHCR       (*(volatile int *)0x10008000)
 #define VIF0_QWC        (*(volatile int *)0x10008020)
@@ -217,13 +219,7 @@ extern char D_00616D50[], D_00616D60[], D_00616D70[], D_00616D80[], D_00616D90[]
 extern char D_00616DA0[], D_00616DB0[], D_00616DC0[], D_00616DD0[], D_00616DE0[];
 extern char D_00616DF0[];
 
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
-extern char *strcpy(char *dst, const char *src);
-extern char *strcat(char *dst, const char *src);
 extern void NuStrCat(char *dst, char *src);
-extern void *memset(void *dst, int c, unsigned int n);
-extern int sprintf(char *buf, const char *fmt, ...);
 extern void TagWalk(DmaTag *tag, TagWalkFunc walker);
 extern DmaTag *VifTagWalk(DmaTag *tag, void *user);
 int VU0_DmaGetStatus(void);

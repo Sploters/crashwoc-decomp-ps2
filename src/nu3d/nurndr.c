@@ -118,7 +118,10 @@
  *   0x00130928 NuRndrAnglesZX
  */
 
+#include "nu_libc.h"
 #include "nu_types.h"
+
+#include "nucore/nuerror.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
 
 typedef struct { float x, y, z; } NuVec3;
@@ -202,8 +205,6 @@ typedef struct nurndrfoot_s {
 
 extern nurndrfoot_s NuRndrFootData[];
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern char D_00614770[];
 #define nurndr_file D_00614770
 extern char D_00614790[];
@@ -286,7 +287,6 @@ extern float otscale;
 extern nurndrotbin_s D_00689AA0[];
 #define ot_bins D_00689AA0
 
-extern void *memset(void *s, int c, unsigned int n);
 extern ottri_s *ot_tri[];
 extern ottri_s ot_tribuff[];
 extern ottri_s *ot_free;
@@ -472,7 +472,6 @@ extern char D_006147C8[];
 #define err_fgeom_no_mtl D_006147C8
 extern struct numtl_s *nurndr_forced_mtl;
 extern struct numtl_s **nurndr_forced_mtl_table;
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern void NuMtxMul(NuMtx *dst, NuMtx *a, NuMtx *b);
 extern int NuCameraClipTestExtents(NuVec3 *min, NuVec3 *max, NuMtx *wm);
 extern void NuRndrOTInsertTriBatch(NuMtx *mtx, int clip, struct numtl_s *mtl, void *tris, int count);

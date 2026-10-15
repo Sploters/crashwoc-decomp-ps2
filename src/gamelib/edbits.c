@@ -16,6 +16,8 @@
  *   0x001a74f8 edbitsRegisterBaseScene
  */
 
+#include "nu_libc.h"
+
 struct nuvec_s {
     float x;
     float y;
@@ -76,7 +78,6 @@ extern void NuStrCpy(char *dst, char *src);
 extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern void NuVecRotateZ(struct nuvec_s *dst, struct nuvec_s *src, int angle);
 extern int NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl, struct numtx_s *mtx);
-extern int strncmp(const char *s1, const char *s2, int n);
 
 
 void edbitsSoundPlay(struct nuvec_s *pos, int sfx) {

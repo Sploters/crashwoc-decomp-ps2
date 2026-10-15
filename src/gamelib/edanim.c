@@ -84,6 +84,8 @@
  *   0x001a6b40 edanimcbCancelSoundTypeMenu
  */
 
+#include "nu_libc.h"
+
 struct nuvec_s {
     float x;
     float y;
@@ -515,15 +517,12 @@ extern int saveloadCheckCardPresent(void);
 extern int saveloadCheckCardType(void);
 extern int saveloadCheckCardFormatted(void);
 extern int saveloadCheckCardFreeSpace(int port);
-extern int sprintf(char *buf, const char *fmt, ...);
 extern int saveloadCheckSlotsUsed(void);
 extern int saveloadSaveSlot(int slot, char *text, int size);
 extern int saveloadLoadSlot(int slot, char *text, int size);
 extern int saveloadDeleteSlot(int slot);
 extern int saveloadUnFormatCard(void);
 extern int saveloadFormatCard(void);
-extern int strncmp(const char *a, const char *b, int n);
-extern char *strncpy(char *dst, const char *src, unsigned int n);
 extern void EdFileSetMedia(int media);
 extern int EdFileOpen(char *name, int mode);
 /* Defined as returning int (gamelib/edfile), but declared void here as in the
@@ -537,7 +536,6 @@ extern void EdFileRead(void *data, int size);
 extern int EdFileReadInt(void);
 extern float EdFileReadFloat(void);
 extern short EdFileReadShort(void);
-extern char *strcpy(char *dst, const char *src);
 extern char *edbitsGetSoundName(int type);
 extern void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, float sizez,
                            int rotx, int roty, int rotz, int flags, int colour, void *mtl);

@@ -61,6 +61,10 @@
  *   0x0014c768 FindSplinePtSize
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 struct numtx_s {
     float _00, _01, _02, _03;
     float _10, _11, _12, _13;
@@ -197,8 +201,6 @@ struct nusplinecfg_s {
     int ptsize;                     /* 0x04 */
 };
 
-extern void *memset(void *s, int c, unsigned int n);
-extern char *strstr(const char *haystack, const char *needle);
 extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 extern int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *m);
 extern void *NuTexAnimProgFind(char *name);
@@ -225,9 +227,7 @@ extern void NuNodeGraphInit(struct nunode_s *root);
 extern void CvtNodes(struct nunode_s *node, int depth);
 extern void MakeFaceOnDma(int fh, struct nufaceongeom_s *geom, int mtlid);
 
-extern int strcasecmp(const char *s1, const char *s2);
 extern char *NuStrIStr(char *str, char *sub);
-extern int rand(void);
 extern void NuVecLerp(struct nuvec_s *out, struct nuvec_s *a, struct nuvec_s *b, float t);
 
 struct nucvtmtl_s {
@@ -249,8 +249,6 @@ extern char *vpDmaTag_Ret(char *dma);
 
 extern int verts_this_frame;
 
-typedef void (*nuerror_fn)(char *fmt, ...);
-extern nuerror_fn NuErrorProlog(char *file, int line);
 extern int NuFileLoadBuffer(char *name, void *buf, int size);
 extern struct nugscn_s *NuGScnLoadFix(void);
 
@@ -299,9 +297,6 @@ extern struct nugscn_s *D_00633114;
 #define no_dmabuffer_msg D_00614E68
 #define dma_overflow_msg D_00614E98
 #define unknown_faceon_msg D_00614EB0
-
-typedef void (*nudebugmsg_fn)(char *fmt, ...);
-extern nudebugmsg_fn NuDebugMsgProlog(char *file, int line);
 
 extern char D_00614D00[];
 extern char D_00615130[];

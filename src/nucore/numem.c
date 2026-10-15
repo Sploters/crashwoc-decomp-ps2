@@ -18,7 +18,9 @@
  *   0x00105390 NuMemFree
  */
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
 
 typedef struct NuMemGuard {
     int magic[3];
@@ -45,18 +47,6 @@ typedef struct NuExternalMemory {
     unsigned int *cursor;
     unsigned int end;
 } NuExternalMemory;
-
-extern void *malloc(unsigned int size);
-extern void *realloc(void *ptr, unsigned int size);
-extern void free(void *ptr);
-extern void *memset(void *dst, int c, unsigned int len);
-extern void *memcpy(void *dst, const void *src, unsigned int len);
-extern int memcmp(const void *a, const void *b, unsigned int len);
-extern char *strcpy(char *dst, const char *src);
-extern int strlen(const char *s);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 
 extern NuMemHeader *D_0062EA04;
 extern int D_0062EA08;

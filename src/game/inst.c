@@ -12,6 +12,8 @@
  *   0x001d5f38 InstInit
  */
 
+#include "nu_libc.h"
+
 union variptr_u {
     void *voidptr;
 };
@@ -62,8 +64,6 @@ extern struct nuanimdata_s *NuAnimDataLoadBuff(char *name, union variptr_u *buff
 extern struct shaddata_s *ShadDataLoad(char *name, union variptr_u *buff, union variptr_u endbuff);
 extern int NuFileSize(char *name);
 extern void ShadDataDestroy(struct shaddata_s *shad);
-extern int strcasecmp(const char *s1, const char *s2);
-extern char *strcpy(char *dest, const char *src);
 
 struct nuscene_s *InstSceneLoad(char *name) {
     struct sceneinst_s *sc;

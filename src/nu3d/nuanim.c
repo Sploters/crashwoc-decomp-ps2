@@ -41,6 +41,10 @@
  *   0x00145358 NuAnimCurveScale
  */
 
+#include "nu_libc.h"
+
+#include "nucore/nuerror.h"
+
 typedef struct nuanimkey_s {
     float time;
     float dtime;
@@ -207,12 +211,8 @@ typedef struct nujointnode_s {
 } NuJointNode;
 
 
-typedef void (*NuErrorFunc)(const char *fmt, ...);
-
-extern NuErrorFunc NuErrorProlog(const char *file, int line);
 extern void *NuMemAllocFn(int size, char *file, int line);
 extern void NuMemFreeFn(void *ptr, char *file, int line);
-extern void *memset(void *dst, int value, unsigned int size);
 extern int NuFileOpen(char *name, int mode);
 extern int NuFileRead(int fh, void *buf, int size);
 extern void NuFileClose(int fh);
@@ -220,7 +220,6 @@ extern int NuFileLoadBuffer(char *name, void *buf, int size);
 extern int NuFileWriteInt(int fh, int value);
 extern int NuFileWrite(int fh, void *data, int size);
 extern int NuFileWriteChar(int fh, int value);
-extern int strlen(const char *s);
 extern int NuFileReadInt(int fh);
 extern int NuFileWriteFloat(int fh, float value);
 extern float NuFileReadFloat(int fh);
@@ -228,7 +227,6 @@ extern char NuFileReadChar(int fh);
 extern NuAnimData *NuAnimDataCreate(int nchunks);
 extern NuAnimDataChunk *NuAnimDataChunkCreate(int numnodes);
 extern NuAnimCurveSet *NuAnimCurveSetCreate(int ncurves);
-extern double floor(double x);
 extern void NuAnimDataChunkDestroy(NuAnimDataChunk *chunk);
 extern void NuMtxSetIdentity(NuMtx *m);
 extern void NuMtxSetRotateXYZ(NuMtx *m, NuAngVec *a);
@@ -1745,7 +1743,6 @@ void NuAnimCurve2SetApplyToMatrix(NuAnimCurve2 *curves, signed char *curveflags,
 }
 
 
-extern NuErrorFunc NuDebugMsgProlog(const char *file, int line);
 extern void *NuStreamGetOutputBuffer(int stream);
 extern int NuMemFileOpen(void *buf, int size, int mode);
 extern char D_00614A80[];
