@@ -44,6 +44,8 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
 
 typedef struct nuanimkey_s {
     float time;
@@ -139,28 +141,9 @@ typedef struct nuanimtime_s {
     unsigned int time_byte;
 } NuAnimTime;
 
-typedef struct nuvec_s {
-    float x;
-    float y;
-    float z;
-} NuVec;
-
-typedef struct nuangvec_s {
-    int x;
-    int y;
-    int z;
-} NuAngVec;
-
-typedef struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-} NuMtx;
-
 typedef struct nujointdata_s {
-    NuMtx orient;
-    NuVec locator_offset;
+    struct numtx_s orient;
+    struct nuvec_s locator_offset;
     char *name;
     unsigned char parent_ix;
     unsigned char flags;
@@ -201,12 +184,12 @@ typedef struct nunode_s {
 
 typedef struct nujointnode_s {
     NuNode node;
-    NuMtx orient;
-    NuMtx mtx;
-    NuMtx wmtx;
+    struct numtx_s orient;
+    struct numtx_s mtx;
+    struct numtx_s wmtx;
     char pad_e0[0x18];
-    NuVec scale;
-    NuVec pivot;
+    struct nuvec_s scale;
+    struct nuvec_s pivot;
     unsigned char flags;
 } NuJointNode;
 
@@ -228,17 +211,10 @@ extern NuAnimData *NuAnimDataCreate(int nchunks);
 extern NuAnimDataChunk *NuAnimDataChunkCreate(int numnodes);
 extern NuAnimCurveSet *NuAnimCurveSetCreate(int ncurves);
 extern void NuAnimDataChunkDestroy(NuAnimDataChunk *chunk);
-extern void NuMtxSetIdentity(NuMtx *m);
-extern void NuMtxSetRotateXYZ(NuMtx *m, NuAngVec *a);
-extern void NuMtxPreScale(NuMtx *m, NuVec *s);
-extern void NuMtxTranslate(NuMtx *m, NuVec *t);
-extern void NuMtxSetRotateXYZVU0(NuMtx *m, NuAngVec *a);
-extern void NuMtxMulRVU0(NuMtx *dst, NuMtx *a, NuMtx *b);
-extern void NuMtxMulR(NuMtx *dst, NuMtx *a, NuMtx *b);
-extern void NuMtxScale(NuMtx *m, NuVec *s);
-extern void NuMtxPreTranslate(NuMtx *m, NuVec *t);
-extern void NuMtxPreScaleVU0(NuMtx *m, NuVec *s);
-extern void NuMtxScaleVU0(NuMtx *m, NuVec *s);
+extern void NuMtxSetRotateXYZVU0(struct numtx_s *m, struct nuangvec_s *a);
+extern void NuMtxMulRVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
+extern void NuMtxPreScaleVU0(struct numtx_s *m, struct nuvec_s *s);
+extern void NuMtxScaleVU0(struct numtx_s *m, struct nuvec_s *s);
 
 extern unsigned char D_006ADC00[256];
 extern int D_0062EE18;
@@ -642,12 +618,12 @@ float NuAnimCurve2CalcVal(NuAnimCurve2 *curve, NuAnimTime *atime, int keytype) {
 
 
 void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int node, NuJointNode *joint) {
-    NuVec t;
-    NuVec r;
-    NuVec p;
-    NuAngVec ang;
-    NuVec s;
-    NuMtx *m;
+    struct nuvec_s t;
+    struct nuvec_s r;
+    struct nuvec_s p;
+    struct nuangvec_s ang;
+    struct nuvec_s s;
+    struct numtx_s *m;
     NuAnimCurveSet *curveset;
     NuJointNode *parent;
 
@@ -744,17 +720,17 @@ void NuAnimCurveSetApplyToJoint(NuAnimDataChunk *chunk, NuAnimTime *atime, int n
 
 void NuAnimCurveSetApplyBlendToJoint(NuAnimDataChunk *chunk1, NuAnimTime *atime1, NuAnimDataChunk *chunk2,
                                      NuAnimTime *atime2, float blend, int node, NuJointNode *joint) {
-    NuVec lo;
-    NuAngVec rf;
+    struct nuvec_s lo;
+    struct nuangvec_s rf;
     float r[3];
     float r1[3];
     float r2[3];
     float s[3];
     float t[3];
-    NuVec invscale;
+    struct nuvec_s invscale;
     float omblend;
     int i;
-    NuMtx *m;
+    struct numtx_s *m;
     NuAnimCurveSet *curveset1;
     NuAnimCurveSet *curveset2;
     NuJointNode *parent;
@@ -838,7 +814,7 @@ void NuAnimCurveSetApplyBlendToJoint(NuAnimDataChunk *chunk1, NuAnimTime *atime1
             t[i] += blend * curveset2->constants[i];
         }
     }
-    NuMtxTranslate(m, (NuVec *)t);
+    NuMtxTranslate(m, (struct nuvec_s *)t);
     if (joint->flags & 8) {
         NuMtxPreTranslate(m, &joint->pivot);
         lo.x = -joint->pivot.x;
@@ -856,17 +832,17 @@ void NuAnimCurveSetApplyBlendToJoint(NuAnimDataChunk *chunk1, NuAnimTime *atime1
 
 
 void NuAnimCurveSetApplyBlendToJoint2(NuAnimCurveSet *curveset1, NuAnimTime *atime1, NuAnimCurveSet *curveset2,
-                                      NuAnimTime *atime2, float blend, NuJointData *joint, NuVec *scale,
-                                      NuVec *parentscale, NuMtx *m, NuJointAnim *offset) {
-    NuVec lo;
-    NuAngVec rf;
+                                      NuAnimTime *atime2, float blend, NuJointData *joint, struct nuvec_s *scale,
+                                      struct nuvec_s *parentscale, struct numtx_s *m, NuJointAnim *offset) {
+    struct nuvec_s lo;
+    struct nuangvec_s rf;
     float r[3];
     float r1[3];
     float r2[3];
     float s1[3];
     float s2[3];
     float t[3];
-    NuVec invscale;
+    struct nuvec_s invscale;
     float omblend;
     int i;
     signed char procflags;
@@ -1005,7 +981,7 @@ void NuAnimCurveSetApplyBlendToJoint2(NuAnimCurveSet *curveset1, NuAnimTime *ati
         t[1] += offset->ty;
         t[2] += offset->tz;
     }
-    NuMtxTranslate(m, (NuVec *)t);
+    NuMtxTranslate(m, (struct nuvec_s *)t);
     if (joint->flags & 8) {
         NuMtxPreTranslate(m, &joint->locator_offset);
         lo.x = -joint->locator_offset.x;
@@ -1025,16 +1001,16 @@ void NuAnimCurveSetApplyBlendToJoint2(NuAnimCurveSet *curveset1, NuAnimTime *ati
 void NuAnimCurve2SetApplyBlendToJoint2(NuAnimCurve2 *curves1, signed char *curveflags1, signed char curvesetflags1,
                                        NuAnimTime *atime1, NuAnimCurve2 *curves2, signed char *curveflags2,
                                        signed char curvesetflags2, NuAnimTime *atime2, float blend, NuJointData *joint,
-                                       NuVec *scale, NuVec *parentscale, NuMtx *m, NuJointAnim *offset) {
-    NuVec lo;
-    NuAngVec rf;
+                                       struct nuvec_s *scale, struct nuvec_s *parentscale, struct numtx_s *m, NuJointAnim *offset) {
+    struct nuvec_s lo;
+    struct nuangvec_s rf;
     float r[3];
     float r1[3];
     float r2[3];
     float s1[3];
     float s2[3];
     float t[3];
-    NuVec invscale;
+    struct nuvec_s invscale;
     float omblend;
     int i;
     signed char procflags;
@@ -1149,7 +1125,7 @@ void NuAnimCurve2SetApplyBlendToJoint2(NuAnimCurve2 *curves1, signed char *curve
         t[1] += offset->ty;
         t[2] += offset->tz;
     }
-    NuMtxTranslate(m, (NuVec *)t);
+    NuMtxTranslate(m, (struct nuvec_s *)t);
     if (joint->flags & 8) {
         NuMtxPreTranslate(m, &joint->locator_offset);
         lo.x = -joint->locator_offset.x;
@@ -1166,14 +1142,14 @@ void NuAnimCurve2SetApplyBlendToJoint2(NuAnimCurve2 *curves1, signed char *curve
 }
 
 
-void NuAnimCurveSetApplyToJoint2(NuAnimCurveSet *curveset, NuAnimTime *atime, NuJointData *joint, NuVec *scale,
-                                 NuVec *parentscale, NuMtx *m, NuJointAnim *offset) {
+void NuAnimCurveSetApplyToJoint2(NuAnimCurveSet *curveset, NuAnimTime *atime, NuJointData *joint, struct nuvec_s *scale,
+                                 struct nuvec_s *parentscale, struct numtx_s *m, NuJointAnim *offset) {
     signed char procflags;
-    NuVec t;
-    NuVec r;
-    NuVec lo;
-    NuAngVec rf;
-    NuVec invscale;
+    struct nuvec_s t;
+    struct nuvec_s r;
+    struct nuvec_s lo;
+    struct nuangvec_s rf;
+    struct nuvec_s invscale;
 
     if (offset) {
         procflags = offset->flags;
@@ -1331,14 +1307,14 @@ void NuAnimCurveSetApplyToJoint2(NuAnimCurveSet *curveset, NuAnimTime *atime, Nu
 
 
 void NuAnimCurve2SetApplyToJoint(NuAnimCurve2 *curves, signed char *curveflags, signed char curvesetflags,
-                                 NuAnimTime *atime, NuJointData *joint, NuVec *scale, NuVec *parentscale,
-                                 NuMtx *m, NuJointAnim *offset) {
+                                 NuAnimTime *atime, NuJointData *joint, struct nuvec_s *scale, struct nuvec_s *parentscale,
+                                 struct numtx_s *m, NuJointAnim *offset) {
     signed char procflags;
-    NuVec t;
-    NuVec r;
-    NuVec lo;
-    NuAngVec rf;
-    NuVec invscale;
+    struct nuvec_s t;
+    struct nuvec_s r;
+    struct nuvec_s lo;
+    struct nuangvec_s rf;
+    struct nuvec_s invscale;
 
     if (offset) {
         procflags = offset->flags;
@@ -1460,10 +1436,10 @@ void NuAnimCurve2SetApplyToJoint(NuAnimCurve2 *curves, signed char *curveflags, 
 
 
 void NuAnimCurveSetApplyToJointBasic(NuAnimCurveSet *curveset, NuAnimTime *atime, NuJointData *joint,
-                                     NuVec *scale, NuVec *parentscale, NuMtx *m, NuJointAnim *offset) {
+                                     struct nuvec_s *scale, struct nuvec_s *parentscale, struct numtx_s *m, NuJointAnim *offset) {
     signed char procflags;
-    NuVec r;
-    NuAngVec rf;
+    struct nuvec_s r;
+    struct nuangvec_s rf;
 
     if (offset) {
         procflags = offset->flags;
@@ -1553,11 +1529,11 @@ void NuAnimCurveSetApplyToJointBasic(NuAnimCurveSet *curveset, NuAnimTime *atime
 
 
 void NuAnimCurve2SetApplyToJointBasic(NuAnimCurve2 *curves, signed char *curveflags, signed char curvesetflags,
-                                      NuAnimTime *atime, NuJointData *joint, NuVec *scale, NuVec *parentscale,
-                                      NuMtx *m, NuJointAnim *offset) {
+                                      NuAnimTime *atime, NuJointData *joint, struct nuvec_s *scale, struct nuvec_s *parentscale,
+                                      struct numtx_s *m, NuJointAnim *offset) {
     signed char procflags;
-    NuVec r;
-    NuAngVec rf;
+    struct nuvec_s r;
+    struct nuangvec_s rf;
 
     if (offset) {
         procflags = offset->flags;
@@ -1634,11 +1610,11 @@ void NuAnimCurve2SetApplyToJointBasic(NuAnimCurve2 *curves, signed char *curvefl
 }
 
 
-void NuAnimCurveSetApplyToMatrix(NuAnimCurveSet *curveset, NuAnimTime *atime, NuMtx *m) {
-    NuVec t;
-    NuVec r;
-    NuAngVec ang;
-    NuVec s;
+void NuAnimCurveSetApplyToMatrix(NuAnimCurveSet *curveset, NuAnimTime *atime, struct numtx_s *m) {
+    struct nuvec_s t;
+    struct nuvec_s r;
+    struct nuangvec_s ang;
+    struct nuvec_s s;
 
     if (curveset->flags & 1) {
         if (curveset->set[3]) {
@@ -1707,11 +1683,11 @@ void NuAnimCurveSetApplyToMatrix(NuAnimCurveSet *curveset, NuAnimTime *atime, Nu
 
 
 void NuAnimCurve2SetApplyToMatrix(NuAnimCurve2 *curves, signed char *curveflags, signed char curvesetflags,
-                                  NuAnimTime *atime, NuMtx *m) {
-    NuVec t;
-    NuVec r;
-    NuAngVec ang;
-    NuVec s;
+                                  NuAnimTime *atime, struct numtx_s *m) {
+    struct nuvec_s t;
+    struct nuvec_s r;
+    struct nuangvec_s ang;
+    struct nuvec_s s;
 
     if (curvesetflags & 1) {
         r.x = NuAnimCurve2CalcVal(&curves[3], atime, curveflags[3]);

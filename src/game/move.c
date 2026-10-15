@@ -51,6 +51,10 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern s32 FlyingLevelVictoryDance;
@@ -244,18 +248,12 @@ s32 RotDiff(u16 a, u16 b);
 void AddGameDebrisRot(s32 i, struct nuvec_s *pos, s32 n, u16 xrot, u16 yrot);
 void GetALONG(struct nuvec_s *pos, struct RPos_s *rpos, s32 iRAIL, s32 iALONG, s32 dir);
 s32 AheadOfCheckpoint(s32 iRAIL, s32 iALONG, f32 fALONG);
-void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
 f32 NuFsqrt(f32 x);
-s32 NuAtan2D(f32 x, f32 z);
 u16 SeekRot(u16 a, u16 target, s32 rate);
 s32 qrand(void);
 s32 ResetHGobjAnim(struct nuhspecial_s *obj);
 void SetNearestLights(struct Nearest_Light_s *l);
 void SetLevelLights(void);
-void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
-void NuMtxRotateX(struct numtx_s *m, s32 r);
-void NuMtxRotateY(struct numtx_s *m, s32 r);
-void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                       s16 *layers, struct numtx_s *mtx_array, f32 **dwa);
 s32 DrawPanel3DObject(s32 object, f32 x, f32 y, f32 z, f32 scalex, f32 scaley,

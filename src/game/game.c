@@ -133,26 +133,14 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "numath/nufloat.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #define NULL 0
 
-struct nuvec_s {
-    float x, y, z;
-};
-
-struct nuangvec_s {
-    s32 x, y, z;
-};
-
-struct numtx_s {
-    float m[4][4]; /* 0x40 bytes; _30/_31/_32 are m[3][0..2] at +0x30 */
-};
-
-
-struct nucolour3_s {
-    float r; /* 0x0 */
-    float g; /* 0x4 */
-    float b; /* 0x8 */
-};
 
 struct pdir_s {
     s32 index;                 /* 0x0 */
@@ -2877,8 +2865,6 @@ void InitWumpa(void) {
     ResetWumpa();
 }
 
-void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 extern float D_0062D700;
 
 void FlyWumpa(struct wumpa_s *obj) {
@@ -3268,7 +3254,6 @@ s32 AheadOfCheckpoint(s32 iRAIL, s32 iALONG, float fALONG) {
     return 0;
 }
 
-extern float NuVecMag(struct nuvec_s *v);
 extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *ray, float f);
 
 /* gnu89 plain inline: standalone AND inlined into AddFlyingWumpa. */
@@ -3336,11 +3321,6 @@ struct nugspline_s {
     char pad_4[4];
     char *pts; /* 0x8 */
 };
-
-extern void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern float NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *c);
-extern s32 NuAtan2D(float x, float z);
 
 s32 NearestSplinePoint(struct nuvec_s *pos, struct nugspline_s *spl) {
     s32 index;
@@ -3633,7 +3613,6 @@ struct gcam_s {
 
 extern struct gcam_s *pCam;
 extern float D_0062D6D0; /* parallax farclip scale (GC 0.1f) */
-extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
 extern s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 extern void NuRndrClear(s32 mode, s32 col, float z);
 
@@ -3645,9 +3624,9 @@ void DrawParallax(void) {
     n = 0;
     s.x = s.y = s.z = pNuCam->farclip * D_0062D6D0 * 0.5f;
     NuMtxSetScale(&m, &s);
-    m.m[3][0] = pCam->m.m[3][0];
-    m.m[3][1] = pCam->m.m[3][1];
-    m.m[3][2] = pCam->m.m[3][2];
+    m._30 = pCam->m._30;
+    m._31 = pCam->m._31;
+    m._32 = pCam->m._32;
     if (ObjTab[9].obj.special != NULL) {
         NuRndrGScnObj(
             ObjTab[9].obj.scene->gobjs[ObjTab[9].obj.special->instance->objid],
@@ -3809,13 +3788,13 @@ s32 PlayerObjectAnimCollision(struct tobj_s *obj, struct objspecial_s *special,
     if (obj != NULL && special != NULL && special->instance != NULL &&
         special->instance->flags.visible && obj->dead == 0) {
         if (special->instance->anim != NULL) {
-            pos.x = special->instance->anim->mtx.m[3][0];
-            pos.y = special->instance->anim->mtx.m[3][1];
-            pos.z = special->instance->anim->mtx.m[3][2];
+            pos.x = special->instance->anim->mtx._30;
+            pos.y = special->instance->anim->mtx._31;
+            pos.z = special->instance->anim->mtx._32;
         } else {
-            pos.x = special->instance->mtx.m[3][0];
-            pos.y = special->instance->mtx.m[3][1];
-            pos.z = special->instance->mtx.m[3][2];
+            pos.x = special->instance->mtx._30;
+            pos.y = special->instance->mtx._31;
+            pos.z = special->instance->mtx._32;
         }
         if (!(obj->objbot > pos.y + radius) && !(obj->objtop < pos.y - radius)) {
             dx = pos.x - obj->pos.x;
@@ -4092,8 +4071,6 @@ void DefaultTimeTrialNames(s32 all) {
 }
 
 extern float DISCOXOFFSET;
-extern void NuMtxSetIdentity(struct numtx_s *m);
-extern void NuMtxRotateY(struct numtx_s *m, s32 ang);
 extern void EvalModelAnim(struct cmodel_s *model, void *anm, struct numtx_s *m,
                           struct numtx_s *tmtx, float ***dwa,
                           struct numtx_s *loc);
@@ -4124,10 +4101,10 @@ void DrawTempCharacter2(s32 render) {
             if (Level == 0x2b) {
                 if (model->character == 0xbb) {
                     NuMtxRotateY(&m, 0x2000);
-                    m.m[3][0] = DISCOXOFFSET;
+                    m._30 = DISCOXOFFSET;
                 } else if (model->character == 0) {
                     NuMtxRotateY(&m, -0x2000);
-                    m.m[3][0] = -DISCOXOFFSET;
+                    m._30 = -DISCOXOFFSET;
                 }
             }
             EvalModelAnim(model, TempAnim2, &m, tmtx, &dwa, mtxLOCATOR);
@@ -4228,7 +4205,6 @@ void GetMenuInfo(struct cursor_s *cur) {
 }
 
 extern s32 i_tempwumpa;
-extern void NuVecScale(float s, struct nuvec_s *d, struct nuvec_s *v);
 
 void AddFlyingWumpa(struct nuvec_s *src, struct nuvec_s *dir,
                     struct nuvec_s *dst, s32 destroy) {
@@ -4243,7 +4219,7 @@ void AddFlyingWumpa(struct nuvec_s *src, struct nuvec_s *dir,
     wumpa->active = 3;
     wumpa->duration = 2.0f;
     wumpa->time = 0;
-    NuVecScale(0.19999999f, &wumpa->mom, dir);
+    NuVecScale(&wumpa->mom, dir, 0.19999999f);
     WumpaHitTerrain(wumpa);
     if (destroy == 3) {
         destroy = 2;
@@ -4300,7 +4276,6 @@ float RatioBetweenEdges(struct nuvec_s *pos, struct nuvec_s *p0,
     return d1 / (d1 + d2);
 }
 
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 /* retail-owned const vectors: {5,5,5} scale and {0,11,6.25} translate.
  * Copied into ONE stack slot -- two initialised locals would take two. */
 extern struct nuvec_s D_0061D468;
@@ -4336,10 +4311,10 @@ void DrawTempCharacter(s32 render) {
     if (Level == 0x2b) {
         if (model->character == 0xbb) {
             NuMtxRotateY(&m, 0x2000);
-            m.m[3][0] = DISCOXOFFSET;
+            m._30 = DISCOXOFFSET;
         } else if (model->character == 0) {
             NuMtxRotateY(&m, -0x2000);
-            m.m[3][0] = -DISCOXOFFSET;
+            m._30 = -DISCOXOFFSET;
         }
     }
     EvalModelAnim(model, TempAnim, &m, tmtx, &dwa, mtxLOCATOR);
@@ -4702,8 +4677,6 @@ extern struct nuvec_s probedpos;
 extern struct nuvec_s probespk;
 extern struct nuvec_s probepos2;
 extern s32 gamesfx_pitch;
-extern float NuFabs(float x);
-extern float NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
 extern void NuLgtArcLaser(s32 type, struct nuvec_s *start, struct nuvec_s *end,
                           struct nuvec_s *mid, float a, float b, float c, float d,
                           u32 col);
@@ -4873,7 +4846,6 @@ extern s32 CreatureRayCast(struct nuvec_s *start, struct nuvec_s *end);
 s32 RayIntersectSphere(struct nuvec_s *p0, struct nuvec_s *p1,
                        struct nuvec_s *pos, float radius);
 s32 WumpaRayCast(struct nuvec_s *p0, struct nuvec_s *p1, float ratio0);
-extern float NuVecDot(struct nuvec_s *a, struct nuvec_s *b);
 
 s32 RayIntersectSphere(struct nuvec_s *p0, struct nuvec_s *p1,
                        struct nuvec_s *pos, float radius) {
@@ -5154,12 +5126,12 @@ void UpdateAwards(void) {
             if (award->wait != 0) {
                 if (tumble_character == 0) {
                     NuVecAdd(&award->oldpos0,
-                             (struct nuvec_s *)player->obj.mtxLOCATOR[0][7].m[3],
-                             (struct nuvec_s *)player->obj.mtxLOCATOR[0][8].m[3]);
-                    NuVecScale(0.5f, &award->oldpos0, &award->oldpos0);
+                             (struct nuvec_s *)&player->obj.mtxLOCATOR[0][7]._30,
+                             (struct nuvec_s *)&player->obj.mtxLOCATOR[0][8]._30);
+                    NuVecScale(&award->oldpos0, &award->oldpos0, 0.5f);
                 } else {
                     award->oldpos0 =
-                        *(struct nuvec_s *)player->obj.mtxLOCATOR[0][3].m[3];
+                        *(struct nuvec_s *)&player->obj.mtxLOCATOR[0][3]._30;
                 }
                 award->oldpos1.x = award->oldpos0.x;
                 y = award->oldpos0.y;
@@ -5198,8 +5170,6 @@ extern float tumble_item_starttime;
 s32 Draw3DObject(s32 object, struct nuvec_s *pos, u16 xrot, u16 yrot, u16 zrot,
                  float scalex, float scaley, float scalez,
                  struct nugscn_s *scn, struct objspecial_s *obj, s32 rot);
-extern void NuMtxRotateX(struct numtx_s *m, s32 a);
-extern void NuMtxRotateZ(struct numtx_s *m, s32 a);
 
 void DrawAwards(void) {
     struct award_s *award;
@@ -5836,7 +5806,6 @@ void BonusTiming(struct bcreature_s *plr) {
     }
 }
 
-extern void NuMtxMulR(struct numtx_s *d, struct numtx_s *a, struct numtx_s *b);
 extern void ScaleFlatShadow(struct nuvec_s *s, float y, float shadow, float f);
 
 void MakeMaskMatrix(struct mask_s *mask, struct numtx_s *mM, struct numtx_s *mS,
@@ -5852,9 +5821,9 @@ void MakeMaskMatrix(struct mask_s *mask, struct numtx_s *mM, struct numtx_s *mS,
         if (mask->active > 2) {
             if (mLOCATOR != 0) {
                 NuMtxMulR(mM, mM, mLOCATOR);
-                mask->pos.x = mLOCATOR->m[3][0];
-                mask->pos.y = mLOCATOR->m[3][1];
-                mask->pos.z = mLOCATOR->m[3][2];
+                mask->pos.x = mLOCATOR->_30;
+                mask->pos.y = mLOCATOR->_31;
+                mask->pos.z = mLOCATOR->_32;
             } else {
                 wobble = (GameTimer.frame & 0xF) * 0x1000;
                 NuMtxRotateX(mM, (s32)(NuTrigTable[wobble] * 8192.0f) & 0xFFFF);
@@ -5873,9 +5842,9 @@ void MakeMaskMatrix(struct mask_s *mask, struct numtx_s *mM, struct numtx_s *mS,
             NuMtxRotateY(mS, yrot);
             NuMtxRotateZ(mS, mask->surface_zrot);
             NuMtxRotateX(mS, mask->surface_xrot);
-            mS->m[3][0] = mask->pos.x;
-            mS->m[3][1] = mask->shadow + 0.025f;
-            mS->m[3][2] = mask->pos.z;
+            mS->_30 = mask->pos.x;
+            mS->_31 = mask->shadow + 0.025f;
+            mS->_32 = mask->pos.z;
         }
     }
 }
@@ -6086,7 +6055,6 @@ extern s32 vtog_blend;
 extern u16 vtog_angle;
 extern float D_0062D2FC;
 extern float NewShadow(struct nuvec_s *pos, float y);
-extern void NuMtxSetRotationY(struct numtx_s *m, s32 ang);
 extern s32 DrawCharacterModel(struct cmodel_s *model, struct animpkt_s *anim,
                               struct numtx_s *mC, struct numtx_s *mS, s32 render,
                               struct numtx_s *mR, struct numtx_s *loc_mtx,
@@ -6633,10 +6601,10 @@ void DrawMask(struct mask_s *mask) {
             NuHGobjRndrMtxDwa(model->hobj, &mM, 1, 0, tmtx, dwa);
             if (mask->shadow != 2000000.0f) {
                 if (mask->reflect != 0) {
-                    mM.m[0][1] = -mM.m[0][1];
-                    mM.m[1][1] = -mM.m[1][1];
-                    mM.m[2][1] = -mM.m[2][1];
-                    mM.m[3][1] = mask->shadow - (mM.m[3][1] - mask->shadow);
+                    mM._01 = -mM._01;
+                    mM._11 = -mM._11;
+                    mM._21 = -mM._21;
+                    mM._31 = mask->shadow - (mM._31 - mask->shadow);
                     NuHGobjRndrMtxDwa(model->hobj, &mM, 1, 0, tmtx, dwa);
                 }
                 if ((LDATA->flags & 0x1000) == 0 && VEHICLECONTROL != 2 &&
@@ -6738,17 +6706,17 @@ void DrawWumpa(void) {
                 } else {
                     m = &info->m;
                 }
-                m->m[3][0] = wumpa->pos.x;
-                m->m[3][1] = wumpa->pos.y + info->dy;
-                m->m[3][2] = wumpa->pos.z;
+                m->_30 = wumpa->pos.x;
+                m->_31 = wumpa->pos.y + info->dy;
+                m->_32 = wumpa->pos.z;
                 NuRndrGScnObj(ObjTab[0].obj.scene->gobjs[ObjTab[0].obj.special->instance->objid],
                               m);
                 if (TerSurface[wumpa->surface_type].flags & 4) {
                     mTEMP = *m;
-                    mTEMP.m[0][1] = -mTEMP.m[0][1];
-                    mTEMP.m[1][1] = -mTEMP.m[1][1];
-                    mTEMP.m[2][1] = -mTEMP.m[2][1];
-                    mTEMP.m[3][1] = wumpa->shadow - (mTEMP.m[3][1] - wumpa->shadow);
+                    mTEMP._01 = -mTEMP._01;
+                    mTEMP._11 = -mTEMP._11;
+                    mTEMP._21 = -mTEMP._21;
+                    mTEMP._31 = wumpa->shadow - (mTEMP._31 - wumpa->shadow);
                     NuRndrGScnObj(
                         ObjTab[0].obj.scene->gobjs[ObjTab[0].obj.special->instance->objid],
                         &mTEMP);
@@ -7087,9 +7055,9 @@ void UpdateMask(struct mask_s *mask, struct tobj_s *obj) {
         }
     }
     if (locked) {
-        mask->pos.x = mask->mM.m[3][0];
-        mask->pos.y = mask->mM.m[3][1];
-        mask->pos.z = mask->mM.m[3][2];
+        mask->pos.x = mask->mM._30;
+        mask->pos.y = mask->mM._31;
+        mask->pos.z = mask->mM._32;
     } else {
         MakeMaskMatrix(mask, &mask->mM, &mask->mS, mtx, 1.0f);
     }
@@ -7386,9 +7354,9 @@ void DrawKabooms(void) {
                 NuMtxSetScale(&mTEMP, &scale);
                 nextang = ang + 0x4000;
                 NuMtxRotateY(&mTEMP, ang);
-                mTEMP.m[3][0] = k->pos.x + NuTrigTable[ang] * r;
-                mTEMP.m[3][1] = k->pos.y;
-                mTEMP.m[3][2] = k->pos.z + NuTrigTable[nextang & 0xFFFF] * r;
+                mTEMP._30 = k->pos.x + NuTrigTable[ang] * r;
+                mTEMP._31 = k->pos.y;
+                mTEMP._32 = k->pos.z + NuTrigTable[nextang & 0xFFFF] * r;
                 NuRndrGScnObj(ObjTab[object].obj.scene->gobjs[ObjTab[object].obj.special->instance->objid],
                               &mTEMP);
                 ang = nextang;
@@ -8249,9 +8217,6 @@ void BonusTransporter(struct bcreature_s *plr) {
     }
 }
 
-
-extern void NuMtxRotateX(struct numtx_s *m, s32 a);
-extern void NuMtxRotateZ(struct numtx_s *m, s32 a);
 
 /* The GC draft is WRONG here (same trap as DrawPanel3DObject, see
  * docs/decomp_agent.md): it drops the 1/2/3 -> 0x85/0x86/0x87 dispatch and

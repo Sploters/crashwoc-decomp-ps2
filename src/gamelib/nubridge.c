@@ -17,6 +17,10 @@
 #include "nu_libc.h"
 #include "nu_types.h"
 
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+
 #define BRIDGE_MAX 8
 #define BRIDGE_MAX_SECTIONS 24
 #define BRIDGE_MAX_ROPE_POINTS 512
@@ -30,26 +34,6 @@
 
 #define ROPE_SPRING(v, near, here, k) ((v) += fabs((near) - (here)) * ((near) - (here)) * (k) * 0.5 + ((near) - (here)) * (k))
 
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-};
-
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-};
 
 struct nuinstance_s {
     struct numtx_s mtx;
@@ -138,12 +122,6 @@ extern char D_0061A590[];
 #define bridge_sections_msg D_0061A590
 
 extern float NuFsqrt(float x);
-extern int NuAtan2D(float x, float z);
-extern void NuMtxSetIdentity(struct numtx_s *m);
-extern void NuMtxPreRotateY(struct numtx_s *m, int angle);
-extern void NuMtxSetRotationY(struct numtx_s *m, int angle);
-extern void NuMtxPreRotateX(struct numtx_s *m, int angle);
-extern void NuMtxPreRotateZ(struct numtx_s *m, int angle);
 extern void NuVec4MtxTransformVU0(struct nuvec4_s *dst, struct nuvec4_s *src, struct numtx_s *m);
 extern int NewPlatInst(struct numtx_s *mtx, int instance);
 extern void PlatInstRotate(int platinst, int rotate);

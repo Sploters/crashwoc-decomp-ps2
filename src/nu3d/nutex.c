@@ -55,6 +55,7 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numathtypes.h"
 
 typedef struct NuPs2Tex {
     u8 unk000[0x8];
@@ -232,12 +233,6 @@ typedef struct NuMtlAttrib {
     u64 unk51 : 13;
 } NuMtlAttrib;
 
-typedef struct NuColour3 {
-    float r;
-    float g;
-    float b;
-} NuColour3;
-
 typedef struct NuMtl {
     u8 unk000[0x168];
     union {
@@ -245,8 +240,8 @@ typedef struct NuMtl {
         NuMtlAttrib attr;
     };
     u8 unk170[0x4];
-    NuColour3 ambient;
-    NuColour3 diffuse;
+    struct nucolour3_s ambient;
+    struct nucolour3_s diffuse;
     u8 unk18C[0x18];
     int tid;
     int alpha;

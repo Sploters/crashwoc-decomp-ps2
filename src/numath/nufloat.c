@@ -13,6 +13,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nufloat.h"
+
 extern float D_0062EA50;
 #define fetol D_0062EA50
 

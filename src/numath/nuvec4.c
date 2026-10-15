@@ -16,19 +16,8 @@
 
 #include "nu_libc.h"
 
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-};
+#include "numath/numathtypes.h"
+#include "numath/nuvec4.h"
 
 void NuVec4Add(struct nuvec4_s *dst, struct nuvec4_s *a,
                struct nuvec4_s *b)

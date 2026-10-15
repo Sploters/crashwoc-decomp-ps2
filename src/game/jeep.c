@@ -78,10 +78,14 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nuquat.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern struct nuvec_s BaseWheelPosition[];
-extern void NuMtxSetRotationY(struct numtx_s *m, s32 ang);
 extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);
 extern void ApplyFriction(f32 *val, f32 rate, f32 dt);
 extern struct nuvec_s WorldAxis[3];
@@ -100,13 +104,6 @@ extern void GetLocatorMtx(struct CharacterModel *model, struct numtx_s *dest,
 struct fireboss_s;
 extern struct fireboss_s FireBoss;
 
-extern void NuMtxSetRotationX(struct numtx_s *m, s32 ang);
-extern void NuMtxRotateZ(struct numtx_s *m, s32 ang);
-extern void NuMtxRotateY(struct numtx_s *m, s32 ang);
-extern void NuMtxRotateX(struct numtx_s *m, s32 ang);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *pos);
-extern void NuVecScale(struct nuvec_s *dest, struct nuvec_s *src, f32 scale);
-extern void NuVecScaleAccum(struct nuvec_s *dest, struct nuvec_s *src, f32 scale);
 extern s32 DrawFireBoss(struct fireboss_s *fb);
 extern void AddVariableShotDebrisEffect(s32 effect, struct nuvec_s *pos, s32 n,
                                         s32 xrot, s32 yrot);
@@ -171,8 +168,6 @@ extern f32 FindSplineClosestPointAndDist(struct SPLINEFOLLOW *Spline,
                                          s32 Control, struct nuvec_s *Pos,
                                          struct nuvec_s *Closest, s32 Wrap,
                                          s32 BigLook);
-extern f32 NuVecMag(struct nuvec_s *v);
-extern f32 NuVecMagSqr(struct nuvec_s *v);
 
 /* One simulated wheel of the vehicle trail system. */
 struct SIMWHEEL {
@@ -340,8 +335,6 @@ extern struct JEEPSTRUCT PlayerJeep;
 
 extern struct SIMWHEEL GenericTrail[];
 extern void ProcessJeepTrail(struct SIMWHEEL *Wheel, s32 TrailIndx);
-extern void NuVecCross(struct nuvec_s *v, struct nuvec_s *v0, struct nuvec_s *v1);
-extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
 extern f32 NewShadowMask(struct nuvec_s *pos, f32 size, s32 extramask);
 
 struct jeeptrail_s {
@@ -391,7 +384,6 @@ struct objtab_s {
 }; /* 0x20 */
 extern struct objtab_s ObjTab[];
 extern struct numtx_s mTEMP;
-extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
 extern struct nuvec_s FIREBOSSSCALE;
 extern s32 WallOfFireOn;
 extern struct nuvec_s WallOfFirePosition;
@@ -445,9 +437,6 @@ extern s32 SmokeyPosition;
 extern s32 CurrentWesternPosition(void);
 extern void ProcessJeepTrails(void);
 
-extern void NuVecSub(struct nuvec_s *dest, struct nuvec_s *a, struct nuvec_s *b);
-extern s32 NuAtan2D(f32 x, f32 z);
-
 extern char LevelFileName[];
 extern struct BUGGYDATA *BuggyData[];
 extern void *superbuffer_ptr;
@@ -469,11 +458,6 @@ struct BUGGYDATA {
     u16 aWheelAng;                  /* 0x16 */
     s8 WheelHeight[4];              /* 0x18 */
 }; /* 0x1C */
-extern void NuMtxToQuat(struct numtx_s *m, struct nuquat_s *q);
-extern void NuQuatSlerp(struct nuquat_s *dst, struct nuquat_s *a,
-                        struct nuquat_s *b, f32 t);
-extern void NuQuatToMtx(struct nuquat_s *q, struct numtx_s *m);
-extern void NuMtxScale(struct numtx_s *m, struct nuvec_s *s);
 extern void NuStrCpy(char *dst, char *src);
 extern void NuStrCat(char *dst, char *src);
 extern s32 NuFileSize(char *name);
@@ -524,13 +508,6 @@ struct pad_s {
 extern s32 ProcessTimer(f32 *Timer);
 extern struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
 extern struct nuvec_s SetNuVec(f32 x, f32 y, f32 z);
-extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src,
-                           struct numtx_s *m);
-extern void NuVecAdd(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src,
-                              struct numtx_s *m);
-extern f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b,
-                        struct nuvec_s *d);
 extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 size);
 extern void AddGameDebris(s32 type, struct nuvec_s *pos);
 extern s32 NewRayCastSetHandel(struct nuvec_s *vpos, struct nuvec_s *vvel,
@@ -614,7 +591,6 @@ extern struct spline_s *pVIS;
 extern s32 iVIS;
 extern struct nuvec_s JeepvPos;
 extern struct nuvec_s JeepvObj;
-extern s32 NuAtani(s32 x, s32 y);
 extern struct nuvec_s D_006B75E0;
 #define JeepCamVel D_006B75E0
 extern struct nuvec_s D_006B75F0;
@@ -643,8 +619,6 @@ extern void SeekHalfLifeNUVEC(struct nuvec_s *src, struct nuvec_s *target,
                               f32 halflife, f32 dt);
 extern void SeekAngHalfLife360f(f32 *dest, f32 target, f32 halflife, f32 dt);
 extern f32 Rationalise360f(f32 a);
-extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 extern void JeepCamFollowAng(struct cammtx_s *cam, s32 blend);
 extern s32 AddBalloon(struct nuvec_s *Pos, struct nuvec_s *Vel);
 extern void DrawCross(struct nuvec_s *pos, f32 size, s32 colour);

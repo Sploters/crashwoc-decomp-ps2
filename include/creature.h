@@ -3,6 +3,8 @@
 
 #include "nu_types.h"
 
+#include "numath/numathtypes.h"
+
 /* PS2 PAL v1.03 (SLES_503.86) layout of the creature/player structures for
  * unit 91 (game/creature, .\creature.c).
  * Key PS2-verified anchors:
@@ -25,46 +27,6 @@ enum nufilemode_e {
 	NUFILE_READ_NOWAIT = 3,
 	NUFILE_MODE_CNT = 4
 };
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-}; /* 0xC */
-
-struct nuangvec_s
-{
-    int x;
-    int y;
-    int z;
-}; /* 0xC */
-
-struct nuvec4_s {
-    float x;
-    float y;
-    float z;
-    float w;
-}; /* 0x10 */
-
-struct nucolour3_s {
-    float r;
-    float g;
-    float b;
-}; /* 0xC */
-
-struct nuquat_s {
-    float x;
-    float y;
-    float z;
-    float w;
-}; /* 0x10 */
-
-struct numtx_s {
-    float _00, _01, _02, _03;
-    float _10, _11, _12, _13;
-    float _20, _21, _22, _23;
-    float _30, _31, _32, _33;
-}; /* 0x40 */
 
 struct nuhspecial_s {
     struct nugscn_s *scene;    /* 0x0 */

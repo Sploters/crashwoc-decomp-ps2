@@ -16,6 +16,9 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct nugspline_s {
@@ -221,7 +224,6 @@ extern s32 LineCrossed(f32 xold, f32 zold, f32 xnew, f32 znew,
                        f32 x0, f32 z0, f32 x1, f32 z1);
 extern s32 FurtherALONG(s32 iRAIL0, s32 iALONG0, f32 fALONG0, s32 iRAIL1,
                         s32 iALONG1, f32 fALONG1);
-extern f32 NuVecXZDistSqr(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern f32 NuFsqrt(f32 x);
 extern void NuStrCat(char *dst, char *src);
 extern struct nugspline_s *NuSplineFind(struct nugscn_s *scene, char *name);
@@ -239,11 +241,6 @@ extern void FindAnglesZX(struct nuvec_s *n);
 extern void ResetLights(struct Nearest_Light_s *lights);
 extern void JudderGameCamera(struct cammtx_s *cam, f32 time, struct nuvec_s *pos);
 extern void GameSfx(s32 id, struct nuvec_s *pos);
-extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
-extern void NuMtxRotateX(struct numtx_s *m, s32 r);
-extern void NuMtxRotateY(struct numtx_s *m, s32 r);
-extern void NuMtxRotateZ(struct numtx_s *m, s32 r);
-extern void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
 extern s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 extern s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                              s16 *layers, struct numtx_s *mtx_array, f32 **dwa);
@@ -256,7 +253,6 @@ extern void SetLevelLights(void);
 extern void PauseGameAudio(s32 pause);
 extern f32 NewShadowMaskPlat(struct nuvec_s *pos, f32 size, s32 extramask);
 extern u16 SeekRot(u16 a, u16 target, s32 rate);
-extern void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern s32 HitCreatures(struct obj_s *obj, s32 destroy, s32 type);
 extern s32 HitCrates(struct obj_s *obj, s32 destroy);
 extern s32 HitWumpa(struct obj_s *obj, s32 destroy);

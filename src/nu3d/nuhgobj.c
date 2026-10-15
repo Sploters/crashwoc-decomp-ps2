@@ -30,19 +30,10 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
-
-struct nuvec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-};
-
-struct numtx_s {
-    f32 _00, _01, _02, _03;
-    f32 _10, _11, _12, _13;
-    f32 _20, _21, _22, _23;
-    f32 _30, _31, _32, _33;
-};
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nuplane.h"
+#include "numath/nuvec.h"
 
 struct numtl_s {
     char pad000[0x1A4];
@@ -203,19 +194,9 @@ extern void NuGobjDestroy(struct nugobj_s *gobj);
 extern void NuMtlDestroy(struct numtl_s *mtl);
 extern void NuTexDestroy(int tid);
 extern void NuMtxMulVU0(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuVecInvMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
-extern f32 NuLineToPointDistSqr(struct nuvec_s *p0, struct nuvec_s *p1, struct nuvec_s *point);
 extern void NuCvtSknInstFix(struct SkinDmaTag *tag);
 extern void ReadNuIFFHGobjSet(int fh, struct NUHGOBJ_s *hobj);
-extern void NuMtxMul(struct numtx_s *dst, struct numtx_s *a, struct numtx_s *b);
-extern void NuVecSub(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
 extern void NuCvtSknInstUnFix(struct SkinDmaTag *tag);
-extern int NuPointRelToBoundingBox(struct nuvec_s *point, struct nuvec_s *max, struct nuvec_s *min);
-extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
-extern void NuClipXPlane(struct nuvec_s *out, struct nuvec_s *point, struct nuvec_s *dir, f32 *x);
-extern void NuClipYPlane(struct nuvec_s *out, struct nuvec_s *point, struct nuvec_s *dir, f32 *y);
-extern void NuClipZPlane(struct nuvec_s *out, struct nuvec_s *point, struct nuvec_s *dir, f32 *z);
 
 extern char D_00615290[];
 
@@ -546,8 +527,6 @@ int NuHGobjJointMtxWithCheck(struct NUHGOBJ_s *hobj, u8 i, struct numtx_s *mC,
     return 0;
 }
 
-
-extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *mtx);
 
 /* Whether the object's bounding sphere, placed by `wm`, touches the sphere
    of `radius` at `pos`. */

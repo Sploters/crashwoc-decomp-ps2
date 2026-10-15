@@ -122,11 +122,11 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numathtypes.h"
+#include "numath/numtx.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 typedef unsigned int u128 __attribute__((mode(TI)));
-
-typedef struct { float x, y, z; } NuVec3;
-
-typedef struct { float m[4][4]; } NuMtx;
 
 typedef struct GsFrameReg {
     u64 fbp : 9;
@@ -182,7 +182,7 @@ typedef struct GsZbufPair {
 } GsZbufPair;
 
 typedef struct {
-    NuMtx mtx;
+    struct numtx_s mtx;
     float fov;
 } NuCamera;
 
@@ -209,9 +209,9 @@ extern char D_00614770[];
 #define nurndr_file D_00614770
 extern char D_00614790[];
 
-extern int NuHGobjRndrMtxDwa(void *hobj, NuMtx *mtx, int nlayers, short *layer, NuMtx *dwa, int blend);
-extern void NuHGobjEval(void *hobj, int njoints, void *joints, NuMtx *mtx);
-extern NuMtx D_0067DA40[];
+extern int NuHGobjRndrMtxDwa(void *hobj, struct numtx_s *mtx, int nlayers, short *layer, struct numtx_s *dwa, int blend);
+extern void NuHGobjEval(void *hobj, int njoints, void *joints, struct numtx_s *mtx);
+extern struct numtx_s D_0067DA40[];
 #define hgobj_joint_mtx D_0067DA40
 extern int NuRndrStreamTri3dClip(void *verts, int num, void *mtx, void *strm);
 extern int NuRndrStreamTriStrip3dClip(void *verts, int num, void *mtx, void *strm);
@@ -220,17 +220,16 @@ extern void NuRndrOTFlush(void);
 extern void NuRndrStreamFlush(void);
 extern void NuRndrStreamInit(int size);
 extern void NuFntInit(void);
-extern void NuMtxSetIdentity(NuMtx *m);
 extern void NuRndrDeformerWeightsArrayInit(void);
 extern void NuRndrOTInit(void);
 extern u32 *NuRndrCylMakeData(void);
-extern void NuRndrShadowDirCol(NuVec3 *dir, u32 col);
+extern void NuRndrShadowDirCol(struct nuvec_s *dir, u32 col);
 extern u32 *NRCylCapData;
 extern u32 *NRCylData;
 extern int NuRndrShadowCnt;
-extern NuMtx D_00689A40;
+extern struct numtx_s D_00689A40;
 #define rndr_identity_mtx D_00689A40
-extern NuVec3 D_00614760;
+extern struct nuvec_s D_00614760;
 #define default_light_dir D_00614760
 
 extern void NuLgtArcLaserDraw(int mode);
@@ -243,13 +242,10 @@ extern void NuRndrWater(void);
 extern int txupload_on;
 
 extern NuCamera global_camera;
-extern void NuVecCrossRel(NuVec3 *dst, NuVec3 *origin, NuVec3 *a, NuVec3 *b);
-extern int NuAtan2D(float x, float z);
 extern float NuFsqrt(float x);
-extern void NuVecRotateX(NuVec3 *dst, NuVec3 *src, int angle);
 
 typedef struct nurndrwaterrip_s {
-    NuVec3 pos;
+    struct nuvec_s pos;
     float startsize;
     float endsize;
     float size;
@@ -265,7 +261,7 @@ extern int NuRndrWaterRipCnt;
 
 typedef struct nurndrotitem_s {
     void *dma;                      /* DMA chain to call */
-    NuMtx *mtx;
+    struct numtx_s *mtx;
     struct numtl_s *mtl;
     struct nurndrotitem_s *next;
     float depth;
@@ -293,7 +289,7 @@ extern ottri_s *ot_free;
 extern int ot_highest;
 extern float NuTrigTable[];
 
-extern NuVec3 curlight;
+extern struct nuvec_s curlight;
 extern u32 curlightcol;
 extern int NRFanData;
 extern int NuRndrShadowLightFan(void);
@@ -363,12 +359,12 @@ struct nugobj_s {
     struct nugeom_s *geom;
     struct nufaceongeom_s *faceon_geom;
     char pad14[8];
-    NuVec3 min;
-    NuVec3 max;
+    struct nuvec_s min;
+    struct nuvec_s max;
     char pad34[0x14];
     int ngobjs;
     struct nugobj_s *next_gobj;
-    NuVec3 origin;
+    struct nuvec_s origin;
     char pad5c[4];
     int ntris;
     char pad64[8];
@@ -400,15 +396,15 @@ extern int nutex_total_xfer_this_frame;
 extern int nutex_peak_xfer_per_frame;
 extern int nurndr_tritot_this_frame;
 extern struct RndrPacketStream *rndrstream_fx;
-extern NuMtx numtx_identity;
-extern void NuRndrSetLocalMtx(NuMtx *mtx, int mode);
+extern struct numtx_s numtx_identity;
+extern void NuRndrSetLocalMtx(struct numtx_s *mtx, int mode);
 extern int NuRndrStreamSetViewMtxScissorClip(struct RndrPacketStream *stream);
 extern int NuRndrStreamSetLocalMtx(struct RndrPacketStream *stream);
 extern void NuRndrStreamFxMPG(int microcode);
 extern int NuRndrStreamQuadShad(struct RndrPacketStream *stream);
 extern int NuRndrStreamQuadWRip(struct RndrPacketStream *stream, short *visible);
 typedef struct nurndrshadpol_s {
-    NuVec3 pos;
+    struct nuvec_s pos;
     float size;
     short shade;
     short xrot;
@@ -417,7 +413,7 @@ typedef struct nurndrshadpol_s {
 } nurndrshadpol_s;
 
 extern nurndrshadpol_s NuRndrShadPolDat[];
-extern int NuCameraClipTestPoints(NuVec3 *pos, int count, NuMtx *wm);
+extern int NuCameraClipTestPoints(struct nuvec_s *pos, int count, struct numtx_s *wm);
 
 
 
@@ -472,9 +468,8 @@ extern char D_006147C8[];
 #define err_fgeom_no_mtl D_006147C8
 extern struct numtl_s *nurndr_forced_mtl;
 extern struct numtl_s **nurndr_forced_mtl_table;
-extern void NuMtxMul(NuMtx *dst, NuMtx *a, NuMtx *b);
-extern int NuCameraClipTestExtents(NuVec3 *min, NuVec3 *max, NuMtx *wm);
-extern void NuRndrOTInsertTriBatch(NuMtx *mtx, int clip, struct numtl_s *mtl, void *tris, int count);
+extern int NuCameraClipTestExtents(struct nuvec_s *min, struct nuvec_s *max, struct numtx_s *wm);
+extern void NuRndrOTInsertTriBatch(struct numtx_s *mtx, int clip, struct numtl_s *mtl, void *tris, int count);
 extern int NuRndrStreamSetViewMtx(struct RndrPacketStream *stream);
 extern int NuRndrStreamSetLocalMtxEx(struct RndrPacketStream *stream, int mode);
 extern u32 *vpDmaTag_Call(u32 *packet, void *addr);
@@ -755,9 +750,9 @@ void NuRndrGradClear(int mode, int topcolour, int bottomcolour, float depth) {
 }
 
 
-int NuRndrGScnObj(struct nugobj_s *gobj, NuMtx *wm) {
-    NuMtx mtx;
-    NuMtx offset;
+int NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm) {
+    struct numtx_s mtx;
+    struct numtx_s offset;
     int clip;
     int instanced;
     int n;
@@ -780,9 +775,9 @@ int NuRndrGScnObj(struct nugobj_s *gobj, NuMtx *wm) {
     while (n-- != 0) {
         if (instanced) {
             NuMtxSetIdentity(&offset);
-            offset.m[3][0] = gobj->origin.x;
-            offset.m[3][1] = gobj->origin.y;
-            offset.m[3][2] = gobj->origin.z;
+            offset._30 = gobj->origin.x;
+            offset._31 = gobj->origin.y;
+            offset._32 = gobj->origin.z;
             NuMtxMul(&mtx, &offset, wm);
             vis = NuCameraClipTestExtents(&gobj->min, &gobj->max, &mtx);
         } else {
@@ -892,9 +887,9 @@ int NuRndrGScnObj(struct nugobj_s *gobj, NuMtx *wm) {
 }
 
 
-int NuRndrGobj(struct nugobj_s *gobj, NuMtx *wm) {
-    NuMtx mtx;
-    NuMtx offset;
+int NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm) {
+    struct numtx_s mtx;
+    struct numtx_s offset;
     int clip;
     int instanced;
     int vis;
@@ -912,9 +907,9 @@ int NuRndrGobj(struct nugobj_s *gobj, NuMtx *wm) {
     for (; gobj; gobj = gobj->next_gobj) {
         if (instanced) {
             NuMtxSetIdentity(&offset);
-            offset.m[3][0] = gobj->origin.x;
-            offset.m[3][1] = gobj->origin.y;
-            offset.m[3][2] = gobj->origin.z;
+            offset._30 = gobj->origin.x;
+            offset._31 = gobj->origin.y;
+            offset._32 = gobj->origin.z;
             NuMtxMul(&mtx, &offset, wm);
             vis = NuCameraClipTestExtents(&gobj->min, &gobj->max, &mtx);
         } else {
@@ -1624,13 +1619,13 @@ void NuRndrWaterRippleUpdate(int frames) {
 }
 
 
-void NuHGobjRndr(void *hobj, NuMtx *mtx, int nlayers, short *layer) {
+void NuHGobjRndr(void *hobj, struct numtx_s *mtx, int nlayers, short *layer) {
     NuHGobjEval(hobj, 0, 0, hgobj_joint_mtx);
     NuHGobjRndrMtxDwa(hobj, mtx, nlayers, layer, hgobj_joint_mtx, 0);
 }
 
 
-int NuHGobjRndrMtx(void *hobj, NuMtx *mtx, int nlayers, short *layer, NuMtx *dwa) {
+int NuHGobjRndrMtx(void *hobj, struct numtx_s *mtx, int nlayers, short *layer, struct numtx_s *dwa) {
     return NuHGobjRndrMtxDwa(hobj, mtx, nlayers, layer, dwa, 0);
 }
 
@@ -1982,7 +1977,7 @@ void NuRndrFx(int mode, void *fxdata) {
 }
 
 
-void NuRndrShadowDirCol(NuVec3 *dir, u32 col) {
+void NuRndrShadowDirCol(struct nuvec_s *dir, u32 col) {
     curlight = *dir;
     curlightcol = col;
     NRFanData = NuRndrShadowLightFan();
@@ -1995,7 +1990,7 @@ void NuRndrWaterLevelTint(float level, u32 tint) {
 }
 
 
-void NuRndrAddShadow(NuVec3 *pos, float size, int shade, int xrot, int yrot, int zrot) {
+void NuRndrAddShadow(struct nuvec_s *pos, float size, int shade, int xrot, int yrot, int zrot) {
     nurndrshadpol_s *shadow;
 
     if (NuCameraClipTestPoints(pos, 1, 0) == 0 && NuRndrShadowCnt < 128) {
@@ -2028,7 +2023,7 @@ void NuRndrShadPolys(struct numtl_s *mtl) {
 }
 
 
-void NuRndrAddWaterRipple(NuVec3 *pos, int duration, u32 colour, float startsize, float endsize) {
+void NuRndrAddWaterRipple(struct nuvec_s *pos, int duration, u32 colour, float startsize, float endsize) {
     nurndrwaterrip_s *rip;
     int i;
 
@@ -2131,7 +2126,7 @@ void NuRndrOTFlush(void) {
     nurndrotitem_s *item;
     struct numtl_s *mtl;
     void *mpgtag;
-    NuMtx *mtx;
+    struct numtx_s *mtx;
     int mtxmode;
 
     mtx = 0;
@@ -2217,17 +2212,17 @@ int OTTriInsert(void *tri, float depth) {
 }
 
 
-float GlobalCam3DNClip(NuVec3 *p0, NuVec3 *p1, NuVec3 *p2) {
-    NuVec3 normal;
+float GlobalCam3DNClip(struct nuvec_s *p0, struct nuvec_s *p1, struct nuvec_s *p2) {
+    struct nuvec_s normal;
 
     NuVecCrossRel(&normal, p0, p1, p2);
-    return (p0->x - global_camera.mtx.m[3][0]) * normal.x
-        + (p0->y - global_camera.mtx.m[3][1]) * normal.y
-        + (p0->z - global_camera.mtx.m[3][2]) * normal.z;
+    return (p0->x - global_camera.mtx._30) * normal.x
+        + (p0->y - global_camera.mtx._31) * normal.y
+        + (p0->z - global_camera.mtx._32) * normal.z;
 }
 
 
-void RotateCyl(NuVec3 *v, float xang, float yang) {
+void RotateCyl(struct nuvec_s *v, float xang, float yang) {
     float sinx;
     float cosx;
     float siny;
@@ -2247,7 +2242,7 @@ void RotateCyl(NuVec3 *v, float xang, float yang) {
 }
 
 
-void DeRotateVectorAngles(NuVec3 *dir, float *xang, float *yang) {
+void DeRotateVectorAngles(struct nuvec_s *dir, float *xang, float *yang) {
     *yang = NuAtan2D(dir->x, dir->z);
     *xang = NuAtan2D(-dir->y, NuFsqrt(dir->x * dir->x + dir->z * dir->z));
 }
@@ -2257,8 +2252,8 @@ void NuRndrTest(void) {
 }
 
 
-void NuRndrAnglesZX(NuVec3 *dir, NuVec3 *angles) {
-    NuVec3 rotated;
+void NuRndrAnglesZX(struct nuvec_s *dir, struct nuvec_s *angles) {
+    struct nuvec_s rotated;
 
     angles->x = NuAtan2D(dir->z, dir->y);
     NuVecRotateX(&rotated, dir, (int)-angles->x);

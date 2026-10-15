@@ -16,6 +16,8 @@
  *   0x00250518 TestLocalSfx
  */
 
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 /* pSFX entry (offsets verified in GameMusic/GameSfxLoop), stride 0x30. */
@@ -76,7 +78,6 @@ extern s32 gamesfx_edbits;
 extern s32 PLAYERCOUNT;
 extern char GameCam[];
 
-extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, void *c);
 extern void NuSoundPlay3d(struct nuvec_s *pos, s32 sfx, s32 volL, s32 volR,
                           s32 pitch);
 extern void NuSoundPlayChan(s32 track, s32 volL, s32 volR, s32 pitch, s32 channel);

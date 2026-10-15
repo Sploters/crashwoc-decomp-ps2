@@ -43,6 +43,8 @@
 
 #include "nu_libc.h"
 
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 struct eduiitem_s {
@@ -312,7 +314,6 @@ extern struct numtl_s *NuMtlCreate(s32 n);
 extern void NuMtlUpdate(struct numtl_s *mtl);
 extern void NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl,
                          struct numtx_s *mtx);
-extern void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 extern void NuFntScale(s32 x, s32 y);
 extern void NuFntSetPen(s32 colour);
 extern void NuFntPrintEx(s32 x, s32 y, s32 colour, char *fmt, ...);

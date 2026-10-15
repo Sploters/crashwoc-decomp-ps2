@@ -50,6 +50,7 @@
 #include "nu_types.h"
 
 #include "nucore/nuerror.h"
+#include "numath/nurand.h"
 
 typedef struct NuFPar {
     int handle;
@@ -202,7 +203,6 @@ extern int NuFParPushCom(NuFPar *parser, NuFParCommand *commands);
 extern int NuFParInterpretWord(NuFPar *parser);
 extern void NuDisableVBlank(void);
 extern void NuEnableVBlank(void);
-extern s64 NuRand(struct nunrand_s *rand);
 extern void NuTexAnimEnvProc(NuTexAnimEnv *env);
 extern void NuStrCpy(char *dst, char *src);
 

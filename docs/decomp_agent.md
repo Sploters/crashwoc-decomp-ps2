@@ -227,17 +227,19 @@ Layout of `include/` (the engine's own module structure):
 
 | Path | Holds |
 |---|---|
-| `include/nu_types.h` (and later `nu_port.h`, `nu_stdarg.h`, `nu_libc.h`) | platform layer only: fixed-width types (`u8`..`s64`, `f32`, `nuintptr`), port seams, varargs, libc |
+| `include/nu_types.h`, `nu_stdarg.h`, `nu_libc.h` (later `nu_port.h`) | platform layer only: fixed-width types (`u8`..`s64`, `f32`, `nuintptr`), varargs, libc, port seams |
 | `include/<lib>/<lib>types.h` | structs shared by several modules of one library (`nu3d/nu3dtypes.h`) |
 | `include/<lib>/<module>.h` | one per `src/<lib>/<module>.c`: that module's structs, `extern` globals and prototypes |
 
 Include them by path (`#include "nu3d/nugscn.h"`, `#include "nu_types.h"`);
 tools/cc.py stages the tree and passes `-I.`. A module header is created when
-something needs it, not as an empty skeleton. `creature.h`, `gcutscn.h` and
-`nugscn.h` in the root are legacy: their types move to their proper headers
-and the files are deleted once empty.
+something needs it, not as an empty skeleton. A module's `.c` includes its own
+header, and callers include it instead of declaring the functions locally.
+Types are spelled by their struct tag (`struct numtx_s`), not through typedef
+aliases. `creature.h`, `gcutscn.h` and `nugscn.h` in the root are legacy:
+their types move to their proper headers and the files are deleted once empty.
 
-Three tools gate this work:
+Four tools gate this work:
 
 - `python tools/check_types.py` counts duplicate structs and typedefs, `long`,
   varargs hacks, byte-offset casts, `sizeof` pads, local libc prototypes and
@@ -255,6 +257,10 @@ Three tools gate this work:
   `}; /* size */`, `// Size: 0x..`) comment that disagrees, plus headers that
   do not compile on their own. Legacy root headers are reported but do not
   fail `--check`.
+- `python tools/dispatch.py python tools/merge_views.py <tag> [alias...]`
+  measures every local copy of a struct in its own file and prints the sizes,
+  the distinct layouts and the field names that differ at the same offset:
+  the starting point for unifying a struct.
 
 Rules for type refactors:
 

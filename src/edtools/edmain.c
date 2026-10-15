@@ -25,15 +25,12 @@
 
 #include "nu_types.h"
 
-struct pad_s;
-struct nuvec_s;
+#include "numath/numathtypes.h"
 
-typedef struct numtx_s {
-    f32 m[4][4];
-} NUMTX;
+struct pad_s;
 
 typedef struct nucamera_s {
-    NUMTX mtx;
+    struct numtx_s mtx;
     f32 fov;
     f32 aspect;
     f32 nearclip;
@@ -229,7 +226,7 @@ void edmainRender(void) {
 }
 
 
-void edmainSetCamera(NUMTX *mtx) {
+void edmainSetCamera(struct numtx_s *mtx) {
     edmain_camera->mtx = *mtx;
     NuCameraSet(edmain_camera);
 }

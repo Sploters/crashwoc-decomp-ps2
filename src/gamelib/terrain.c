@@ -109,6 +109,8 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
 
 #include "creature.h"
 
@@ -390,7 +392,6 @@ extern tertype PlatImpactTer;
 extern struct numtx_s tertempmat;
 extern struct nuvec4_s tertempvec4;
 
-extern s32 NuAtan2D(f32 x, f32 z);
 extern f32 NuFsqrt(f32 x);
 extern s32 PadRecPtr(void);
 extern void *NuScratchAlloc32(s32 size);
@@ -424,8 +425,6 @@ extern void NuVec4MtxTransformVU0(struct nuvec4_s *dst, struct nuvec4_s *src,
                                   struct numtx_s *m);
 extern void NuVec4MtxInvTransformVU0(struct nuvec4_s *dst, struct nuvec4_s *src,
                                      struct numtx_s *m);
-extern void NuVecCross(struct nuvec_s *v, struct nuvec_s *v0, struct nuvec_s *v1);
-extern void NuVecNorm(struct nuvec_s *d, struct nuvec_s *a);
 extern void NuRndrLine3dDbg(f32 x0, f32 y0, f32 z0, f32 x1, f32 y1, f32 z1, u32 colour);
 extern struct nuvec_s WallSplList[128];
 extern s32 WallSplCount;

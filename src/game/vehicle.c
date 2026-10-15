@@ -232,6 +232,11 @@
 
 #include "nu_libc.h"
 
+#include "numath/numtx.h"
+#include "numath/nuquat.h"
+#include "numath/nutrig.h"
+#include "numath/nuvec.h"
+
 #include "creature.h"
 
 extern s32 Level;
@@ -253,7 +258,7 @@ struct pad_s {
 #define PAD_LEFT  0x8000
 
 /* gp-relative angle scale constants used to convert the glider's float roll/
- * pitch/yaw into NuMtx integer rotation units. */
+ * pitch/yaw into struct numtx_s integer rotation units. */
 extern float D_0062D91C;
 extern float D_0062D920;
 extern float D_0062D924;
@@ -275,24 +280,10 @@ extern float D_00560D44[]; /* ball vertical lift offset (far from $gp) */
 extern float D_0062DE9C;   /* ball momentum -> velocity divisor */
 extern float D_0062DEA0;   /* ball 'boing' vertical momentum */
 
-void NuMtxSetRotationX(struct numtx_s *m, s32 r);
-void NuMtxSetRotationZ(struct numtx_s *m, s32 r);
-void NuMtxRotateX(struct numtx_s *m, s32 r);
-void NuMtxRotateY(struct numtx_s *m, s32 r);
-void NuMtxRotateZ(struct numtx_s *m, s32 r);
-void NuMtxTranslate(struct numtx_s *m, struct nuvec_s *v);
-void NuQuatToMtx(struct nuquat_s *q, struct numtx_s *m);
 void NuHGobjRndr(struct NUHGOBJ_s *hobj, struct numtx_s *m, s32 nlayers,
                  short *layer);
 
 struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
-void NuVecSub(struct nuvec_s *d, struct nuvec_s *a, struct nuvec_s *b);
-void NuVecAdd(struct nuvec_s *dst, struct nuvec_s *a, struct nuvec_s *b);
-f32 NuVecMag(struct nuvec_s *v);
-void NuVecScale(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
-void NuVecRotateY(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
-s32 NuAtan2D(f32 x, f32 z);
-void NuMtxPreRotateY(struct numtx_s *m, s32 r);
 f32 frand(void);
 s32 ProcessTimer(f32 *timer);
 
@@ -876,7 +867,6 @@ void InitWeatherBoss(void)
 extern struct MYDRAW IconMainDraw;
 extern s32 BazookaIconOn;
 extern struct nuvec_s BazookaTokenCurrentPos;
-extern void NuMtxSetTranslation(struct numtx_s *m, struct nuvec_s *v);
 extern s32 MyDrawModelNew(struct MYDRAW *Draw, struct numtx_s *mC,
                           struct numtx_s *loc_mtx);
 
@@ -891,8 +881,6 @@ struct plane_s {
 
 extern struct nuvec_s D_005A6DC0;
 #define plane_scale D_005A6DC0
-
-extern void NuMtxSetScale(struct numtx_s *m, struct nuvec_s *s);
 
 inline void DrawPlane(struct plane_s *plane)
 {
@@ -933,7 +921,6 @@ void DrawFarmLevelExtra(void)
 }
 
 extern struct nuvec_s BazookaTokenPos;
-extern void NuVecScaleAccum(struct nuvec_s *dst, struct nuvec_s *src, f32 scale);
 extern void MyAnimateModelNew(struct MYDRAW *draw, f32 dt);
 
 inline void ProcessBazookaToken(void)
@@ -1147,7 +1134,6 @@ struct objtab_s {
 };
 
 extern struct objtab_s ObjTab[];
-extern void NuMtxPreScale(struct numtx_s *m, struct nuvec_s *s);
 extern s32 NuRndrGScnObj(void *gobj, struct numtx_s *m);
 
 struct gliderbomb_s {
@@ -1379,7 +1365,6 @@ void DrawJeepRocks(void)
 }
 
 extern void ProcessJeepRock(struct jeeprock_s *rock);
-extern f32 NuVecDist(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *diff);
 
 void ProcessJeepRocks(void)
 {
@@ -1449,8 +1434,6 @@ struct cammtx_s {
 };
 extern struct cammtx_s GameCam;
 
-extern void NuVecMtxRotate(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
-extern void NuVecNorm(struct nuvec_s *dst, struct nuvec_s *src);
 extern f32 DotProduct(struct nuvec_s *a, struct nuvec_s *b);
 extern s32 NewRayCast(struct nuvec_s *pos, struct nuvec_s *dir, f32 size);
 extern void InitBattleShip(struct nuvec_s *pos, f32 angle, s32 index);
@@ -1829,7 +1812,6 @@ void ControlAtlas(struct NEWBUGGY *Atlas, struct pad_s *Pad, f32 DeltaTime)
 
 extern void ApplyFriction(f32 *val, f32 rate, f32 dt);
 extern void SeekHalfLife(f32 *dest, f32 target, f32 halflife, f32 dt);
-extern void NuVecRotateX(struct nuvec_s *dst, struct nuvec_s *src, s32 angle);
 
 /* One physics step: friction, gravity tilted towards the stick, then the
    new target position and velocity. */
@@ -1894,7 +1876,6 @@ extern s32 Paused;
 extern s32 FlyingLevelVictoryDance;
 extern void AddVariableShotDebrisEffect(s32 effect, struct nuvec_s *pos, s32 n,
                                         short xrot, short yrot);
-extern f32 NuVecMagSqr(struct nuvec_s *v);
 
 /* On the jeep level, mark every rock within 0.75 of `pos + move` to explode.
  * Returns whether any was hit. */
@@ -2195,7 +2176,6 @@ struct satellite_s {
 };
 extern struct satellite_s SatelliteList[9];
 
-extern void NuVecMtxTransform(struct nuvec_s *dst, struct nuvec_s *src, struct numtx_s *m);
 extern s32 CollideGliderBullets(struct nuvec_s *pos, f32 radius, s32 enemy, f32 yscale,
                                 s32 a, s32 b);
 extern void AddScreenWumpa(f32 x, f32 y, f32 z, s32 n);
@@ -2930,7 +2910,6 @@ void UnleashLighteningHail(struct nuvec_s *pos, s32 attnum)
 extern f32 HAILHIDDENTIME;
 extern f32 HailFallSpeed;
 extern f32 HAILCOLLRAD;
-extern f32 NuVecDistSqr(struct nuvec_s *a, struct nuvec_s *b, struct nuvec_s *d);
 extern s32 InvincibilityCHEAT;
 extern s32 VehicleLevelImmune;
 extern s32 BEENHITBIGBUZZTIME;
@@ -3124,9 +3103,6 @@ void DrawWBBolts(void)
         }
     }
 }
-
-extern void NuMtxSetRotationY(struct numtx_s *m, s32 angle);
-extern void NuMtxScale(struct numtx_s *m, struct nuvec_s *s);
 
 void DrawVehMasks(void)
 {

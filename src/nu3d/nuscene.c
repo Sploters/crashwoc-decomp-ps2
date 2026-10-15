@@ -33,6 +33,7 @@
 #include "nu_libc.h"
 
 #include "nucore/nuerror.h"
+#include "numath/numathtypes.h"
 
 struct numtl_s {
     char pad000[0x168];
@@ -40,10 +41,6 @@ struct numtl_s {
     char pad16C[0x38];
     int tid;                        /* 0x1A4 */
 };
-
-struct numtx_s {
-    float m[4][4];
-}; /* 0x40 */
 
 struct nuanimdata_s;
 
@@ -74,19 +71,6 @@ struct nuskinnode_s {
     int *joints;                    /* 0x2C */
     struct numtx_s *joint_mtxs;     /* 0x30 */
 }; /* 0x34 */
-
-struct nuvec_s {
-    float x;
-    float y;
-    float z;
-}; /* 0x0C */
-
-struct nucolour_s {
-    unsigned int r : 8;
-    unsigned int g : 8;
-    unsigned int b : 8;
-    unsigned int a : 8;
-};
 
 struct nuvtx_s {
     struct nuvec_s pnt;             /* 0x00 */
