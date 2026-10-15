@@ -357,13 +357,16 @@ def main():
     manifest_of = {fid: manifest for manifest, fid, _ in pending}
 
     def apply(ids):
-        """Rewrite the touched manifests with exactly `ids` flipped."""
+        """Rewrite the touched manifests with exactly `ids` flipped. A
+        manifest that already holds that text is left alone, so its mtime
+        keeps saying it predates the verifier run that proved it."""
         texts = dict(originals)
         for fid in ids:
             texts[manifest_of[fid]] = flip_state(texts[manifest_of[fid]], fid,
                                                  "matching")
         for manifest, text in texts.items():
-            write_manifest(manifest, text)
+            if read_manifest(manifest) != text:
+                write_manifest(manifest, text)
 
     for manifest, fid, state in pending:
         rel = manifest.relative_to(ROOT).as_posix()

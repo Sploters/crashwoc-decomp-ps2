@@ -247,6 +247,22 @@ class TestPromoteMain(unittest.TestCase):
                       self.manifest.read_text())
         self.assertEqual(self.manifest.read_text().count("matching"), 1)
 
+    def test_kept_manifest_is_not_rewritten_after_the_proving_run(self):
+        # The final apply() must not touch a manifest whose text is already
+        # right: a newer mtime would make the verifier results look stale.
+        bad = {"pal103:unit-0001:00100060:NuListDoWork"}
+        stamps = []
+        real = self.fake_verifier(bad)
+
+        def run(version):
+            ok = real(version)
+            stamps.append(self.manifest.stat().st_mtime_ns)
+            return ok
+        with mock.patch.object(promote, "run_verifier", run):
+            self.main("NuListGetHead", "NuListDoWork", "NuListEnd",
+                      "--isolate")
+        self.assertEqual(self.manifest.stat().st_mtime_ns, stamps[-1])
+
     def test_interrupt_restores_the_manifest(self):
         def boom(version):
             raise KeyboardInterrupt
