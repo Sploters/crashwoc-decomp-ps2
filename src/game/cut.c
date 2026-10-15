@@ -33,6 +33,8 @@
 
 #include "nu_libc.h"
 
+#include "nu3d/nugobj.h"
+#include "nu3d/nuhgobj.h"
 #include "nu3d/numtl.h"
 #include "nu3d/nutex.h"
 #include "nu3d/nutexanm.h"
@@ -118,7 +120,6 @@ extern s32 D_0063338C;
 #define cutcharcache D_006FF880            /* loaded character models, by path */
 #define ncutcharcache D_0063338C
 extern char *superbuffer_ptr;
-extern void *NuGHGRead(void *buf, char *path);
 
 extern void NewMenu(void *cursor, s32 a, s32 b, s32 c);
 extern void GameMusic(s32 sfx, s32 i);
@@ -175,9 +176,7 @@ extern s32 fadeval;
 extern void NuSoundUpdate(void);
 extern void sceGsSyncV(s32 mode);
 extern void *world_scene[];
-extern void NuHGobjDestroy(void *obj);
 extern void NuSoundFlushLoops(void);
-extern void NuGobjInit(void);
 extern s32 set_cutscenecammtx;
 extern struct numtx_s cutscenecammtx;
 extern struct numtx_s *pNuCam;
@@ -194,11 +193,6 @@ extern struct anim_s CutAnim;
 extern struct anim_s CutVortexAnim;
 extern s32 gamecut_finished;
 extern void NuAnimData2CalcTime(void *anim, f32 currf, struct nuanimtime_s *atime);
-
-struct NUHGOBJ_s {
-    u8 pad0[0x7E];
-    u8 num_layers;                   /* 0x7E */
-};
 
 extern s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hobj, struct numtx_s *m,
                              s32 nlayers, short *layer, struct numtx_s *tmtx,

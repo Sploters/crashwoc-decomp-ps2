@@ -90,6 +90,7 @@
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
 #include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 struct debtypedef_s {
     char name[0x10];
@@ -149,13 +150,6 @@ struct edanimitem_s {
     unsigned char toggle;
     char pad11[0x4C - 0x11];
     float fvalue;
-};
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;
-    char pad0c[0x18 - 0x0C];
-    int colour;
-    char pad1c[0x24 - 0x1C];
 };
 
 struct eduimenu_s {
@@ -505,7 +499,7 @@ extern void edbitsDrawCube(float x, float y, float z, float sizex, float sizey, 
                            int rotx, int roty, int rotz, int flags, int colour, void *mtl);
 extern void edbitsDrawDiagonalCross(float x, float y, float z, float size, int colour, void *mtl);
 extern void edcamSet(void);
-extern int NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, void *mtx);
+extern int NuRndrLine3d(struct nuvtx_tc1_s *line, void *mtl, void *mtx);
 extern void NuRndrRect2di(int x, int y, int w, int h, int colour, void *mtl);
 extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl);
 extern void NuFntSet(void *fnt);
@@ -1385,7 +1379,7 @@ int edanimFileLoad(char *filename)
 
 void edanimDrawCursor(void)
 {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     struct nuvec_s dir;
 
     line[0].pnt.x = edanim_cam_pos.x - 0.5f;
@@ -1394,8 +1388,8 @@ void edanimDrawCursor(void)
     line[1].pnt.x = edanim_cam_pos.x + 0.5f;
     line[1].pnt.y = edanim_cam_pos.y;
     line[1].pnt.z = edanim_cam_pos.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edanim_mtl, 0);
     line[0].pnt.x = edanim_cam_pos.x;
     line[0].pnt.y = edanim_cam_pos.y - 0.5f;
@@ -1403,8 +1397,8 @@ void edanimDrawCursor(void)
     line[1].pnt.x = edanim_cam_pos.x;
     line[1].pnt.y = edanim_cam_pos.y + 0.5f;
     line[1].pnt.z = edanim_cam_pos.z;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edanim_mtl, 0);
     line[0].pnt.x = edanim_cam_pos.x;
     line[0].pnt.y = edanim_cam_pos.y;
@@ -1412,8 +1406,8 @@ void edanimDrawCursor(void)
     line[1].pnt.x = edanim_cam_pos.x;
     line[1].pnt.y = edanim_cam_pos.y;
     line[1].pnt.z = edanim_cam_pos.z + 0.5f;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edanim_mtl, 0);
     if (edanim_particle_mode) {
         dir.x = 0.0f;
@@ -1427,8 +1421,8 @@ void edanimDrawCursor(void)
         line[1].pnt.x = edanim_cam_pos.x + dir.x;
         line[1].pnt.y = edanim_cam_pos.y + dir.y;
         line[1].pnt.z = edanim_cam_pos.z + dir.z;
-        line[0].colour = 0xFF0000FF;
-        line[1].colour = 0xFF0000FF;
+        line[0].diffuse = 0xFF0000FF;
+        line[1].diffuse = 0xFF0000FF;
         NuRndrLine3d(line, edanim_mtl, 0);
     }
     NuRndrRect2di(0x1720, 0xA50, 0xDC0, 0x370, 0x80808080, edanim_mtl_zoff);

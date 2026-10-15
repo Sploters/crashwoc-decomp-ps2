@@ -27,6 +27,7 @@
 #include "numath/numathtypes.h"
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
+#include "nu3d/nugobj.h"
 
 struct numtx2_s
 {
@@ -75,14 +76,6 @@ union variptr_u
     void *test;
     void *prmode;
     void *frame;
-};
-
-/* Renderer vertex; NuRndrLine3d takes two of them. */
-struct NuRndrVtx {
-    struct nuvec_s pos; /* 0x00 */
-    char pad0c[0x0C];   /* 0x0C */
-    int col;            /* 0x18 */
-    char pad1c[8];      /* 0x1C */
 };
 
 /* Sub-record shape 1/3: a sphere (radius) or an upright line (height). */
@@ -175,7 +168,7 @@ extern char D_00619EF8[];
 extern char D_00619F20[];
 extern char D_00619F60[];
 
-void NuRndrLine3d(struct NuRndrVtx *line, void *arg1, struct numtx_s *mtx);
+void NuRndrLine3d(struct nuvtx_tc1_s *line, void *arg1, struct numtx_s *mtx);
 
 extern NuTriggerSys *D_00633230;
 #define g_NuTriggerSysList D_00633230
@@ -454,7 +447,7 @@ void NuTriggerSysUpdate(struct nuvec_s *pos, f32 radius)
 
 void DebugRenderTriggers(void)
 {
-    struct NuRndrVtx line[2];
+    struct nuvtx_tc1_s line[2];
     NuTriggerSys *sys;
     NuTriggerDefHdr *hdr;
     NuTriggerDef *def;
@@ -467,8 +460,8 @@ void DebugRenderTriggers(void)
     if (g_DbgTriggerOff)
         return;
 
-    line[1].col = -1;
-    line[0].col = -1;
+    line[1].diffuse = -1;
+    line[0].diffuse = -1;
 
     for (; sys != 0; sys = sys->next) {
         inst = sys->data->inst;
@@ -490,64 +483,64 @@ void DebugRenderTriggers(void)
                 struct numtx_s *mtx = &inst->nodes[def->parent].mtx;
 
                 if (g_DbgTriggerExtents) {
-                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
-                    line[0].pos = line[1].pos;
-                    line[0].pos.x += def->radius;
-                    line[0].pos.y += def->radius;
-                    line[0].pos.z += def->radius;
-                    line[1].pos.x -= def->radius;
-                    line[1].pos.y += def->radius;
-                    line[1].pos.z += def->radius;
+                    line[1].pnt = *(struct nuvec_s *)&mtx->_30;
+                    line[0].pnt = line[1].pnt;
+                    line[0].pnt.x += def->radius;
+                    line[0].pnt.y += def->radius;
+                    line[0].pnt.z += def->radius;
+                    line[1].pnt.x -= def->radius;
+                    line[1].pnt.y += def->radius;
+                    line[1].pnt.z += def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
-                    line[0].pos = line[1].pos;
-                    line[0].pos.x += def->radius;
-                    line[0].pos.y += def->radius;
-                    line[0].pos.z += def->radius;
-                    line[1].pos.x += def->radius;
-                    line[1].pos.y -= def->radius;
-                    line[1].pos.z += def->radius;
+                    line[1].pnt = *(struct nuvec_s *)&mtx->_30;
+                    line[0].pnt = line[1].pnt;
+                    line[0].pnt.x += def->radius;
+                    line[0].pnt.y += def->radius;
+                    line[0].pnt.z += def->radius;
+                    line[1].pnt.x += def->radius;
+                    line[1].pnt.y -= def->radius;
+                    line[1].pnt.z += def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
-                    line[0].pos = line[1].pos;
-                    line[0].pos.x += def->radius;
-                    line[0].pos.y += def->radius;
-                    line[0].pos.z += def->radius;
-                    line[1].pos.x += def->radius;
-                    line[1].pos.y += def->radius;
-                    line[1].pos.z -= def->radius;
+                    line[1].pnt = *(struct nuvec_s *)&mtx->_30;
+                    line[0].pnt = line[1].pnt;
+                    line[0].pnt.x += def->radius;
+                    line[0].pnt.y += def->radius;
+                    line[0].pnt.z += def->radius;
+                    line[1].pnt.x += def->radius;
+                    line[1].pnt.y += def->radius;
+                    line[1].pnt.z -= def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
-                    line[0].pos = line[1].pos;
-                    line[0].pos.x -= def->radius;
-                    line[0].pos.y -= def->radius;
-                    line[0].pos.z -= def->radius;
-                    line[1].pos.x += def->radius;
-                    line[1].pos.y -= def->radius;
-                    line[1].pos.z -= def->radius;
+                    line[1].pnt = *(struct nuvec_s *)&mtx->_30;
+                    line[0].pnt = line[1].pnt;
+                    line[0].pnt.x -= def->radius;
+                    line[0].pnt.y -= def->radius;
+                    line[0].pnt.z -= def->radius;
+                    line[1].pnt.x += def->radius;
+                    line[1].pnt.y -= def->radius;
+                    line[1].pnt.z -= def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
-                    line[0].pos = line[1].pos;
-                    line[0].pos.x -= def->radius;
-                    line[0].pos.y -= def->radius;
-                    line[0].pos.z -= def->radius;
-                    line[1].pos.x -= def->radius;
-                    line[1].pos.y += def->radius;
-                    line[1].pos.z -= def->radius;
+                    line[1].pnt = *(struct nuvec_s *)&mtx->_30;
+                    line[0].pnt = line[1].pnt;
+                    line[0].pnt.x -= def->radius;
+                    line[0].pnt.y -= def->radius;
+                    line[0].pnt.z -= def->radius;
+                    line[1].pnt.x -= def->radius;
+                    line[1].pnt.y += def->radius;
+                    line[1].pnt.z -= def->radius;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[1].pos = *(struct nuvec_s *)&mtx->_30;
-                    line[0].pos = line[1].pos;
-                    line[0].pos.x -= def->radius;
-                    line[0].pos.y -= def->radius;
-                    line[0].pos.z -= def->radius;
-                    line[1].pos.x -= def->radius;
-                    line[1].pos.y -= def->radius;
-                    line[1].pos.z += def->radius;
+                    line[1].pnt = *(struct nuvec_s *)&mtx->_30;
+                    line[0].pnt = line[1].pnt;
+                    line[0].pnt.x -= def->radius;
+                    line[0].pnt.y -= def->radius;
+                    line[0].pnt.z -= def->radius;
+                    line[1].pnt.x -= def->radius;
+                    line[1].pnt.y -= def->radius;
+                    line[1].pnt.z += def->radius;
                     NuRndrLine3d(line, 0, 0);
                 }
 
@@ -562,22 +555,22 @@ void DebugRenderTriggers(void)
 
                             NuVecMtxTransform(&tmp, &sph->pos, mtx);
 
-                            line[0].pos = tmp;
-                            line[1].pos = tmp;
-                            line[0].pos.x -= sph->radius;
-                            line[1].pos.x += sph->radius;
+                            line[0].pnt = tmp;
+                            line[1].pnt = tmp;
+                            line[0].pnt.x -= sph->radius;
+                            line[1].pnt.x += sph->radius;
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos = tmp;
-                            line[1].pos = tmp;
-                            line[0].pos.y -= sph->radius;
-                            line[1].pos.y += sph->radius;
+                            line[0].pnt = tmp;
+                            line[1].pnt = tmp;
+                            line[0].pnt.y -= sph->radius;
+                            line[1].pnt.y += sph->radius;
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos = tmp;
-                            line[1].pos = tmp;
-                            line[0].pos.z -= sph->radius;
-                            line[1].pos.z += sph->radius;
+                            line[0].pnt = tmp;
+                            line[1].pnt = tmp;
+                            line[0].pnt.z -= sph->radius;
+                            line[1].pnt.z += sph->radius;
                             NuRndrLine3d(line, 0, 0);
                         } break;
                         case 2: {
@@ -585,85 +578,85 @@ void DebugRenderTriggers(void)
 
                             NuMtxInvH(&inv, &box->mtx);
 
-                            line[0].pos.x = box->bbmin.x;
-                            line[0].pos.y = box->bbmin.y;
-                            line[0].pos.z = box->bbmin.z;
-                            line[1].pos.x = box->bbmax.x;
-                            line[1].pos.y = box->bbmin.y;
-                            line[1].pos.z = box->bbmin.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, mtx);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, mtx);
+                            line[0].pnt.x = box->bbmin.x;
+                            line[0].pnt.y = box->bbmin.y;
+                            line[0].pnt.z = box->bbmin.z;
+                            line[1].pnt.x = box->bbmax.x;
+                            line[1].pnt.y = box->bbmin.y;
+                            line[1].pnt.z = box->bbmin.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, mtx);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, mtx);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmin.x;
-                            line[0].pos.y = box->bbmin.y;
-                            line[0].pos.z = box->bbmin.z;
-                            line[1].pos.x = box->bbmin.x;
-                            line[1].pos.y = box->bbmax.y;
-                            line[1].pos.z = box->bbmin.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, mtx);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, mtx);
+                            line[0].pnt.x = box->bbmin.x;
+                            line[0].pnt.y = box->bbmin.y;
+                            line[0].pnt.z = box->bbmin.z;
+                            line[1].pnt.x = box->bbmin.x;
+                            line[1].pnt.y = box->bbmax.y;
+                            line[1].pnt.z = box->bbmin.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, mtx);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, mtx);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmin.x;
-                            line[0].pos.y = box->bbmin.y;
-                            line[0].pos.z = box->bbmin.z;
-                            line[1].pos.x = box->bbmin.x;
-                            line[1].pos.y = box->bbmin.y;
-                            line[1].pos.z = box->bbmax.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, mtx);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, mtx);
+                            line[0].pnt.x = box->bbmin.x;
+                            line[0].pnt.y = box->bbmin.y;
+                            line[0].pnt.z = box->bbmin.z;
+                            line[1].pnt.x = box->bbmin.x;
+                            line[1].pnt.y = box->bbmin.y;
+                            line[1].pnt.z = box->bbmax.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, mtx);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, mtx);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmax.x;
-                            line[0].pos.y = box->bbmax.y;
-                            line[0].pos.z = box->bbmax.z;
-                            line[1].pos.x = box->bbmin.x;
-                            line[1].pos.y = box->bbmax.y;
-                            line[1].pos.z = box->bbmax.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, mtx);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, mtx);
+                            line[0].pnt.x = box->bbmax.x;
+                            line[0].pnt.y = box->bbmax.y;
+                            line[0].pnt.z = box->bbmax.z;
+                            line[1].pnt.x = box->bbmin.x;
+                            line[1].pnt.y = box->bbmax.y;
+                            line[1].pnt.z = box->bbmax.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, mtx);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, mtx);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmax.x;
-                            line[0].pos.y = box->bbmax.y;
-                            line[0].pos.z = box->bbmax.z;
-                            line[1].pos.x = box->bbmax.x;
-                            line[1].pos.y = box->bbmin.y;
-                            line[1].pos.z = box->bbmax.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, mtx);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, mtx);
+                            line[0].pnt.x = box->bbmax.x;
+                            line[0].pnt.y = box->bbmax.y;
+                            line[0].pnt.z = box->bbmax.z;
+                            line[1].pnt.x = box->bbmax.x;
+                            line[1].pnt.y = box->bbmin.y;
+                            line[1].pnt.z = box->bbmax.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, mtx);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, mtx);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmax.x;
-                            line[0].pos.y = box->bbmax.y;
-                            line[0].pos.z = box->bbmax.z;
-                            line[1].pos.x = box->bbmax.x;
-                            line[1].pos.y = box->bbmax.y;
-                            line[1].pos.z = box->bbmin.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, mtx);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, mtx);
+                            line[0].pnt.x = box->bbmax.x;
+                            line[0].pnt.y = box->bbmax.y;
+                            line[0].pnt.z = box->bbmax.z;
+                            line[1].pnt.x = box->bbmax.x;
+                            line[1].pnt.y = box->bbmax.y;
+                            line[1].pnt.z = box->bbmin.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, mtx);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, mtx);
                             NuRndrLine3d(line, 0, 0);
                         } break;
                         case 3: {
                             NuTriggerSphere *cyl =
                                 (NuTriggerSphere *)sub->ptr;
 
-                            NuVecMtxTransform(&line[0].pos, &cyl->pos, mtx);
-                            line[1].pos = line[0].pos;
-                            line[1].pos.y += cyl->radius;
+                            NuVecMtxTransform(&line[0].pnt, &cyl->pos, mtx);
+                            line[1].pnt = line[0].pnt;
+                            line[1].pnt.y += cyl->radius;
                             NuRndrLine3d(line, 0, 0);
                         } break;
                         case 0:
@@ -677,52 +670,52 @@ void DebugRenderTriggers(void)
                 struct numtx_s inv;
 
                 if (g_DbgTriggerExtents) {
-                    line[0].pos.x = def->bbmin.x;
-                    line[0].pos.y = def->bbmin.y;
-                    line[0].pos.z = def->bbmin.z;
-                    line[1].pos.x = def->bbmax.x;
-                    line[1].pos.y = def->bbmin.y;
-                    line[1].pos.z = def->bbmin.z;
+                    line[0].pnt.x = def->bbmin.x;
+                    line[0].pnt.y = def->bbmin.y;
+                    line[0].pnt.z = def->bbmin.z;
+                    line[1].pnt.x = def->bbmax.x;
+                    line[1].pnt.y = def->bbmin.y;
+                    line[1].pnt.z = def->bbmin.z;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[0].pos.x = def->bbmin.x;
-                    line[0].pos.y = def->bbmin.y;
-                    line[0].pos.z = def->bbmin.z;
-                    line[1].pos.x = def->bbmin.x;
-                    line[1].pos.y = def->bbmax.y;
-                    line[1].pos.z = def->bbmin.z;
+                    line[0].pnt.x = def->bbmin.x;
+                    line[0].pnt.y = def->bbmin.y;
+                    line[0].pnt.z = def->bbmin.z;
+                    line[1].pnt.x = def->bbmin.x;
+                    line[1].pnt.y = def->bbmax.y;
+                    line[1].pnt.z = def->bbmin.z;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[0].pos.x = def->bbmin.x;
-                    line[0].pos.y = def->bbmin.y;
-                    line[0].pos.z = def->bbmin.z;
-                    line[1].pos.x = def->bbmin.x;
-                    line[1].pos.y = def->bbmin.y;
-                    line[1].pos.z = def->bbmax.z;
+                    line[0].pnt.x = def->bbmin.x;
+                    line[0].pnt.y = def->bbmin.y;
+                    line[0].pnt.z = def->bbmin.z;
+                    line[1].pnt.x = def->bbmin.x;
+                    line[1].pnt.y = def->bbmin.y;
+                    line[1].pnt.z = def->bbmax.z;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[0].pos.x = def->bbmax.x;
-                    line[0].pos.y = def->bbmax.y;
-                    line[0].pos.z = def->bbmax.z;
-                    line[1].pos.x = def->bbmin.x;
-                    line[1].pos.y = def->bbmax.y;
-                    line[1].pos.z = def->bbmax.z;
+                    line[0].pnt.x = def->bbmax.x;
+                    line[0].pnt.y = def->bbmax.y;
+                    line[0].pnt.z = def->bbmax.z;
+                    line[1].pnt.x = def->bbmin.x;
+                    line[1].pnt.y = def->bbmax.y;
+                    line[1].pnt.z = def->bbmax.z;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[0].pos.x = def->bbmax.x;
-                    line[0].pos.y = def->bbmax.y;
-                    line[0].pos.z = def->bbmax.z;
-                    line[1].pos.x = def->bbmax.x;
-                    line[1].pos.y = def->bbmin.y;
-                    line[1].pos.z = def->bbmax.z;
+                    line[0].pnt.x = def->bbmax.x;
+                    line[0].pnt.y = def->bbmax.y;
+                    line[0].pnt.z = def->bbmax.z;
+                    line[1].pnt.x = def->bbmax.x;
+                    line[1].pnt.y = def->bbmin.y;
+                    line[1].pnt.z = def->bbmax.z;
                     NuRndrLine3d(line, 0, 0);
 
-                    line[0].pos.x = def->bbmax.x;
-                    line[0].pos.y = def->bbmax.y;
-                    line[0].pos.z = def->bbmax.z;
-                    line[1].pos.x = def->bbmax.x;
-                    line[1].pos.y = def->bbmax.y;
-                    line[1].pos.z = def->bbmin.z;
+                    line[0].pnt.x = def->bbmax.x;
+                    line[0].pnt.y = def->bbmax.y;
+                    line[0].pnt.z = def->bbmax.z;
+                    line[1].pnt.x = def->bbmax.x;
+                    line[1].pnt.y = def->bbmax.y;
+                    line[1].pnt.z = def->bbmin.z;
                     NuRndrLine3d(line, 0, 0);
                 }
 
@@ -735,22 +728,22 @@ void DebugRenderTriggers(void)
                             NuTriggerSphere *sph =
                                 (NuTriggerSphere *)sub->ptr;
 
-                            line[0].pos = sph->pos;
-                            line[1].pos = sph->pos;
-                            line[0].pos.x -= sph->radius;
-                            line[1].pos.x += sph->radius;
+                            line[0].pnt = sph->pos;
+                            line[1].pnt = sph->pos;
+                            line[0].pnt.x -= sph->radius;
+                            line[1].pnt.x += sph->radius;
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos = sph->pos;
-                            line[1].pos = sph->pos;
-                            line[0].pos.y -= sph->radius;
-                            line[1].pos.y += sph->radius;
+                            line[0].pnt = sph->pos;
+                            line[1].pnt = sph->pos;
+                            line[0].pnt.y -= sph->radius;
+                            line[1].pnt.y += sph->radius;
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos = sph->pos;
-                            line[1].pos = sph->pos;
-                            line[0].pos.z -= sph->radius;
-                            line[1].pos.z += sph->radius;
+                            line[0].pnt = sph->pos;
+                            line[1].pnt = sph->pos;
+                            line[0].pnt.z -= sph->radius;
+                            line[1].pnt.z += sph->radius;
                             NuRndrLine3d(line, 0, 0);
                         } break;
                         case 2: {
@@ -758,73 +751,73 @@ void DebugRenderTriggers(void)
 
                             NuMtxInvH(&inv, &box->mtx);
 
-                            line[0].pos.x = box->bbmin.x;
-                            line[0].pos.y = box->bbmin.y;
-                            line[0].pos.z = box->bbmin.z;
-                            line[1].pos.x = box->bbmax.x;
-                            line[1].pos.y = box->bbmin.y;
-                            line[1].pos.z = box->bbmin.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
+                            line[0].pnt.x = box->bbmin.x;
+                            line[0].pnt.y = box->bbmin.y;
+                            line[0].pnt.z = box->bbmin.z;
+                            line[1].pnt.x = box->bbmax.x;
+                            line[1].pnt.y = box->bbmin.y;
+                            line[1].pnt.z = box->bbmin.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmin.x;
-                            line[0].pos.y = box->bbmin.y;
-                            line[0].pos.z = box->bbmin.z;
-                            line[1].pos.x = box->bbmin.x;
-                            line[1].pos.y = box->bbmax.y;
-                            line[1].pos.z = box->bbmin.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
+                            line[0].pnt.x = box->bbmin.x;
+                            line[0].pnt.y = box->bbmin.y;
+                            line[0].pnt.z = box->bbmin.z;
+                            line[1].pnt.x = box->bbmin.x;
+                            line[1].pnt.y = box->bbmax.y;
+                            line[1].pnt.z = box->bbmin.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmin.x;
-                            line[0].pos.y = box->bbmin.y;
-                            line[0].pos.z = box->bbmin.z;
-                            line[1].pos.x = box->bbmin.x;
-                            line[1].pos.y = box->bbmin.y;
-                            line[1].pos.z = box->bbmax.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
+                            line[0].pnt.x = box->bbmin.x;
+                            line[0].pnt.y = box->bbmin.y;
+                            line[0].pnt.z = box->bbmin.z;
+                            line[1].pnt.x = box->bbmin.x;
+                            line[1].pnt.y = box->bbmin.y;
+                            line[1].pnt.z = box->bbmax.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmax.x;
-                            line[0].pos.y = box->bbmax.y;
-                            line[0].pos.z = box->bbmax.z;
-                            line[1].pos.x = box->bbmin.x;
-                            line[1].pos.y = box->bbmax.y;
-                            line[1].pos.z = box->bbmax.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
+                            line[0].pnt.x = box->bbmax.x;
+                            line[0].pnt.y = box->bbmax.y;
+                            line[0].pnt.z = box->bbmax.z;
+                            line[1].pnt.x = box->bbmin.x;
+                            line[1].pnt.y = box->bbmax.y;
+                            line[1].pnt.z = box->bbmax.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmax.x;
-                            line[0].pos.y = box->bbmax.y;
-                            line[0].pos.z = box->bbmax.z;
-                            line[1].pos.x = box->bbmax.x;
-                            line[1].pos.y = box->bbmin.y;
-                            line[1].pos.z = box->bbmax.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
+                            line[0].pnt.x = box->bbmax.x;
+                            line[0].pnt.y = box->bbmax.y;
+                            line[0].pnt.z = box->bbmax.z;
+                            line[1].pnt.x = box->bbmax.x;
+                            line[1].pnt.y = box->bbmin.y;
+                            line[1].pnt.z = box->bbmax.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
                             NuRndrLine3d(line, 0, 0);
 
-                            line[0].pos.x = box->bbmax.x;
-                            line[0].pos.y = box->bbmax.y;
-                            line[0].pos.z = box->bbmax.z;
-                            line[1].pos.x = box->bbmax.x;
-                            line[1].pos.y = box->bbmax.y;
-                            line[1].pos.z = box->bbmin.z;
-                            NuVecMtxTransform(&line[0].pos, &line[0].pos, &inv);
-                            NuVecMtxTransform(&line[1].pos, &line[1].pos, &inv);
+                            line[0].pnt.x = box->bbmax.x;
+                            line[0].pnt.y = box->bbmax.y;
+                            line[0].pnt.z = box->bbmax.z;
+                            line[1].pnt.x = box->bbmax.x;
+                            line[1].pnt.y = box->bbmax.y;
+                            line[1].pnt.z = box->bbmin.z;
+                            NuVecMtxTransform(&line[0].pnt, &line[0].pnt, &inv);
+                            NuVecMtxTransform(&line[1].pnt, &line[1].pnt, &inv);
                             NuRndrLine3d(line, 0, 0);
                         } break;
                         case 3: {
                             NuTriggerSphere *cyl =
                                 (NuTriggerSphere *)sub->ptr;
 
-                            line[0].pos = cyl->pos;
-                            line[1].pos = line[0].pos;
-                            line[1].pos.y += cyl->radius;
+                            line[0].pnt = cyl->pos;
+                            line[1].pnt = line[0].pnt;
+                            line[1].pnt.y += cyl->radius;
                             NuRndrLine3d(line, 0, 0);
                         } break;
                         case 0:

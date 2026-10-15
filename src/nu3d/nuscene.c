@@ -37,19 +37,10 @@
 #include "nu3d/numtl.h"
 #include "nu3d/nutex.h"
 #include "nu3d/nutexanm.h"
+#include "nu3d/nugobj.h"
+#include "nu3d/nunode.h"
 
 struct nuanimdata_s;
-
-struct nunode_s {
-    char *name;                     /* 0x00 */
-    int id;                         /* 0x04 */
-    int type;                       /* 0x08 */
-    int num_children;               /* 0x0C */
-    struct nunode_s *parent;        /* 0x10 */
-    struct nunode_s *child;         /* 0x14 */
-    struct nunode_s *next;          /* 0x18 */
-    void *data;                     /* 0x1C */
-}; /* 0x20 */
 
 struct nutransformnode_s {
     struct nunode_s node;           /* 0x00 */
@@ -59,110 +50,15 @@ struct nutransformnode_s {
     char padA4[0x04];
 }; /* 0xA8 */
 
-struct nuskinnode_s {
-    struct nunode_s node;           /* 0x00 */
-    struct nugobj_s *geometry;      /* 0x20 */
-    char pad24[0x04];
-    int num_joints;                 /* 0x28 */
-    int *joints;                    /* 0x2C */
-    struct numtx_s *joint_mtxs;     /* 0x30 */
-}; /* 0x34 */
-
-struct nuvtx_s {
-    struct nuvec_s pnt;             /* 0x00 */
-    struct nuvec_s nrm;             /* 0x0C */
-    struct nucolour_s diffuse;      /* 0x18 */
-    float tc[2];                    /* 0x1C */
-}; /* 0x24 */
-
-struct nuprim_s {
-    char pad00[0x10];
-    unsigned short *vid;            /* 0x10 */
-};
-
 struct nucntrl_s {
     char pad00[0x0C];
 }; /* 0x0C */
-
-struct nublendgeom_s {
-    int nblends;                    /* 0x00 */
-    struct nuvec_s **blends;        /* 0x04 */
-    int *ix;                        /* 0x08 */
-    struct nuvec_s *data;           /* 0x0C */
-}; /* 0x10 */
-
-struct nuskin_s {
-    struct nuskin_s *next;          /* 0x00 */
-    int vtxoffset;                  /* 0x04 */
-    int vtxcnt;                     /* 0x08 */
-    int mtxcnt;                     /* 0x0C */
-    int *mtxid;                     /* 0x10 */
-    float *weights;                 /* 0x14 */
-    char pad18[0x10];
-}; /* 0x28 */
-
-struct nugeom_s {
-    struct nugeom_s *next;          /* 0x00 */
-    struct numtl_s *mtl;            /* 0x04 */
-    char pad08[0x0C];
-    int mtl_id;                     /* 0x14 */
-    char pad18[0x08];
-    int vtxcnt;                     /* 0x20 */
-    int vtxmax;                     /* 0x24 */
-    struct nuvtx_s *vtx;            /* 0x28 */
-    struct nuprim_s *prim;          /* 0x2C */
-    struct nuskin_s *skins;         /* 0x30 */
-    void *vtxskininfo;              /* 0x34 */
-    struct nucntrl_s *cntrls;       /* 0x38 */
-    int ncntrls;                    /* 0x3C */
-    char pad40[0x08];
-    struct nublendgeom_s *blendgeom; /* 0x48 */
-    int id;                         /* 0x4C */
-}; /* 0x50 */
-
-struct nufaceon_s {
-    char pad00[0x18];
-}; /* 0x18 */
-
-struct nufaceongeom_s {
-    struct nufaceongeom_s *next;    /* 0x00 */
-    struct numtl_s *mtl;            /* 0x04 */
-    int mtl_id;                     /* 0x08 */
-    int faceontype;                 /* 0x0C */
-    struct nufaceon_s *faceons;     /* 0x10 */
-    int nfaceons;                   /* 0x14 */
-    float faceonradius;             /* 0x18 */
-    int pad1C;
-}; /* 0x20 */
-
-struct nugobj_s {
-    struct nugobj_s *sysnext;       /* 0x00 */
-    struct nugobj_s *syslast;       /* 0x04 */
-    int type;                       /* 0x08 */
-    struct nugeom_s *geom;          /* 0x0C */
-    struct nufaceongeom_s *faceon_geom; /* 0x10 */
-    char pad14[0x34];
-    int ngobjs;                     /* 0x48 */
-    struct nugobj_s *next_gobj;     /* 0x4C */
-    struct nuvec_s origin;          /* 0x50 */
-    char pad5C[0x04];
-    int tricount;                   /* 0x60 */
-    char pad64[0x08];
-}; /* 0x6C */
 
 struct nusplinedef_s {
     int len;                        /* 0x00 */
     struct nuvec_s *pts;            /* 0x04 */
     char pad08[0x34];
 }; /* 0x3C */
-
-struct nujointnode_s {
-    struct nunode_s node;           /* 0x00 */
-    struct numtx_s orient;          /* 0x20 */
-    char pad60[0xA4];
-    struct nuvec_s offset;          /* 0x104 */
-    char flags;                     /* 0x110 */
-};
 
 struct nusplinenode_s {
     struct nunode_s node;           /* 0x00 */
@@ -262,16 +158,9 @@ extern int NuFileBeginBlkRead(int fh, int blk);
 extern void NuFileEndBlkRead(int fh);
 extern void NuTexSwizzelBits(struct nutex_s *tex);
 extern int FindSplinePtSize(char *name);
-extern struct nugobj_s *NuGobjCreate(void);
-extern struct nugeom_s *NuGeomCreate(void);
-extern struct nufaceongeom_s *NuFaceOnGeomCreate(void);
-extern void NuGobjAddGeom(struct nugobj_s *gobj, struct nugeom_s *geom);
-extern void NuGobjAddFaceOnGeom(struct nugobj_s *gobj, struct nufaceongeom_s *geom);
-extern void NuGobjCalcDims(struct nugobj_s *gobj);
 extern void NuPs2CreateRenderStream(struct nugobj_s *gobj);
 extern void NuPs2CreateFaceOn(struct nugobj_s *gobj);
 extern void NuPs2CreateSkin(struct nugobj_s *gobj);
-extern void NuGeomAddSkin(struct nugeom_s *geom, struct nuskin_s *skin);
 void ReadNuIFFGeomVtx(int fh, struct nugeom_s *geom);
 void ReadNuIFFGeomPrim(int fh, struct nugeom_s *geom);
 void ReadNuIFFGeomCntrl(int fh, struct nugeom_s *geom);
@@ -284,7 +173,6 @@ extern int NuFileReadInt(int fh);
 extern unsigned int NuFileReadUnsignedInt(int fh);
 extern char NuFileReadChar(int fh);
 extern float NuFileReadFloat(int fh);
-extern void NuGobjDestroy(struct nugobj_s *gobj);
 extern void NuNodeDestroyHierarchy(struct nunode_s *node);
 extern struct nunode_s *NuNodeCreate(void);
 extern struct nunode_s *NuMeshNodeCreate(struct nugobj_s *geometry);
@@ -301,8 +189,6 @@ void ReadNuIFFScene(int fh, struct nuscene_s *scene);
 char *ReadNuIFFNameTable(int fh, int *size);
 extern struct nuanimdata_s *NuAnimDataRead(int fh);
 extern void ReadNuIFFTexAnimSet(int fh, struct nugscn_s *gscene, short *tids);
-extern struct nuprim_s *NuPrimCreate(int nvids, int type);
-extern void NuGeomAddPrim(struct nugeom_s *geom, struct nuprim_s *prim);
 void NuSceneMtlUpdate(struct nuscene_s *scene);
 void ReadNuIFFGeomDef(int fh, struct nuscene_s *scene);
 
@@ -554,16 +440,16 @@ void ReadNuIFFBlendShape(int fh, struct nugeom_s *geom) {
         memset(geom->blendgeom, 0, sizeof(struct nublendgeom_s));
         offset = 0;
         geom->blendgeom->nblends = count;
-        geom->blendgeom->blends = NuMemAllocFn(count * sizeof(struct nuvec_s *), nuscene_srcfile, 0x420);
-        memset(geom->blendgeom->blends, 0, count * sizeof(struct nuvec_s *));
+        geom->blendgeom->blend_offsets = NuMemAllocFn(count * sizeof(struct nuvec_s *), nuscene_srcfile, 0x420);
+        memset(geom->blendgeom->blend_offsets, 0, count * sizeof(struct nuvec_s *));
         geom->blendgeom->ix = NuMemAllocFn(count * sizeof(int), nuscene_srcfile, 0x424);
         NuFileRead(fh, geom->blendgeom->ix, count * sizeof(int));
         size = NuFileReadInt(fh);
-        geom->blendgeom->data = NuMemAllocFn(size, nuscene_srcfile, 0x429);
-        NuFileRead(fh, geom->blendgeom->data, size);
+        geom->blendgeom->offsets = NuMemAllocFn(size, nuscene_srcfile, 0x429);
+        NuFileRead(fh, geom->blendgeom->offsets, size);
         for (i = 0; i < count; i++) {
             if (NuFileReadChar(fh)) {
-                geom->blendgeom->blends[i] = &geom->blendgeom->data[offset];
+                geom->blendgeom->blend_offsets[i] = &geom->blendgeom->offsets[offset];
                 offset += geom->vtxcnt;
             }
         }
@@ -608,7 +494,7 @@ static struct nunode_s *NuNodeRead(int fh, struct nuscene_s *scene) {
         NuFileBeginBlkRead(fh, 0x3044534E);
         gobjix = NuFileReadInt(fh);
         skin = NuSkinNodeCreate(NuFileReadInt(fh));
-        joints = skin->joints;
+        joints = skin->joint_ids;
         for (i = 0; i < skin->num_joints; i++) {
             *joints++ = NuFileReadInt(fh);
         }
@@ -622,7 +508,7 @@ static struct nunode_s *NuNodeRead(int fh, struct nuscene_s *scene) {
         joint = NuJointNodeCreate(&mtx);
         NuFileRead(fh, &joint->orient, sizeof(struct numtx_s));
         NuFileRead(fh, &joint->flags, sizeof(char));
-        NuFileRead(fh, &joint->offset, sizeof(struct nuvec_s));
+        NuFileRead(fh, &joint->pivot, sizeof(struct nuvec_s));
         NuFileEndBlkRead(fh);
         node = &joint->node;
         break;
@@ -1129,15 +1015,15 @@ void ReadNuIFFGeomVtx(int fh, struct nugeom_s *geom) {
     int count;
     int size;
     int i;
-    struct nuvtx_s *vtx;
+    struct nuvtx_tc1_s *vtx;
     struct nucolour_s src;
     struct nucolour_s dst;
 
     count = NuFileReadInt(fh);
     if (count) {
-        size = count * sizeof(struct nuvtx_s);
+        size = count * sizeof(struct nuvtx_tc1_s);
         vtx = NuMemAllocFn(size, nuscene_srcfile, 0x371);
-        geom->vtx = vtx;
+        geom->vtxptr = vtx;
         geom->vtxcnt = count;
         geom->vtxmax = count;
         if (!vtx) {
@@ -1145,12 +1031,12 @@ void ReadNuIFFGeomVtx(int fh, struct nugeom_s *geom) {
         }
         NuFileRead(fh, vtx, size);
         for (i = 0; i < count; i++) {
-            src = vtx[i].diffuse;
+            src = vtx[i].rgba;
             dst.r = src.b;
             dst.g = src.g;
             dst.b = src.r;
             dst.a = src.a;
-            vtx[i].diffuse = dst;
+            vtx[i].rgba = dst;
         }
     }
 }
@@ -1224,8 +1110,8 @@ void ReadNuIFFFaceOnGeom(int fh, struct nufaceongeom_s *fgeom) {
     int size;
 
     fgeom->nfaceons = NuFileReadInt(fh);
-    fgeom->faceontype = NuFileReadInt(fh);
-    fgeom->faceonradius = NuFileReadFloat(fh);
+    fgeom->faceon_type = NuFileReadInt(fh);
+    fgeom->faceon_radius = NuFileReadFloat(fh);
     size = fgeom->nfaceons * sizeof(struct nufaceon_s);
     fgeom->faceons = NuMemAllocFn(size, nuscene_srcfile, 0x3AA);
     NuFileRead(fh, fgeom->faceons, size);

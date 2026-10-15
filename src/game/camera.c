@@ -28,6 +28,7 @@
 #include "numath/nutrig.h"
 #include "numath/nuvec.h"
 #include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 #include "creature.h"
 
@@ -1957,24 +1958,17 @@ Finish:
     }
 }
 
-struct nurndrvtx_s {
-    struct nuvec_s pnt;           /* 0x00 */
-    u8 unk_0x0C[0xC];
-    s32 colour;                   /* 0x18 */
-    u8 unk_0x1C[0x8];
-};                                /* 0x24 */
-
 extern struct numtl_s *D_00633268;
 #define camtarget_mtl D_00633268
 
-extern void NuRndrLine3d(struct nurndrvtx_s *line, struct numtl_s *mtl,
+extern void NuRndrLine3d(struct nuvtx_tc1_s *line, struct numtl_s *mtl,
                          struct numtx_s *mtx);
 extern void NuRndrLine3dDbg(u32 colour, f32 x0, f32 y0, f32 z0, f32 x1,
                             f32 y1, f32 z1);
 
 inline void DrawMtlLine3D(struct numtl_s *mtl, f32 x0, f32 y0, f32 z0, f32 x1,
                           f32 y1, f32 z1) {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
 
     line[0].pnt.x = x0;
     line[0].pnt.y = y0;
@@ -1982,8 +1976,8 @@ inline void DrawMtlLine3D(struct numtl_s *mtl, f32 x0, f32 y0, f32 z0, f32 x1,
     line[1].pnt.x = x1;
     line[1].pnt.y = y1;
     line[1].pnt.z = z1;
-    line[0].colour = -1;
-    line[1].colour = -1;
+    line[0].diffuse = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, mtl, 0);
 }
 

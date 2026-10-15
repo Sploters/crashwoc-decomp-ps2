@@ -25,6 +25,7 @@
 #include "nu3d/numtl.h"
 #include "nu3d/nustream.h"
 #include "nu3d/nutex.h"
+#include "nu3d/nugobj.h"
 
 struct nuwaterfx_s {
     u8 pad00[0x8];
@@ -40,16 +41,6 @@ typedef struct NuCamera {
     struct numtx_s mtx;
 } NuCamera;
 
-typedef struct NuGeom {
-    struct NuGeom *next;
-    struct numtl_s *mtl;
-} NuGeom;
-
-typedef struct NuGobj {
-    u8 pad00[0xC];
-    NuGeom *geom;
-} NuGobj;
-
 typedef struct NuInstance {
     struct numtx_s mtx;
     int objid;
@@ -59,7 +50,7 @@ typedef struct NuInstance {
 
 typedef struct NuGScn {
     u8 pad00[0x14];
-    NuGobj **gobjs;
+    struct nugobj_s **gobjs;
     int numinstance;
     NuInstance *instances;
 } NuGScn;
@@ -74,7 +65,7 @@ extern int NuRndrBeginScene(int target);
 extern void NuRndrEndScene(void);
 extern void NuRndrRectUV2di(int x, int y, int w, int h, float u0, float v0, float u1, float v1,
                             u32 colour, struct numtl_s *mtl);
-extern void NuRndrGobj(NuGobj *gobj, NuInstance *inst);
+extern void NuRndrGobj(struct nugobj_s *gobj, NuInstance *inst);
 extern void NuRndrStreamLink(struct nurndrstream_s *stream);
 extern u32 *vpDmaTag_Cnt(u32 *cur);
 extern u32 *vpDmaTag_Close(u32 *cur);
@@ -145,8 +136,8 @@ extern WaterTable D_006B22F0[8];
 #define watertable D_006B22F0
 
 
-static inline int isWaterGobj(NuGobj *gobj) {
-    NuGeom *geom;
+static inline int isWaterGobj(struct nugobj_s *gobj) {
+    struct nugeom_s *geom;
 
     for (geom = gobj->geom; geom; geom = geom->next) {
         switch (geom->mtl->fxid) {

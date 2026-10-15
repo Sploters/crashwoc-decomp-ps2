@@ -110,6 +110,7 @@
 #include "numath/numtx.h"
 #include "numath/nuvec.h"
 #include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 struct camera_s {
     struct numtx_s mtx;
@@ -198,8 +199,6 @@ struct nuspecial_s {
     char pad48[0x50 - 0x48];
 };
 
-struct nugobj_s;
-
 struct nugscn_s {
     char pad00[0x14];
     struct nugobj_s **gobjs;
@@ -268,13 +267,6 @@ struct edobject_s {
     float bouncy_player_grav;
     float bouncy_tension;
     float bouncy_damping;
-};
-
-struct nurndrvtx_s {
-    struct nuvec_s pnt;
-    char pad0c[0x18 - 0x0C];
-    int colour;
-    char pad1c[0x24 - 0x1C];
 };
 
 struct nuinstflags_s {
@@ -586,7 +578,7 @@ extern void NuFntScale(int x, int y);
 extern void NuFntSet(void *font);
 extern void NuFntSetPen(int colour);
 extern void NuFntPrintEx(int x, int y, int flags, char *fmt, ...);
-extern int NuRndrLine3d(struct nurndrvtx_s *line, void *mtl, struct numtx_s *mtx);
+extern int NuRndrLine3d(struct nuvtx_tc1_s *line, void *mtl, struct numtx_s *mtx);
 extern void NuRndrRect2di(int x, int y, int w, int h, int colour, void *mtl);
 extern void NuRndrLine2di(int x0, int y0, int x1, int y1, int colour, void *mtl);
 extern void eduiMenuRender(void *menu);
@@ -1957,36 +1949,36 @@ void edobjDoInput(struct pad_s *pad)
 
 void edobjDrawCursor(void)
 {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     struct nuvec_s dir;
     int type;
 
     line[0].pnt.x = edobj_cam_pos.x - 0.5f;
     line[0].pnt.y = edobj_cam_pos.y;
     line[0].pnt.z = edobj_cam_pos.z;
-    line[0].colour = -1;
+    line[0].diffuse = -1;
     line[1].pnt.x = edobj_cam_pos.x + 0.5f;
     line[1].pnt.y = edobj_cam_pos.y;
     line[1].pnt.z = edobj_cam_pos.z;
-    line[1].colour = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edobj_mtl, 0);
     line[0].pnt.x = edobj_cam_pos.x;
     line[0].pnt.y = edobj_cam_pos.y - 0.5f;
     line[0].pnt.z = edobj_cam_pos.z;
-    line[0].colour = -1;
+    line[0].diffuse = -1;
     line[1].pnt.x = edobj_cam_pos.x;
     line[1].pnt.y = edobj_cam_pos.y + 0.5f;
     line[1].pnt.z = edobj_cam_pos.z;
-    line[1].colour = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edobj_mtl, 0);
     line[0].pnt.x = edobj_cam_pos.x;
     line[0].pnt.y = edobj_cam_pos.y;
     line[0].pnt.z = edobj_cam_pos.z - 0.5f;
-    line[0].colour = -1;
+    line[0].diffuse = -1;
     line[1].pnt.x = edobj_cam_pos.x;
     line[1].pnt.y = edobj_cam_pos.y;
     line[1].pnt.z = edobj_cam_pos.z + 0.5f;
-    line[1].colour = -1;
+    line[1].diffuse = -1;
     NuRndrLine3d(line, edobj_mtl, 0);
     if (edobj_particle_mode) {
         dir.x = 0.0f;
@@ -1997,11 +1989,11 @@ void edobjDrawCursor(void)
         line[0].pnt.x = edobj_cam_pos.x;
         line[0].pnt.y = edobj_cam_pos.y;
         line[0].pnt.z = edobj_cam_pos.z;
-        line[0].colour = 0xFF0000FF;
+        line[0].diffuse = 0xFF0000FF;
         line[1].pnt.x = edobj_cam_pos.x + dir.x;
         line[1].pnt.y = edobj_cam_pos.y + dir.y;
         line[1].pnt.z = edobj_cam_pos.z + dir.z;
-        line[1].colour = 0xFF0000FF;
+        line[1].diffuse = 0xFF0000FF;
         NuRndrLine3d(line, edobj_mtl, 0);
     }
     if (!edobj_waypoint_mode && !edobj_particle_mode) {
@@ -2834,7 +2826,7 @@ void edobjRenderParticleEmitters(int obj)
 
 void edobjRenderWaypoints(int obj)
 {
-    struct nurndrvtx_s line[2];
+    struct nuvtx_tc1_s line[2];
     int colour;
     int i;
 
@@ -2849,11 +2841,11 @@ void edobjRenderWaypoints(int obj)
             line[0].pnt.x = ObjectPath[obj].waypoints[i - 1].x;
             line[0].pnt.y = ObjectPath[obj].waypoints[i - 1].y;
             line[0].pnt.z = ObjectPath[obj].waypoints[i - 1].z;
-            line[0].colour = -1;
+            line[0].diffuse = -1;
             line[1].pnt.x = ObjectPath[obj].waypoints[i].x;
             line[1].pnt.y = ObjectPath[obj].waypoints[i].y;
             line[1].pnt.z = ObjectPath[obj].waypoints[i].z;
-            line[1].colour = -1;
+            line[1].diffuse = -1;
             NuRndrLine3d(line, edobj_mtl_zoff, 0);
         }
     }

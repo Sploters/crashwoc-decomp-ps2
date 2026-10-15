@@ -31,24 +31,12 @@
 
 #include "numath/numathtypes.h"
 #include "nu3d/numtl.h"
+#include "nu3d/nugobj.h"
 
 typedef struct nucolourref_s {
     unsigned int addr;
     int count;
 } NuColourRef;
-
-typedef struct NuGeom {
-    struct NuGeom *next;
-    void *mtl;
-    void *dmastream;
-} NuGeom;
-
-typedef struct NuGobj {
-    struct NuGobj *sysnext;
-    struct NuGobj *syslast;
-    int type;
-    NuGeom *geom;
-} NuGobj;
 
 typedef union NuFloatBits {
     float f;
@@ -161,8 +149,8 @@ void NuCvtCalcFastPoint(struct nuvec_s *a, struct nuvec_s *b, struct numtl_s *mt
 }
 
 
-void NuPs2DestroyRenderStream(NuGobj *gobj) {
-    NuGeom *geom;
+void NuPs2DestroyRenderStream(struct nugobj_s *gobj) {
+    struct nugeom_s *geom;
 
     geom = gobj->geom;
     if (geom && geom->dmastream) {
