@@ -434,7 +434,7 @@ struct weatherboss_s {
     struct MYSPLINE mainspline; /* 0x620 */
     char pad_650[0x654 - 0x650];
     f32 chestsoundbtimer;      /* 0x654 */
-    char pad_658[0x660 - 0x658];
+    s32 hitsoundframe;         /* 0x658 */
 };
 extern struct weatherboss_s WeatherBoss;
 
@@ -812,13 +812,13 @@ struct spline_s *GetWeatherBossSpline(void)
 }
 
 extern s32 FlyingLevelExtro;
-extern f32 GetBigGunBestTarget(f32 bestdot, struct nuvec_s **pos,
+extern f32 GetBigGunBestTarget(f32 best, struct nuvec_s **pos,
                                struct nuvec_s **vel, s32 *moving);
-extern f32 GetBattleShipBestTarget(f32 bestdot, struct nuvec_s **pos,
+extern f32 GetBattleShipBestTarget(f32 best, struct nuvec_s **pos,
                                    struct nuvec_s **vel, s32 *moving);
-extern f32 GetGunBoatBestTarget(f32 bestdot, struct nuvec_s **pos,
+extern f32 GetGunBoatBestTarget(f32 best, struct nuvec_s **pos,
                                 struct nuvec_s **vel, s32 *moving);
-extern f32 GetZoffaBestTarget(f32 bestdot, struct nuvec_s **pos,
+extern f32 GetZoffaBestTarget(f32 best, struct nuvec_s **pos,
                               struct nuvec_s **vel, s32 *moving);
 
 inline s32 PickGliderTarget(struct nuvec_s **pos, struct nuvec_s **vel, s32 *moving)
@@ -4642,7 +4642,8 @@ void InitBigGun(struct nuvec_s *pos, f32 angle, s32 type, f32 minx, f32 maxx,
     gun->yawwobble = 0.0f;
     gun->type = type;
 
-    /* The collision point sits 1.5 units from the gun towards its turret. */
+    /* terrpos: pos moved 1.5 units further along the direction from
+     * (0, 7.75, 11.17) to pos. */
     NuVecSub(&dir, &gun->pos, SetNuVecPntr(0.0f, 7.75f, 11.17f));
     NuVecNorm(&dir, &dir);
     NuVecScale(&dir, &dir, 1.5f);
