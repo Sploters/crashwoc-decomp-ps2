@@ -415,6 +415,36 @@ class TestQualityReview(WorkflowCase):
         self.assertEqual(done["state"], "ready_for_contribution")
 
 
+class TestRegressions(WorkflowCase):
+    """One test per bug fixed in the workflow; each fails on the old code."""
+
+    def test_gate_script_output_stays_off_stdout(self):
+        # Bug: promote.py / verify_promoted.py printed straight to stdout and
+        # corrupted the JSON that `workflow batch --json` writes there. A
+        # child process writes to file descriptor 1 itself, so capture at
+        # that level, not through sys.stdout.
+        import os
+        sys.stdout.flush()
+        saved = os.dup(1)
+        with tempfile.TemporaryFile() as cap:
+            os.dup2(cap.fileno(), 1)
+            try:
+                proc = workflow._run_logged(self.p, [
+                    sys.executable, "-c",
+                    "import sys; print('verifier noise'); "
+                    "print('oops', file=sys.stderr)"])
+            finally:
+                os.dup2(saved, 1)
+                os.close(saved)
+            cap.seek(0)
+            leaked = cap.read()
+        self.assertEqual(proc.returncode, 0)
+        self.assertEqual(leaked, b"")
+        log = (workflow._runs_dir(self.p) / "last_verifier.log").read_text()
+        self.assertIn("verifier noise", log)
+        self.assertIn("oops", log)
+
+
 class TestLint(unittest.TestCase):
     def rules(self, body):
         return [f["rule"] for f in quality.lint_function(body)]
